@@ -464,7 +464,8 @@ void r3d_framebuffer_load_mipchain_bloom(int width, int height)
     glGenFramebuffers(1, &bloom->id);
     glBindFramebuffer(GL_FRAMEBUFFER, bloom->id);
 
-    int mipChainLength = (int)floor(log2(fminf(width, height)));
+    int mipChainLength = (int)(floor(log2(fminf(width, height))) * R3D.env.bloomMipChainScale);
+    if (mipChainLength < 1) mipChainLength = 1;
 
     bloom->mipChain = MemAlloc(mipChainLength * sizeof(struct r3d_mip_bloom_t));
     if (bloom->mipChain == NULL) {

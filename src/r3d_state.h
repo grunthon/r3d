@@ -182,6 +182,7 @@ extern struct R3D_State {
         R3D_Bloom bloomMode;        // (post pass)
         float bloomIntensity;       // (post pass)
         int bloomFilterRadius;      // (gen pass)
+        float bloomMipChainScale;   // (gen pass)
         float bloomThreshold;       // (gen pass)
         float bloomSoftThreshold;   // (gen pass)
         Vector4 bloomPrefilter;     // (gen pass)

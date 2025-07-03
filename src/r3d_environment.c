@@ -190,6 +190,29 @@ float R3D_GetBloomSoftThreshold(void)
 	return R3D.env.bloomSoftThreshold;
 }
 
+void R3D_SetBloomMipChainScale(float value)
+{
+	value = Clamp(value, 0.0f, 1.0f);
+
+	R3D.env.bloomMipChainScale = value;
+
+	if (R3D.env.bloomMode != R3D_BLOOM_DISABLED) {
+		if (R3D.framebuffer.mipChainBloom.id != 0) {
+			r3d_framebuffer_unload_mipchain_bloom();
+
+			r3d_framebuffer_load_mipchain_bloom(
+				R3D.state.resolution.width,
+				R3D.state.resolution.height
+			);
+		}
+	}
+}
+
+float R3D_GetBloomMipChainScale(void)
+{
+	return R3D.env.bloomMipChainScale;
+}
+
 void R3D_SetFogMode(R3D_Fog mode)
 {
 	R3D.env.fogMode = mode;

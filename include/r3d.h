@@ -1613,6 +1613,28 @@ R3DAPI void R3D_SetBloomSoftThreshold(float value);
  */
 R3DAPI float R3D_GetBloomSoftThreshold(void);
 
+/**
+ * @brief Sets the scaling of the amount of bloom mipmaps used.
+ *
+ * Controls the amount of mipmaps used for the bloom effect. More mipmaps will
+ * give a smoother and more widely dispersed effect, while less mipmaps can
+ * provide a tighter effect. Use of this function will rebuild the mipmaps
+ * and may give a one time performance hit.
+ *
+ * @param value The percentage of the maximum possible mipmap to use. (expressed as 0.0 to 1.0).
+ */
+R3DAPI void R3D_SetBloomMipChainScale(float value);
+
+/**
+ * @brief Gets the value for scaling the amount of bloom mipmaps used.
+ *
+ * This function retrieves the percentage value used to scale the amount bloom
+ * mipmaps used, which alters the smoothness and dispersion of the effect.
+ *
+ * @return The current value used for scaling the amount bloom mipmaps.
+ */
+R3DAPI float R3D_GetBloomMipChainScale(void);
+
 // --------------------------------------------
 // ENVIRONMENT: Fog Config Functions
 // --------------------------------------------
