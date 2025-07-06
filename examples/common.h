@@ -34,7 +34,7 @@ static inline void DrawCredits(const char* text)
 
 int main(void)
 {
-	InitWindow(800, 600, "");
+	InitWindow(1920, 1080, "");
 
 	const char* title = Init();
 	SetWindowTitle(title);

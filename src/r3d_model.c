@@ -2622,6 +2622,16 @@ bool process_assimp_materials(const struct aiScene* scene, R3D_Material** materi
 
         //mat->normal.scale = 1.0f;
 
+        /* --- Load emission map --- */
+
+        mat->emission.texture = r3d_load_assimp_texture(scene, aiMat, aiTextureType_EMISSIVE, 0, basePath);
+        if (mat->emission.texture.id == 0) {
+            mat->emission.texture = R3D_GetWhiteTexture();
+        }
+        else {
+            mat->emission.multiplier = 1.0f;
+        }
+        
         /* --- Load ORM map --- */
 
         bool hasOcclusion = false;
