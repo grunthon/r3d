@@ -210,7 +210,7 @@ static bool light_init(r3d_light_t* light, R3D_LightType type)
     light->direction = (Vector3) {0, 0, -1};
 
     light->energy = 1.0f;
-    light->specular = 0.5f;
+    light->specular = 1.0f;
     light->range = 50.0f;
     light->falloff = 1.0f;
     light->innerCutOff = cosf(22.5f * DEG2RAD);
