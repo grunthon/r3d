@@ -16,6 +16,7 @@ int main(void)
 
     // Post-processing setup
     R3D_ENVIRONMENT_SET(bloom.mode, R3D_BLOOM_MIX);
+    R3D_ENVIRONMENT_SET(ssil.giIntensity, 8.0f);
     R3D_ENVIRONMENT_SET(ssgi.intensity, 8.0f);
     R3D_ENVIRONMENT_SET(ssao.enabled, true);
 
@@ -31,9 +32,10 @@ int main(void)
     R3D_Light lights[2];
     for (int i = 0; i < 2; i++) {
         lights[i] = R3D_CreateLight(R3D_LIGHT_OMNI);
-        R3D_SetLightPosition(lights[i], (Vector3) {i ? -10.0f : 10.0f, 20.0f, 0.0f});
+        R3D_SetLightPosition(lights[i], (Vector3) {i ? -5.0f : 5.0f, 5.0f, 0.0f});
         R3D_SetShadowUpdateMode(lights[i], R3D_SHADOW_UPDATE_MANUAL);
         R3D_SetLightEnergy(lights[i], 8.0f);
+        R3D_SetLightRange(lights[i], 16.0f);
         R3D_EnableShadow(lights[i]);
         R3D_EnableLight(lights[i]);
     }
@@ -111,8 +113,8 @@ int main(void)
 
             // Draw lights
             BeginMode3D(camera);
-                DrawSphere(R3D_GetLightPosition(lights[0]), 0.5f, WHITE);
-                DrawSphere(R3D_GetLightPosition(lights[1]), 0.5f, WHITE);
+                DrawSphere(R3D_GetLightPosition(lights[0]), 0.2f, WHITE);
+                DrawSphere(R3D_GetLightPosition(lights[1]), 0.2f, WHITE);
             EndMode3D();
 
             // Display tonemapping
