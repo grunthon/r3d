@@ -54,7 +54,7 @@ struct UpsampleWeights {
     float invWSum;
 };
 
-UpsampleWeights ComputeUpsampleWeights(float refDepth, float NdotV)
+UpsampleWeights ComputeUpsampleWeights(float refDepth, float NoV)
 {
     ivec2 depthRes = textureSize(uDepthTex, 1);
     ivec2 maxCoord = depthRes - ivec2(1);
@@ -85,7 +85,7 @@ UpsampleWeights ComputeUpsampleWeights(float refDepth, float NdotV)
 
     const float kMinNdotV = 0.05;
     const float kDepthEdgeToleranceMeters = 0.05;
-    float depthSharpness = max(NdotV, kMinNdotV) / kDepthEdgeToleranceMeters; // = 1.0 / (t / max(NdotV, min))
+    float depthSharpness = max(NoV, kMinNdotV) / kDepthEdgeToleranceMeters; // = 1.0 / (t / max(NoV, min))
 
     w *= exp(-abs(d - vec4(refDepth)) * depthSharpness);
 
@@ -122,15 +122,15 @@ void main()
     vec3 P = V_GetWorldPosition(vTexCoord, depth);
     vec3 N = V_GetWorldNormal(uNormalTex, pixCoord);
     vec3 V = normalize(uView.position - P);
-    float NdotV = max(dot(N, V), 0.0);
+    float NoV = max(dot(N, V), 0.0);
 
-    vec3 F0 = PBR_ComputeF0(orm.z, orm.w, albedo);
+    vec3 F0 = PBR_F0(orm.z, orm.w, albedo);
     vec3 kD = albedo * (1.0 - orm.z);
 
     vec4 io = vec4(0.0, 0.0, 0.0, 1.0);
     if (uSsil.enabled || uSsao.enabled || uSsgi.enabled)
     {
-        UpsampleWeights uw = ComputeUpsampleWeights(depth, NdotV);
+        UpsampleWeights uw = ComputeUpsampleWeights(depth, NoV);
         if (uSsil.enabled) {
             io = Upsample(uSsilTex, uw);
             io.rgb *= uSsil.giIntensity;
@@ -150,7 +150,7 @@ void main()
 
     vec3 diff = vec3(0.0);
     vec3 spec = vec3(0.0);
-    E_ComputeAmbientAndProbes(diff, spec, kD, orm.rgb, F0, P, N, V, NdotV);
+    E_ComputeAmbientAndProbes(diff, spec, kD, orm.rgb, F0, P, N, V, NoV);
 
     FragDiffuse = vec4(diff + io.rgb, 1.0);
     FragSpecular = vec4(spec, 1.0);

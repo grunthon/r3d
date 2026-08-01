@@ -36,11 +36,11 @@ out vec4 FragColor;
 
 float DistributionGGX(vec3 N, vec3 H, float a2)
 {
-    float NdotH = max(dot(N, H), 0.0);
-    float NdotH2 = NdotH * NdotH;
+    float NoH = max(dot(N, H), 0.0);
+    float NoH2 = NoH * NoH;
 
     float nom = a2;
-    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+    float denom = (NoH2 * (a2 - 1.0) + 1.0);
     denom = M_PI * denom * denom;
 
     return nom / max(denom, EPSILON);
@@ -120,21 +120,21 @@ void main()
         vec3 H = ImportanceSampleGGX(Xi, a, OBN);
         vec3 L = normalize(reflect(-V, H));
 
-        float NdotL = max(dot(N, L), 0.0);
+        float NoL = max(dot(N, L), 0.0);
 
-        if (NdotL > EPSILON)
+        if (NoL > EPSILON)
         {
             float D = DistributionGGX(N, H, a2);
-            float NdotH = max(dot(N, H), 0.0);
+            float NoH = max(dot(N, H), 0.0);
             float HdotV = max(dot(H, V), 0.0);
 
-            float pdf = (D * NdotH) / max(4.0 * HdotV, EPSILON);
+            float pdf = (D * NoH) / max(4.0 * HdotV, EPSILON);
             float mipLevel = ComputeMipLevel(pdf, uSourceFaceSize);
             mipLevel = clamp(mipLevel, 0.0, uSourceNumLevels - 1.0);
 
             vec3 sampleColor = textureLod(uSourceTex, L, mipLevel).rgb;
-            prefilteredColor += sampleColor * NdotL;
-            totalWeight += NdotL;
+            prefilteredColor += sampleColor * NoL;
+            totalWeight += NoL;
         }
     }
 
