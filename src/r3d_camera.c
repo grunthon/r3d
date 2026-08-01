@@ -20,10 +20,10 @@ R3D_Camera R3D_CameraFromRL(Camera3D camera)
 {
     R3D_Camera result = R3D_CAMERA_BASE;
 
-    result.position = camera.position;
-    result.fovy = camera.fovy;
+    result.position  = camera.position;
+    result.fovy      = camera.fovy;
     result.nearPlane = rlGetCullDistanceNear();
-    result.farPlane = rlGetCullDistanceFar();
+    result.farPlane  = rlGetCullDistanceFar();
 
     result.projection =
         (camera.projection == CAMERA_ORTHOGRAPHIC)
@@ -40,9 +40,9 @@ Camera3D R3D_CameraToRL(R3D_Camera camera)
     Camera3D result = {0};
 
     result.position = camera.position;
-    result.target = Vector3Add(camera.position, R3D_GetCameraForward(camera));
-    result.up = R3D_GetCameraUp(camera);
-    result.fovy = (float)camera.fovy;
+    result.target   = Vector3Add(camera.position, R3D_GetCameraForward(camera));
+    result.up       = R3D_GetCameraUp(camera);
+    result.fovy     = (float)camera.fovy;
 
     result.projection =
         (camera.projection == R3D_PROJECTION_ORTHOGRAPHIC)
@@ -58,12 +58,14 @@ void R3D_CameraLookAt(R3D_Camera* camera, Vector3 target, Vector3 up)
 
     Vector3 forward = Vector3Subtract(target, camera->position);
 
-    if (r3d_vector3_len_sq(forward) <= 1e-12f) {
+    if (r3d_vector3_len_sq(forward) <= 1e-12f)
+    {
         forward = (Vector3){0.0f, 0.0f, -1.0f};
         target = Vector3Add(camera->position, forward);
     }
 
-    if (r3d_vector3_len_sq(up) <= 1e-12f) {
+    if (r3d_vector3_len_sq(up) <= 1e-12f)
+    {
         up = (Vector3){0.0f, 1.0f, 0.0f};
     }
 
@@ -105,7 +107,8 @@ Matrix R3D_GetCameraProj(R3D_Camera camera, double aspect)
 {
     if (aspect <= 0.0) aspect = 1.0;
 
-    if (camera.projection == R3D_PROJECTION_ORTHOGRAPHIC) {
+    if (camera.projection == R3D_PROJECTION_ORTHOGRAPHIC)
+    {
         double top = camera.fovy * 0.5;
         double right = top * aspect;
 
@@ -148,7 +151,7 @@ void R3D_MoveCameraLocal(R3D_Camera* camera, Vector3 delta)
 
     // Local convention: +X right, +Y up, -Z forward.
     Vector3 world_delta = Vector3RotateByQuaternion(delta, camera->rotation);
-    camera->position = Vector3Add(camera->position, world_delta);
+    camera->position    = Vector3Add(camera->position, world_delta);
 }
 
 void R3D_CameraRotate(R3D_Camera* camera, Quaternion rotation)
