@@ -71,7 +71,7 @@ void main()
     FragColor = vec4(vec3(0.0), 1.0);
 
     ivec2 pixelCoord = ivec2(gl_FragCoord.xy);
-    float depth = texture(uDepthTex, vTexCoord).r;
+    float depth = texelFetch(uDepthTex, pixelCoord, 0).r;
     if (depth >= uView.far) return;
 
     vec3 position = V_GetViewPosition(vTexCoord, depth);
