@@ -130,12 +130,12 @@ void main()
 
         /* Compute diffuse lighting */
 
-        vec3 diffLight = L_Diffuse(ROUGHNESS, NoV, NoL, LoH);
+        vec3 diffLight = L_Diffuse(ORM.g, NoV, NoL, LoH);
         diffLight *= lightColE * dielectric;
 
         /* Compute specular lighting */
 
-        vec3 specLight =  L_Specular(F0, ROUGHNESS, NoV, NoL, NoH, LoH);
+        vec3 specLight =  L_Specular(F0, ORM.g, NoV, NoL, NoH, LoH);
         specLight *= lightColE * light.specular;
 
         /* Compute shadow factor */
