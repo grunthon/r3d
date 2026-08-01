@@ -16,7 +16,8 @@
 // TREE NODE TYPES
 // ========================================
 
-enum r3d_animtree_type {
+enum r3d_animtree_type
+{
     R3D_ANIMTREE_ANIM = 1,
     R3D_ANIMTREE_BLEND2,
     R3D_ANIMTREE_ADD2,
@@ -34,7 +35,8 @@ typedef struct r3d_animtree_switch r3d_animtree_switch_t;
 typedef struct r3d_animtree_stm    r3d_animtree_stm_t;
 typedef struct r3d_animtree_stm_x  r3d_animtree_stm_x_t;
 
-union R3D_AnimationTreeNode {
+union R3D_AnimationTreeNode
+{
     r3d_animtree_base_t*   base;
     r3d_animtree_anim_t*   anim;
     r3d_animtree_blend2_t* bln2;
@@ -48,21 +50,24 @@ union R3D_AnimationTreeNode {
 // STATE MACHINE STRUCTURES
 // ========================================
 
-typedef struct {
+typedef struct
+{
     R3D_AnimationStmIndex beginIdx;
     R3D_AnimationStmIndex endIdx;
     float endWeight;
     R3D_StmEdgeParams params;
 } r3d_stmedge_t;
 
-typedef struct {
+typedef struct
+{
     int outCount;
     int maxOut;
     r3d_stmedge_t** outList;
     r3d_stmedge_t* activeIn;
 } r3d_stmstate_t;
 
-typedef struct {
+typedef struct
+{
     bool yes;
     float when;
 } r3d_stmvisit_t;
@@ -71,11 +76,13 @@ typedef struct {
 // TREE NODE STRUCTURES
 // ========================================
 
-struct r3d_animtree_base {
+struct r3d_animtree_base
+{
     r3d_animtree_type_t type;
 };
 
-struct r3d_animtree_anim {
+struct r3d_animtree_anim
+{
     r3d_animtree_type_t type;
     const R3D_Animation* animation;
     R3D_AnimationNodeParams params;
@@ -87,21 +94,24 @@ struct r3d_animtree_anim {
     } root;
 };
 
-struct r3d_animtree_blend2 {
+struct r3d_animtree_blend2
+{
     r3d_animtree_type_t type;
     R3D_AnimationTreeNode inMain;
     R3D_AnimationTreeNode inBlend;
     R3D_Blend2NodeParams params;
 };
 
-struct r3d_animtree_add2 {
+struct r3d_animtree_add2
+{
     r3d_animtree_type_t type;
     R3D_AnimationTreeNode inMain;
     R3D_AnimationTreeNode inAdd;
     R3D_Add2NodeParams params;
 };
 
-struct r3d_animtree_switch {
+struct r3d_animtree_switch
+{
     r3d_animtree_type_t type;
     R3D_AnimationTreeNode* inList;
     float* inWeights;
@@ -111,7 +121,8 @@ struct r3d_animtree_switch {
     R3D_SwitchNodeParams params;
 };
 
-struct r3d_animtree_stm {
+struct r3d_animtree_stm
+{
     r3d_animtree_type_t type;
     int statesCount;
     int edgesCount;
@@ -122,7 +133,8 @@ struct r3d_animtree_stm {
     r3d_stmedge_t* edgeList;
     r3d_stmstate_t* stateList;
     r3d_stmvisit_t* visitList;
-    struct {
+    struct
+    {
         r3d_stmedge_t** edges;
         int idx;
         int len;
@@ -132,7 +144,8 @@ struct r3d_animtree_stm {
     } path;
 };
 
-struct r3d_animtree_stm_x {
+struct r3d_animtree_stm_x
+{
     r3d_animtree_type_t type;
     R3D_AnimationTreeNode nested;
 };
@@ -141,13 +154,15 @@ struct r3d_animtree_stm_x {
 // TREE UPDATE/EVAL SUPPORT INFO STRUCTURES
 // ========================================
 
-typedef struct {
+typedef struct
+{
     bool anodeDone;
     float xFade;
     float consumedTime;
 } upinfo_t;
 
-typedef struct {
+typedef struct
+{
     Transform motion;
     Transform distance;
 } rminfo_t;
@@ -181,8 +196,9 @@ static bool valid_root_bone(int boneIdx)
 static bool masked_bone(const R3D_BoneMask* bMask, int boneIdx)
 {
     int maskBits = (sizeof(bMask->mask[0]) * 8);
-    int part = boneIdx / maskBits;
-    int bit = boneIdx % maskBits;
+    int part     = boneIdx / maskBits;
+    int bit      = boneIdx % maskBits;
+
     return (bMask->mask[part] & (1 << bit)) != 0;
 }
 
@@ -195,12 +211,15 @@ static r3d_stmedge_t* stm_find_edge(const r3d_animtree_stm_t* node, const r3d_st
     int pathLen = node->path.len;
     int pathIdx = node->path.idx;
 
-    if (pathIdx < pathLen) {
+    if (pathIdx < pathLen)
+    {
         return node->path.edges[pathIdx];
     }
-    else {
+    else
+    {
         int edgesCount = state->outCount;
-        for (int edgeIdx = 0; edgeIdx < edgesCount; edgeIdx++) {
+        for (int edgeIdx = 0; edgeIdx < edgesCount; edgeIdx++)
+        {
             r3d_stmedge_t* edge = state->outList[edgeIdx];
             R3D_StmEdgeStatus status = edge->params.status;
             bool open = (status == R3D_STM_EDGE_AUTO || status == R3D_STM_EDGE_ONCE);
@@ -218,17 +237,20 @@ static bool stm_update_edge(const R3D_AnimationTree* atree, r3d_animtree_stm_t* 
     float xFade = edge->params.xFadeTime;
     bool doXFade = (xFade > elapsedTime);
 
-    if (doXFade) {
+    if (doXFade)
+    {
         float wInc = Remap(elapsedTime, 0.0f, xFade, 0.0f, 1.0f);
         edge->endWeight += wInc;
 
-        float wClamp = R3D_CLAMP(edge->endWeight, 0.0f, 1.0f);
-        float wDelta = edge->endWeight - wClamp;
+        float wClamp    = R3D_CLAMP(edge->endWeight, 0.0f, 1.0f);
+        float wDelta    = edge->endWeight - wClamp;
         edge->endWeight = wClamp;
+
         *consumedTime = (wInc > 0.0f ? elapsedTime * (1.0f - wDelta/wInc) : elapsedTime);
         *done = FloatEquals(edge->endWeight, 1.0f);
     }
-    else {
+    else
+    {
         edge->endWeight = 1.0f;
         *consumedTime = xFade;
         *done = true;
@@ -257,7 +279,8 @@ static bool stm_next_state(r3d_animtree_stm_t* node, r3d_stmedge_t* edge,
     anode_reset(anode);
 
     edge->endWeight = 0.0f;
-    if (edge->params.status == R3D_STM_EDGE_ONCE) {
+    if (edge->params.status == R3D_STM_EDGE_ONCE)
+    {
         edge->params.status = edge->params.nextStatus;
     }
 
@@ -277,8 +300,10 @@ static bool stm_update_state(const R3D_AnimationTree* atree, r3d_animtree_stm_t*
     float edgeTime = 0.0f;
     r3d_stmedge_t* activeEdge = state->activeIn;
 
-    if (activeEdge) {
-        if (!stm_update_edge(atree, node, activeEdge, elapsedTime, &edgeTime, &edgeDone)) {
+    if (activeEdge)
+    {
+        if (!stm_update_edge(atree, node, activeEdge, elapsedTime, &edgeTime, &edgeDone))
+        {
             return false;
         }
     }
@@ -287,7 +312,8 @@ static bool stm_update_state(const R3D_AnimationTree* atree, r3d_animtree_stm_t*
 
     r3d_stmedge_t* nextEdge = stm_find_edge(node, state);
     upinfo_t nodeInfo = {.xFade = (nextEdge ? nextEdge->params.xFadeTime : 0.0f)};
-    if (!anode_update(atree, nodeList[*activeIdx], elapsedTime, &nodeInfo)) {
+    if (!anode_update(atree, nodeList[*activeIdx], elapsedTime, &nodeInfo))
+    {
         return false;
     }
 
@@ -309,19 +335,22 @@ static int expand_path(r3d_animtree_stm_t* node, r3d_stmedge_t** edges, r3d_stme
     int outCount = state->outCount;
 
     int added = 0;
-    for (int edgeIdx = 0; edgeIdx < outCount; edgeIdx++) {
+    for (int edgeIdx = 0; edgeIdx < outCount; edgeIdx++)
+    {
         r3d_stmedge_t* edge = state->outList[edgeIdx];
 
         bool closed = edge->params.status == R3D_STM_EDGE_OFF;
         if (closed) continue;
 
-        if (nextCount < maxOpenPaths) {
+        if (nextCount < maxOpenPaths)
+        {
             memcpy(&next[nextCount*maxPathLen], edges, pathLen * sizeof(r3d_stmedge_t*));
             next[nextCount*maxPathLen + pathLen] = edge;
             nextCount += 1;
             added += 1;
         }
-        else {
+        else
+        {
             R3D_TRACELOG(LOG_WARNING, "Failed to find path: max open paths count exceeded (%d)", maxOpenPaths);
             break;
         }
@@ -345,9 +374,11 @@ static bool stm_find_path(r3d_animtree_stm_t* node, R3D_AnimationStmIndex target
     );
 
     int pathLen = 1;
-    while(pathsCount > 0) {
+    while(pathsCount > 0)
+    {
         int nextCount = 0;
-        for (int pIdx = 0; pIdx < pathsCount; pIdx++) {
+        for (int pIdx = 0; pIdx < pathsCount; pIdx++)
+        {
             R3D_AnimationStmIndex stateIdx = openPaths[pIdx*maxPathLen + pathLen-1]->endIdx;
             if (stateIdx == targetIdx) {
                 memcpy(node->path.edges, &openPaths[pIdx*maxPathLen], pathLen * sizeof(r3d_stmedge_t*));
@@ -364,10 +395,12 @@ static bool stm_find_path(r3d_animtree_stm_t* node, R3D_AnimationStmIndex target
             );
         }
 
-        if (pathLen < maxPathLen) {
+        if (pathLen < maxPathLen)
+        {
             pathLen += 1;
         }
-        else {
+        else
+        {
             R3D_TRACELOG(LOG_WARNING, "Failed to find path: max path lenght exceeded (%d)", maxPathLen);
             break;
         }
@@ -388,12 +421,14 @@ static R3D_AnimationTreeNode* anode_create(R3D_AnimationTree* atree, r3d_animtre
     R3D_AnimationTreeNode* node;
 
     int poolSize = atree->nodePoolSize;
-    if (poolSize < atree->nodePoolMaxSize) {
+    if (poolSize < atree->nodePoolMaxSize)
+    {
         node = &atree->nodePool[poolSize];
         node->base = MemAlloc(nodeSize);
         node->base->type = type;
     }
-    else {
+    else
+    {
         return NULL;
     }
 
@@ -431,12 +466,14 @@ static void anode_reset_switch(r3d_animtree_switch_t* node)
     int inCount = node->inCount;
     int activeIn = node->params.activeInput;
 
-    for (int i = 0; i < inCount; i++) {
+    for (int i = 0; i < inCount; i++)
+    {
         node->inWeights[i] = 0.0f;
     }
     node->inWeights[activeIn] = 1.0f;
 
-    for (int i = 0; i < inCount; i++) {
+    for (int i = 0; i < inCount; i++)
+    {
         anode_reset(node->inList[i]);
     }
 }
@@ -470,7 +507,8 @@ static void anode_reset_stm_x(r3d_animtree_stm_x_t* node)
 
 static void anode_reset(R3D_AnimationTreeNode anode)
 {
-    switch(anode.base->type) {
+    switch(anode.base->type)
+    {
     case R3D_ANIMTREE_ANIM:   anode_reset_anim(anode.anim); break;
     case R3D_ANIMTREE_BLEND2: anode_reset_blend2(anode.bln2); break;
     case R3D_ANIMTREE_ADD2:   anode_reset_add2(anode.add2); break;
@@ -492,8 +530,10 @@ static bool anode_update_anim(r3d_animtree_anim_t* node, float elapsedTime, upin
     const R3D_Animation* a = node->animation;
 
     R3D_AnimationState* s = &node->params.state;
-    if (!s->play) {
-        if (info) {
+    if (!s->play)
+    {
+        if (info)
+        {
             *info = (upinfo_t) {
                 .anodeDone = true,
                 .xFade = info->xFade,
@@ -512,11 +552,14 @@ static bool anode_update_anim(r3d_animtree_anim_t* node, float elapsedTime, upin
 
     bool cross = ((speed < 0.0f && tCur <= 0.0f) || (speed > 0.0f && tCur >= duration));
 
-    if (cross) {
-        if ((s->play = s->loop)) {
+    if (cross)
+    {
+        if ((s->play = s->loop))
+        {
             s->currentTime -= copysignf(duration, speed);
         }
-        else {
+        else
+        {
             float tClamp = R3D_CLAMP(s->currentTime, 0.0f, duration);
             float tDelta = s->currentTime - tClamp;
             elapsedTime = (!FloatEquals(tInc, 0.0f) ? elapsedTime * (1.0f - tDelta/tInc) : 0.0f);
@@ -524,11 +567,13 @@ static bool anode_update_anim(r3d_animtree_anim_t* node, float elapsedTime, upin
         }
         node->root.loops = (int)(elapsedTime / duration);
     }
-    else {
+    else
+    {
         node->root.loops = -1;
     }
 
-    if (info) {
+    if (info)
+    {
         float xFade = info->xFade;
         float durXFade = R3D_CLAMP(duration - xFade, 0.0f, duration);
         bool crossXFade = ((speed < 0.0f && tCur <= xFade) || (speed > 0.0f && tCur >= durXFade));
@@ -562,7 +607,8 @@ static bool anode_update_switch(const R3D_AnimationTree* atree, r3d_animtree_swi
 {
     int inCount = node->inCount;
     int activeIn = node->params.activeInput;
-    if (activeIn < 0 || activeIn >= inCount) {
+    if (activeIn < 0 || activeIn >= inCount)
+    {
         R3D_TRACELOG(LOG_WARNING, "Failed to update switch: active input %d out of range (%d)", activeIn, inCount);
         return false;
     }
@@ -570,9 +616,10 @@ static bool anode_update_switch(const R3D_AnimationTree* atree, r3d_animtree_swi
     bool reset = (activeIn == node->prevIn) ? false : !node->params.synced;
     if (reset) anode_reset(node->inList[activeIn]);
 
-    for (int i = 0; i < inCount; i++) {
-        if (!anode_update(atree, node->inList[i], elapsedTime,
-                          (i == activeIn) ? info : NULL)) {
+    for (int i = 0; i < inCount; i++)
+    {
+        if (!anode_update(atree, node->inList[i], elapsedTime, (i == activeIn) ? info : NULL))
+        {
             return false;
         }
     }
@@ -581,22 +628,27 @@ static bool anode_update_switch(const R3D_AnimationTree* atree, r3d_animtree_swi
     float xFade = node->params.xFadeTime;
     bool noXFade = (xFade <= elapsedTime);
 
-    if (noXFade) {
-        for (int i = 0; i < inCount; i++) {
+    if (noXFade)
+    {
+        for (int i = 0; i < inCount; i++)
+        {
             node->inWeights[i] = 0.0f;
         }
         node->inWeights[activeIn] = 1.0f;
     }
-    else {
+    else
+    {
         float wFade = Remap(elapsedTime, 0.0f, xFade, 0.0f, 1.0f);
-        for (int i = 0; i < inCount; i++) {
+        for (int i = 0; i < inCount; i++)
+        {
             float wSign = (i == activeIn) ? 1.0f : -1.0f;
             node->inWeights[i] = R3D_CLAMP(node->inWeights[i] + wSign*wFade, 0.0f, 1.0f);
         }
     }
 
     float wSum = 0.0f;
-    for (int i = 0; i < inCount; i++) {
+    for (int i = 0; i < inCount; i++)
+    {
         wSum += node->inWeights[i];
     }
     node->weightsInvSum = 1.0f / wSum;
@@ -617,29 +669,34 @@ static bool anode_update_stm(const R3D_AnimationTree* atree, r3d_animtree_stm_t*
 
     while(doNext)
     {
-        if (visited[activeIdx].yes && FloatEquals(visited[activeIdx].when, elapsedTime)) {
+        if (visited[activeIdx].yes && FloatEquals(visited[activeIdx].when, elapsedTime))
+        {
             R3D_TRACELOG(LOG_WARNING, "Failed to update stm: cycle detected, aborted");
             return false;
         }
         visited[activeIdx] = (r3d_stmvisit_t){.yes = true, .when = elapsedTime};
 
         float consumedTime;
-        if (!stm_update_state(atree, node, elapsedTime, &consumedTime, &activeIdx, &doNext, &stmDone)) {
+        if (!stm_update_state(atree, node, elapsedTime, &consumedTime, &activeIdx, &doNext, &stmDone))
+        {
             return false;
         }
         elapsedTime -= consumedTime;
 
-        if (doNext) {
+        if (doNext)
+        {
             int pathLen = node->path.len;
             int pathIdx = node->path.idx;
             if (pathIdx < pathLen) node->path.idx += 1;
         }
 
-        if (FloatEquals(elapsedTime, 0.0f)) {
+        if (FloatEquals(elapsedTime, 0.0f))
+        {
             break;
         }
 
-        if (elapsedTime < 0.0f) {
+        if (elapsedTime < 0.0f)
+        {
             R3D_TRACELOG(LOG_WARNING, "Failed to update stm: incorrect time calculation (%f)", elapsedTime);
             return false;
         }
@@ -647,9 +704,10 @@ static bool anode_update_stm(const R3D_AnimationTree* atree, r3d_animtree_stm_t*
 
     node->activeIdx = activeIdx;
 
-    if (info) {
+    if (info)
+    {
         *info = (upinfo_t) {
-            .anodeDone = stmDone,
+            .anodeDone    = stmDone,
             .consumedTime = startTime - elapsedTime
         };
     }
@@ -664,7 +722,8 @@ static bool anode_update_stm_x(const R3D_AnimationTree* atree, r3d_animtree_stm_
 
 static bool anode_update(const R3D_AnimationTree* atree, R3D_AnimationTreeNode anode, float elapsedTime, upinfo_t* info)
 {
-    switch(anode.base->type) {
+    switch(anode.base->type)
+    {
     case R3D_ANIMTREE_ANIM:   return anode_update_anim(anode.anim, elapsedTime, info);
     case R3D_ANIMTREE_BLEND2: return anode_update_blend2(atree, anode.bln2, elapsedTime, info);
     case R3D_ANIMTREE_ADD2:   return anode_update_add2(atree, anode.add2, elapsedTime, info);
@@ -689,30 +748,37 @@ static bool anode_eval_anim(const R3D_AnimationTree* atree, r3d_animtree_anim_t*
     const R3D_AnimationState state = node->params.state;
     const R3D_AnimationChannel* channel = r3d_anim_channel_find(anim, boneIdx);
 
-    if (channel) {
+    if (channel)
+    {
         *out = r3d_anim_channel_lerp(channel, state.currentTime * anim->ticksPerSecond, NULL, NULL);
     }
-    else {
+    else
+    {
         MatrixDecompose(atree->player.skeleton.localBind[boneIdx], &out->translation, &out->rotation, &out->scale);
     }
 
-    if (node->params.evalCallback) {
+    if (node->params.evalCallback)
+    {
         node->params.evalCallback(anim, state, boneIdx, out, node->params.evalUserData);
     }
 
-    if (channel && is_root_bone(atree, boneIdx)) {
-        if (info) {
+    if (channel && is_root_bone(atree, boneIdx))
+    {
+        if (info)
+        {
             Transform motion = {0};
             const int loops = node->root.loops;
 
-            if (loops > 0) {
+            if (loops > 0)
+            {
                 motion = r3d_anim_transform_scale(
                     r3d_anim_transform_subtr(node->root.restN, node->root.rest0),
                     (float)loops
                 );
             }
 
-            if (loops >= 0) {
+            if (loops >= 0)
+            {
                 const bool forward = state.speed > 0.0f;
                 const Transform rest0 = forward ? node->root.rest0 : node->root.restN;
                 const Transform restN = forward ? node->root.restN : node->root.rest0;
@@ -724,7 +790,8 @@ static bool anode_eval_anim(const R3D_AnimationTree* atree, r3d_animtree_anim_t*
                 motion.rotation = QuaternionNormalize(motion.rotation);
                 info->motion = motion;
             }
-            else {
+            else
+            {
                 info->motion = r3d_anim_transform_subtr(*out, node->root.last);
             }
 
@@ -748,14 +815,17 @@ static bool anode_eval_blend2(const R3D_AnimationTree* atree, r3d_animtree_blend
     Transform in[2] = {0};
 
     bool success = anode_eval(atree, node->inMain, boneIdx, &in[0], isRm ? &rm[0] : NULL);
-    if (!success) {
+    if (!success)
+    {
         R3D_TRACELOG(LOG_WARNING, "Failed to eval blend2 node");
         return false;
     }
 
-    if (doBlend) {
+    if (doBlend)
+    {
         success = anode_eval(atree, node->inBlend, boneIdx, &in[1], isRm ? &rm[1] : NULL);
-        if (!success) {
+        if (!success)
+        {
             R3D_TRACELOG(LOG_WARNING, "Failed to eval blend2 node");
             return false;
         }
@@ -764,8 +834,9 @@ static bool anode_eval_blend2(const R3D_AnimationTree* atree, r3d_animtree_blend
     const float w = R3D_CLAMP(node->params.blend, 0.0f, 1.0f);
     *out = doBlend ? r3d_anim_transform_lerp(in[0], in[1], w) : in[0];
 
-    if (isRm) {
-        *info = doBlend ? (rminfo_t){
+    if (isRm)
+    {
+        *info = doBlend ? (rminfo_t) {
             .motion = r3d_anim_transform_lerp(rm[0].motion, rm[1].motion, w),
             .distance = r3d_anim_transform_lerp(rm[0].distance, rm[1].distance, w)
         } : rm[0];
@@ -785,14 +856,17 @@ static bool anode_eval_add2(const R3D_AnimationTree* atree, r3d_animtree_add2_t*
     Transform in[2] = {0};
 
     bool success = anode_eval(atree, node->inMain, boneIdx, &in[0], isRm ? &rm[0] : NULL);
-    if (!success) {
+    if (!success)
+    {
         R3D_TRACELOG(LOG_WARNING, "Failed to eval add2 node");
         return false;
     }
 
-    if (doAdd) {
+    if (doAdd)
+    {
         success = anode_eval(atree, node->inAdd, boneIdx, &in[1], isRm ? &rm[1] : NULL);
-        if (!success) {
+        if (!success)
+        {
             R3D_TRACELOG(LOG_WARNING, "Failed to eval add2 node");
             return false;
         }
@@ -801,8 +875,9 @@ static bool anode_eval_add2(const R3D_AnimationTree* atree, r3d_animtree_add2_t*
     const float w = R3D_CLAMP(node->params.weight, 0.0f, 1.0f);
     *out = doAdd ? r3d_anim_transform_add_v(in[0], in[1], w) : in[0];
 
-    if (isRm) {
-        *info = doAdd ? (rminfo_t){
+    if (isRm)
+    {
+        *info = doAdd ? (rminfo_t) {
             .motion = r3d_anim_transform_lerp(rm[0].motion, rm[1].motion, w),
             .distance = r3d_anim_transform_lerp(rm[0].distance, rm[1].distance, w)
         } : rm[0];
@@ -829,14 +904,16 @@ static bool anode_eval_switch(const R3D_AnimationTree* atree, r3d_animtree_switc
         Transform inTr = {0};
 
         bool success = anode_eval(atree, node->inList[i], boneIdx, &inTr, isRm ? &inRm : NULL);
-        if (!success) {
+        if (!success)
+        {
             R3D_TRACELOG(LOG_WARNING, "Failed to eval switch node: input %d failed", i);
             return false;
         }
 
         result = r3d_anim_transform_addx_v(result, inTr, w);
 
-        if (isRm) {
+        if (isRm)
+        {
             rm.motion = r3d_anim_transform_addx_v(rm.motion, inRm.motion, w);
             rm.distance = r3d_anim_transform_addx_v(rm.distance, inRm.distance, w);
         }
@@ -858,24 +935,27 @@ static bool anode_eval_stm(const R3D_AnimationTree* atree, r3d_animtree_stm_t* n
     Transform activeTr = {0};
 
     bool success = anode_eval(atree, node->nodeList[activeIdx], boneIdx, &activeTr, isRm ? &activeRm : NULL);
-    if (!success) {
+    if (!success)
+    {
         R3D_TRACELOG(LOG_WARNING, "Failed to eval stm state %d", activeIdx);
         return false;
     }
 
     const r3d_stmedge_t* edge = node->stateList[activeIdx].activeIn;
 
-    if (!edge) {
+    if (!edge)
+    {
         *out = activeTr;
         if (isRm) *info = activeRm;
         return true;
     }
 
-    rminfo_t edgeRm = {0};
+    rminfo_t  edgeRm = {0};
     Transform edgeTr = {0};
 
     success = anode_eval(atree, node->nodeList[edge->beginIdx], boneIdx, &edgeTr, isRm ? &edgeRm : NULL);
-    if (!success) {
+    if (!success)
+    {
         R3D_TRACELOG(LOG_WARNING, "Failed to eval stm state %d", edge->beginIdx);
         return false;
     }
@@ -883,8 +963,9 @@ static bool anode_eval_stm(const R3D_AnimationTree* atree, r3d_animtree_stm_t* n
     const float endWeight = R3D_CLAMP(edge->endWeight, 0.0f, 1.0f);
     *out = r3d_anim_transform_lerp(edgeTr, activeTr, endWeight);
 
-    if (isRm) {
-        *info = (rminfo_t){
+    if (isRm)
+    {
+        *info = (rminfo_t) {
             .motion = r3d_anim_transform_lerp(edgeRm.motion, activeRm.motion, endWeight),
             .distance = r3d_anim_transform_lerp(edgeRm.distance, activeRm.distance, endWeight)
         };
@@ -902,7 +983,8 @@ static bool anode_eval_stm_x(const R3D_AnimationTree* atree, r3d_animtree_stm_x_
 static bool anode_eval(const R3D_AnimationTree* atree, R3D_AnimationTreeNode anode,
                        int boneIdx, Transform* out, rminfo_t* info)
 {
-    switch(anode.base->type) {
+    switch(anode.base->type)
+    {
     case R3D_ANIMTREE_ANIM:   return anode_eval_anim(atree, anode.anim, boneIdx, out, info);
     case R3D_ANIMTREE_BLEND2: return anode_eval_blend2(atree, anode.bln2, boneIdx, out, info);
     case R3D_ANIMTREE_ADD2:   return anode_eval_add2(atree, anode.add2, boneIdx, out, info);
@@ -922,7 +1004,8 @@ static bool anode_eval(const R3D_AnimationTree* atree, R3D_AnimationTreeNode ano
 
 static bool atree_blend2_add(r3d_animtree_blend2_t* parent, R3D_AnimationTreeNode anode, int inIdx)
 {
-    switch(inIdx) {
+    switch(inIdx)
+    {
     case 0: parent->inMain = anode; return true;
     case 1: parent->inBlend = anode; return true;
     default:
@@ -934,7 +1017,8 @@ static bool atree_blend2_add(r3d_animtree_blend2_t* parent, R3D_AnimationTreeNod
 
 static bool atree_add2_add(r3d_animtree_add2_t* parent, R3D_AnimationTreeNode anode, int inIdx)
 {
-    switch(inIdx) {
+    switch(inIdx)
+    {
     case 0: parent->inMain = anode; return true;
     case 1: parent->inAdd = anode; return true;
     default:
@@ -945,7 +1029,8 @@ static bool atree_add2_add(r3d_animtree_add2_t* parent, R3D_AnimationTreeNode an
 
 static bool atree_switch_add(r3d_animtree_switch_t* parent, R3D_AnimationTreeNode anode, int inIdx)
 {
-    if (inIdx < parent->inCount) {
+    if (inIdx < parent->inCount)
+    {
         parent->inList[inIdx] = anode;
         return true;
     }
@@ -956,7 +1041,8 @@ static bool atree_switch_add(r3d_animtree_switch_t* parent, R3D_AnimationTreeNod
 static R3D_AnimationTreeNode* atree_anim_create(R3D_AnimationTree* atree, R3D_AnimationNodeParams params, bool reset)
 {
     const R3D_Animation* a = R3D_GetAnimation(atree->player.animLib, params.name);
-    if (!a) {
+    if (!a)
+    {
         R3D_TRACELOG(LOG_WARNING, "Failed to create animation node: animation \"%s\" not found", params.name);
         return NULL;
     }
@@ -969,16 +1055,19 @@ static R3D_AnimationTreeNode* atree_anim_create(R3D_AnimationTree* atree, R3D_An
     if (reset) anode_reset_anim(anim);
 
     int boneIdx = atree->rootBone;
-    if (valid_root_bone(boneIdx)) {
+    if (valid_root_bone(boneIdx))
+    {
         const R3D_AnimationState* s = &anim->params.state;
         const R3D_AnimationChannel* c = r3d_anim_channel_find(a, boneIdx);
-        if (c) {
+        if (c != NULL)
+        {
             anim->root.last = r3d_anim_channel_lerp(
                 c, s->currentTime * a->ticksPerSecond,
                 &anim->root.rest0, &anim->root.restN
             );
         }
-        else {
+        else
+        {
             Transform bind;
             MatrixDecompose(
                 atree->player.skeleton.localBind[boneIdx],
@@ -1027,10 +1116,10 @@ static R3D_AnimationTreeNode* atree_switch_create(R3D_AnimationTree* atree, int 
     if (!anode) return NULL;
 
     r3d_animtree_switch_t* swch = anode->swch;
-    swch->inList = MemAlloc(inCount * sizeof(*swch->inList));
+    swch->inList    = MemAlloc(inCount * sizeof(*swch->inList));
     swch->inWeights = MemAlloc(inCount * sizeof(*swch->inWeights));
-    swch->inCount = inCount;
-    swch->params = params;
+    swch->inCount   = inCount;
+    swch->params    = params;
 
     swch->inWeights[params.activeInput] = 1.0f;
     return anode;
@@ -1042,17 +1131,18 @@ static R3D_AnimationTreeNode* atree_stm_create(R3D_AnimationTree* atree, int sta
     if (!anode) return NULL;
 
     r3d_animtree_stm_t* stm = anode->stm;
-    stm->nodeList = MemAlloc(statesCount * sizeof(*stm->nodeList));
-    stm->edgeList = MemAlloc(edgesCount * sizeof(*stm->edgeList));
+    stm->nodeList  = MemAlloc(statesCount * sizeof(*stm->nodeList));
+    stm->edgeList  = MemAlloc(edgesCount * sizeof(*stm->edgeList));
     stm->stateList = MemAlloc(statesCount * sizeof(*stm->stateList));
     stm->visitList = MemAlloc(statesCount * sizeof(*stm->visitList));
     stm->maxStates = statesCount;
-    stm->maxEdges = edgesCount;
-    if (travel) {
+    stm->maxEdges  = edgesCount;
+    if (travel)
+    {
         stm->path.edges = MemAlloc(statesCount * sizeof(*stm->path.edges));
-        stm->path.open = MemAlloc(edgesCount * statesCount * sizeof(*stm->path.open));
-        stm->path.next = MemAlloc(edgesCount * statesCount * sizeof(*stm->path.next));
-        stm->path.mark = MemAlloc(statesCount * sizeof(*stm->path.mark));
+        stm->path.open  = MemAlloc(edgesCount * statesCount * sizeof(*stm->path.open));
+        stm->path.next  = MemAlloc(edgesCount * statesCount * sizeof(*stm->path.next));
+        stm->path.mark  = MemAlloc(statesCount * sizeof(*stm->path.mark));
     }
     return anode;
 }
@@ -1072,7 +1162,7 @@ static R3D_AnimationStmIndex atree_state_create(r3d_animtree_stm_t* node, R3D_An
     if (nextIdx >= node->maxStates) return -1;
 
     r3d_stmstate_t* state = &node->stateList[nextIdx];
-    *state = (r3d_stmstate_t){
+    *state = (r3d_stmstate_t) {
         .outList = (edgesCount > 0 ? MemAlloc(edgesCount * sizeof(*state->outList)) : NULL),
         .outCount = 0,
         .maxOut = edgesCount,
@@ -1111,7 +1201,8 @@ static R3D_AnimationStmIndex atree_edge_create(r3d_animtree_stm_t* node, R3D_Ani
 
 static void atree_delete(R3D_AnimationTreeNode anode)
 {
-    switch(anode.base->type) {
+    switch(anode.base->type)
+    {
     case R3D_ANIMTREE_ANIM:
     case R3D_ANIMTREE_BLEND2:
     case R3D_ANIMTREE_ADD2:
@@ -1162,13 +1253,15 @@ static void atree_update(R3D_AnimationTree* atree, float elapsedTime,
         success = anode_eval(atree, *atree->rootNode, boneIdx, &out, isRootBone ? &rmInfo : NULL);
         if (!success) goto failure;
 
-        if (isRootBone) {
+        if (isRootBone)
+        {
             if (rootMotion) *rootMotion = rmInfo.motion;
             if (rootDistance) *rootDistance = rmInfo.distance;
             out = r3d_anim_transform_subtr(out, rmInfo.distance);
         }
 
-        if (atree->updateCallback) {
+        if (atree->updateCallback)
+        {
             atree->updateCallback(player, boneIdx, &out, atree->updateUserData);
         }
 
@@ -1191,7 +1284,8 @@ static void atree_travel(r3d_animtree_stm_t* node, R3D_AnimationStmIndex targetI
     if (node->activeIdx == targetIdx) return;
 
     bool found = stm_find_path(node, targetIdx);
-    if (!found) {
+    if (!found)
+    {
         r3d_stmstate_t* state = &node->stateList[targetIdx];
         R3D_AnimationTreeNode anode = node->nodeList[targetIdx];
         state->activeIn = NULL;
@@ -1257,7 +1351,8 @@ void R3D_AddRootAnimationNode(R3D_AnimationTree* tree, R3D_AnimationTreeNode* no
 
 bool R3D_AddAnimationNode(R3D_AnimationTreeNode* parent, R3D_AnimationTreeNode* node, int inputIndex)
 {
-    switch(parent->base->type) {
+    switch(parent->base->type)
+    {
     case R3D_ANIMTREE_ANIM:
     case R3D_ANIMTREE_STM:
     case R3D_ANIMTREE_STM_X:  return false;
@@ -1388,24 +1483,32 @@ R3D_BoneMask R3D_ComputeBoneMask(const R3D_Skeleton* skeleton, const char* boneN
     const int bCount = skeleton->boneCount;
     R3D_BoneMask bMask = {.boneCount = bCount};
 
-    if ((size_t)bCount > sizeof(bMask.mask) * 8) {
+    if ((size_t)bCount > sizeof(bMask.mask) * 8)
+    {
         R3D_TRACELOG(LOG_WARNING, "Failed to compute bone mask: max bone count exceeded (%d)", sizeof(bMask.mask) * 8);
         return (R3D_BoneMask){0};
     }
 
     int maskBits = sizeof(bMask.mask[0]) * 8;
-    for (int i = 0; i < boneNameCount; i++) {
+    for (int i = 0; i < boneNameCount; i++)
+    {
         const char* name = boneNames[i];
+
         bool found = false;
         for (int bIdx = 0; bIdx < bCount; bIdx++)
-            if (!strncmp(name, bones[bIdx].name, sizeof(bones[bIdx].name))) {
+        {
+            if (!strncmp(name, bones[bIdx].name, sizeof(bones[bIdx].name)))
+            {
                 int part = bIdx / maskBits;
                 int bit = bIdx % maskBits;
                 bMask.mask[part] |= 1 << bit;
                 found = true;
                 break;
             }
-        if (!found) {
+        }
+
+        if (!found)
+        {
             R3D_TRACELOG(LOG_WARNING, "Failed to compute bone mask: bone \"%s\" not found", name);
             return (R3D_BoneMask){0};
         }
