@@ -15,7 +15,7 @@ typedef struct PackedScale {
 int main(void)
 {
     // Initialize window
-    InitWindow(800, 450, "[r3d] - Instanced rendering example");
+    InitWindow(1152, 648, "[r3d] - Instanced rendering example");
     SetTargetFPS(60);
 
     // Initialize R3D

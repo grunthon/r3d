@@ -10,7 +10,7 @@
 int main(void)
 {
     // Initialize window
-    InitWindow(800, 450, "[r3d] - DoF example");
+    InitWindow(1152, 648, "[r3d] - DoF example");
     SetTargetFPS(60);
 
     // Initialize R3D with FXAA

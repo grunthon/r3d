@@ -12,7 +12,7 @@ static inline float randf(float min, float max) {
 int main(void)
 {
     // Initialize window
-    InitWindow(800, 450, "[r3d] - Many lights example");
+    InitWindow(1152, 648, "[r3d] - Many lights example");
     SetTargetFPS(60);
 
     // Initialize R3D

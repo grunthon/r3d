@@ -4,7 +4,7 @@
 int main(void)
 {
     // Initialize window
-    InitWindow(800, 450, "[r3d] - Multiview");
+    InitWindow(1152, 648, "[r3d] - Multiview");
     SetTargetFPS(60);
 
     // Initialize R3D

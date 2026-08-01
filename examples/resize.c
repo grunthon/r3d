@@ -7,7 +7,7 @@ static const char* GetUpscaleModeName(R3D_UpscaleMode mode);
 int main(void)
 {
     // Initialize window
-    InitWindow(800, 450, "[r3d] - Resize example");
+    InitWindow(1152, 648, "[r3d] - Resize example");
     SetWindowState(FLAG_WINDOW_RESIZABLE);
     SetTargetFPS(60);
 

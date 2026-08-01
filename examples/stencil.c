@@ -3,7 +3,7 @@
 
 int main(void)
 {
-    InitWindow(800, 450, "[r3d] - Stencil Effects");
+    InitWindow(1152, 648, "[r3d] - Stencil Effects");
     SetTargetFPS(60);
 
     R3D_Init(GetScreenWidth(), GetScreenHeight());

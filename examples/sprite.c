@@ -10,7 +10,7 @@ static void GetTexCoordScaleOffset(Vector2* uvScale, Vector2* uvOffset, int xFra
 int main(void)
 {
     // Initialize window
-    InitWindow(800, 450, "[r3d] - Sprite example");
+    InitWindow(1152, 648, "[r3d] - Sprite example");
     SetTargetFPS(60);
 
     // Initialize R3D

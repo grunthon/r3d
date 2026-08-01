@@ -8,7 +8,7 @@
 int main(void)
 {
     // Initialize window
-    InitWindow(800, 450, "[r3d] - Shader example");
+    InitWindow(1152, 648, "[r3d] - Shader example");
     SetTargetFPS(60);
 
     // Initialize R3D

@@ -15,7 +15,7 @@
 
 int main(void)
 {
-    InitWindow(800, 450, "[r3d] - Kinematics Example");
+    InitWindow(1152, 648, "[r3d] - Kinematics Example");
     SetTargetFPS(60);
 
     R3D_Init(GetScreenWidth(), GetScreenHeight());

@@ -12,7 +12,7 @@ typedef struct {
 int main(void)
 {
     // Initialize window
-    InitWindow(800, 450, "[r3d] - Particles example");
+    InitWindow(1152, 648, "[r3d] - Particles example");
     SetTargetFPS(60);
 
     // Initialize R3D

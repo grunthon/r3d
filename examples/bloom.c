@@ -9,7 +9,7 @@ static void AdjustBloomParam(float* param, int direction, float step, float min,
 int main(void)
 {
     // Initialize window
-    InitWindow(800, 450, "[r3d] - Bloom example");
+    InitWindow(1152, 648, "[r3d] - Bloom example");
     SetTargetFPS(60);
 
     // Initialize R3D

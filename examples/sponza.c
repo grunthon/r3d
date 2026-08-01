@@ -8,7 +8,7 @@
 int main(void)
 {
     // Initialize window
-    InitWindow(800, 450, "[r3d] - Sponza example");
+    InitWindow(1152, 648, "[r3d] - Sponza example");
     SetTargetFPS(60);
 
     // Initialize R3D
