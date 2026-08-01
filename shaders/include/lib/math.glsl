@@ -18,6 +18,12 @@
 
 /* === Functions === */
 
+float M_Pow5(float x)
+{
+	float x2 = x * x;
+	return x2 * x2 * x;
+}
+
 vec3 M_Rotate3D(vec3 v, vec4 q)
 {
     vec3 t = 2.0 * cross(q.xyz, v);

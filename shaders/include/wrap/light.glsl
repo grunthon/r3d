@@ -11,28 +11,18 @@
 
 /* === Lighting === */
 
-vec3 L_Diffuse(float LdotH, float NdotV, float NdotL, float roughness)
+vec3 L_Diffuse(float roughness, float NoV, float NoL, float LoH)
 {
-    float FD90_minus_1 = 2.0 * LdotH * LdotH * roughness - 0.5;
-    float FdV = 1.0 + FD90_minus_1 * PBR_SchlickFresnel(NdotV);
-    float FdL = 1.0 + FD90_minus_1 * PBR_SchlickFresnel(NdotL);
-
-    return vec3(M_INV_PI * (FdV * FdL * NdotL)); // Diffuse BRDF (Burley)
+    return vec3(PBR_Fd_Burley(roughness, NoV, NoL, LoH) * NoL);
 }
 
-vec3 L_Specular(vec3 F0, float LdotH, float cNdotH, float NdotV, float NdotL, float roughness)
+vec3 L_Specular(vec3 F0, float roughness, float NoV, float NoL, float NoH, float LoH)
 {
-    roughness = max(roughness, 0.02); // 'roughness > 0.01' to avoid FP16 overflow after GGX distribution
+	float D = PBR_D_GGX(NoH, roughness);
+	float V = PBR_V_SmithGGXCorrelated(NoV, NoL, roughness);
+	vec3  F = PBR_F_Schlick(F0, LoH);
 
-    float alphaGGX = roughness * roughness;
-    float D = PBR_DistributionGGX(cNdotH, alphaGGX);
-    float G = PBR_GeometryGGX(NdotL, NdotV, alphaGGX);
-
-    float cLdotH5 = PBR_SchlickFresnel(LdotH);
-    float F90 = clamp(50.0 * F0.g, 0.0, 1.0);
-    vec3 F = F0 + (F90 - F0) * cLdotH5;
-
-    return NdotL * D * F * G; // Specular BRDF (Schlick GGX)
+	return (D * V) * F * NoL;
 }
 
 /* === Shadows === */
@@ -57,11 +47,11 @@ mat2 L_ShadowDebandingMatrix(vec2 fragCoord)
     return mat2(vec2(cr, -sr), vec2(sr, cr));
 }
 
-float L_SampleShadowDir(Light light, vec3 Pws, float Zvs, float NdotL, mat2 diskRot)
+float L_SampleShadowDir(Light light, vec3 Pws, float Zvs, float NoL, mat2 diskRot)
 {
     vec4 Pls = light.viewProj * vec4(Pws, 1.0);
     vec3 projCoords = Pls.xyz / Pls.w * 0.5 + 0.5;
-    float bias = light.shadowDepthBias + light.shadowSlopeBias * (1.0 - NdotL);
+    float bias = light.shadowDepthBias + light.shadowSlopeBias * (1.0 - NoL);
     float compareDepth = projCoords.z - bias;
 
     float shadow = 0.0;
@@ -78,11 +68,11 @@ float L_SampleShadowDir(Light light, vec3 Pws, float Zvs, float NdotL, mat2 disk
     return mix(1.0, shadow, edgeFade * distFade * light.shadowOpacity);
 }
 
-float L_SampleShadowSpot(Light light, vec3 Pws, float NdotL, mat2 diskRot)
+float L_SampleShadowSpot(Light light, vec3 Pws, float NoL, mat2 diskRot)
 {
     vec4 Pls = light.viewProj * vec4(Pws, 1.0);
     vec3 projCoords = Pls.xyz / Pls.w * 0.5 + 0.5;
-    float bias = light.shadowDepthBias + light.shadowSlopeBias * (1.0 - NdotL);
+    float bias = light.shadowDepthBias + light.shadowSlopeBias * (1.0 - NoL);
     float compareDepth = projCoords.z - bias;
 
     float shadow = 0.0;
@@ -95,12 +85,12 @@ float L_SampleShadowSpot(Light light, vec3 Pws, float NdotL, mat2 diskRot)
     return mix(1.0, shadow, light.shadowOpacity);
 }
 
-float L_SampleShadowOmni(Light light, vec3 Pws, float NdotL, mat2 diskRot)
+float L_SampleShadowOmni(Light light, vec3 Pws, float NoL, mat2 diskRot)
 {
     vec3 lightToFrag = Pws - light.position;
     float currentDepth = length(lightToFrag);
 
-    float bias = light.shadowDepthBias + light.shadowSlopeBias * (1.0 - NdotL);
+    float bias = light.shadowDepthBias + light.shadowSlopeBias * (1.0 - NoL);
     float compareDepth = (currentDepth - bias) / light.far;
 
     mat3 OBN = M_OrthonormalBasis(lightToFrag / currentDepth);

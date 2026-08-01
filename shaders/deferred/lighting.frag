@@ -60,9 +60,9 @@ void main()
     float Ldist = length(Ldelta);
 
     vec3 L = (uLight.type == LIGHT_DIR) ? -uLight.direction : Ldelta / max(Ldist, 1e-4);
-    float NdotL = dot(N, L);
+    float NoL = dot(N, L);
 
-    if (NdotL <= 0.0) {
+    if (NoL <= 0.0) {
         FragDiff = vec4(0.0);
         FragSpec = vec4(0.0);
         return;
@@ -76,14 +76,14 @@ void main()
     /* Compute view direction and the dot product of the normal and view direction */
 
     vec3 V = normalize(uView.position - P);
-    float NdotV = max(dot(N, V), 1e-4);
+    float NoV = max(dot(N, V), 1e-4);
 
     /* Compute the halfway vector between the view and light directions */
 
     vec3 H = normalize(V + L);
 
-    float LdotH = max(dot(L, H), 0.0);
-    float NdotH = max(dot(N, H), 0.0);
+    float LoH = max(dot(L, H), 0.0);
+    float NoH = max(dot(N, H), 0.0);
 
     /* Compute light color energy */
 
@@ -91,13 +91,13 @@ void main()
 
     /* Compute diffuse lighting */
 
-    vec3 diff = L_Diffuse(LdotH, NdotV, NdotL, orm.g);
+    vec3 diff = L_Diffuse(orm.g, NoV, NoL, LoH);
     diff *= albedo * lightColE * (1.0 - orm.b);
 
     /* Compute specular lighting */
 
-    vec3 F0 = PBR_ComputeF0(orm.b, orm.w, albedo);
-    vec3 spec = L_Specular(F0, LdotH, NdotH, NdotV, NdotL, orm.g);
+    vec3 F0 = PBR_F0(orm.b, orm.w, albedo);
+    vec3 spec = L_Specular(F0, orm.g, NoV, NoL, NoH, LoH);
     spec *= lightColE * uLight.specular;
 
     /* Compute shadow factor */
@@ -118,9 +118,9 @@ void main()
     if (uLight.shadowLayer >= 0 && uLight.shadowOpacity != 0.0 && shadow > 1e-4) {
         mat2 diskRot = L_ShadowDebandingMatrix(gl_FragCoord.xy);
         switch (uLight.type) {
-        case LIGHT_DIR:  shadow *= L_SampleShadowDir(uLight, P, depth, NdotL, diskRot); break;
-        case LIGHT_SPOT: shadow *= L_SampleShadowSpot(uLight, P, NdotL, diskRot); break;
-        case LIGHT_OMNI: shadow *= L_SampleShadowOmni(uLight, P, NdotL, diskRot); break;
+        case LIGHT_DIR:  shadow *= L_SampleShadowDir(uLight, P, depth, NoL, diskRot); break;
+        case LIGHT_SPOT: shadow *= L_SampleShadowSpot(uLight, P, NoL, diskRot); break;
+        case LIGHT_OMNI: shadow *= L_SampleShadowOmni(uLight, P, NoL, diskRot); break;
         }
     }
 

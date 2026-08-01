@@ -30,7 +30,7 @@ void E_SampleProbe(inout vec3 irr, inout vec3 rad, inout float wIrr, inout float
     }
 }
 
-void E_ComputeAmbientAndProbes(inout vec3 diffuse, inout vec3 specular, vec3 kD, vec3 orm, vec3 F0, vec3 P, vec3 N, vec3 V, float NdotV)
+void E_ComputeAmbientAndProbes(inout vec3 diffuse, inout vec3 specular, vec3 kD, vec3 orm, vec3 F0, vec3 P, vec3 N, vec3 V, float NoV)
 {
     float occlusion = orm.x;
     float roughness = orm.y;
@@ -71,16 +71,16 @@ void E_ComputeAmbientAndProbes(inout vec3 diffuse, inout vec3 specular, vec3 kD,
     }
 
     irradiance *= occlusion * uAmbient.energy;
-    radiance *= IBL_GetSpecularOcclusion(NdotV, occlusion, roughness);
+    radiance *= IBL_GetSpecularOcclusion(NoV, occlusion, roughness);
 
-    vec2 brdf = texture(uBrdfLutTex, vec2(NdotV, roughness)).xy;
-    IBL_MultiScattering(irradiance, radiance, kD, F0, brdf, NdotV, roughness);
+    vec2 brdf = texture(uBrdfLutTex, vec2(NoV, roughness)).xy;
+    IBL_MultiScattering(irradiance, radiance, kD, F0, brdf, NoV, roughness);
 
     diffuse += irradiance;
     specular += radiance;
 }
 
-void E_ComputeAmbientOnly(inout vec3 diffuse, inout vec3 specular, vec3 kD, vec3 orm, vec3 F0, vec3 P, vec3 N, vec3 V, float NdotV)
+void E_ComputeAmbientOnly(inout vec3 diffuse, inout vec3 specular, vec3 kD, vec3 orm, vec3 F0, vec3 P, vec3 N, vec3 V, float NoV)
 {
     float occlusion = orm.x;
     float roughness = orm.y;
@@ -94,11 +94,11 @@ void E_ComputeAmbientOnly(inout vec3 diffuse, inout vec3 specular, vec3 kD, vec3
     vec3 radiance = vec3(0.0);
     if (uAmbient.prefilter >= 0) {
         radiance = IBL_SamplePrefilter(uPrefilterTex, uAmbient.prefilter, V, N, uAmbient.rotation, roughness, uNumPrefilterLevels).rgb;
-        radiance *= IBL_GetSpecularOcclusion(NdotV, occlusion, roughness);
+        radiance *= IBL_GetSpecularOcclusion(NoV, occlusion, roughness);
     }
 
-    vec2 brdf = texture(uBrdfLutTex, vec2(NdotV, roughness)).xy;
-    IBL_MultiScattering(irradiance, radiance, kD, F0, brdf, NdotV, roughness);
+    vec2 brdf = texture(uBrdfLutTex, vec2(NoV, roughness)).xy;
+    IBL_MultiScattering(irradiance, radiance, kD, F0, brdf, NoV, roughness);
 
     diffuse += irradiance;
     specular += radiance;
