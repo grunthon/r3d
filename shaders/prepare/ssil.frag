@@ -123,17 +123,5 @@ void main()
     float ao = max(0.0, 1.0 - aoSum * uSsil.aoIntensity * (2.0 / float(uSsil.sampleCount)) * radiusScale);
     vec3 gi = giSum * (4.0 / float(uSsil.sampleCount)) * radiusScale;
 
-    // 1-pixel bilateral filter using derivatives (almost free)
-    if (abs(dFdx(depth)) < 0.2) {
-        float dx = float(pixelCoord.x & 1) - 0.5;
-        ao -= dFdx(ao) * dx;
-        gi -= dFdx(gi) * dx;
-    }
-    if (abs(dFdy(depth)) < 0.2) {
-        float dy = float(pixelCoord.y & 1) - 0.5;
-        ao -= dFdy(ao) * dy;
-        gi -= dFdy(gi) * dy;
-    }
-
     FragColor = vec4(gi, ao);
 }
