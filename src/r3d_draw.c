@@ -162,7 +162,8 @@ void R3D_End(void)
         &hasVisibleShadows
     );
 
-    if (hasVisibleShadows) {
+    if (hasVisibleShadows)
+    {
         pass_scene_shadow();
         r3d_shader_bind_sampler(R3D_SHADER_SAMPLER_SHADOW_DIR, r3d_light_shadow_get(R3D_LIGHT_DIR));
         r3d_shader_bind_sampler(R3D_SHADER_SAMPLER_SHADOW_SPOT, r3d_light_shadow_get(R3D_LIGHT_SPOT));
@@ -174,7 +175,8 @@ void R3D_End(void)
     bool hasVisibleProbes = false;
     r3d_env_probe_update_and_cull(&R3D.viewState.frustum, &hasVisibleProbes);
 
-    if (hasVisibleProbes || R3D.environment.ambient.map.flags != 0) {
+    if (hasVisibleProbes || R3D.environment.ambient.map.flags != 0)
+    {
         r3d_shader_bind_sampler(R3D_SHADER_SAMPLER_IBL_IRRADIANCE, r3d_env_irradiance_get());
         r3d_shader_bind_sampler(R3D_SHADER_SAMPLER_IBL_PREFILTER, r3d_env_prefilter_get());
         r3d_shader_bind_sampler(R3D_SHADER_SAMPLER_IBL_BRDF_LUT, r3d_texture_get(R3D_TEXTURE_BRDF_LUT));
@@ -196,30 +198,32 @@ void R3D_End(void)
     /* --- Deferred path for opaques and decals --- */
 
     r3d_target_t sceneTarget = R3D_TARGET_SCENE_0;
-    r3d_target_t ssaoSource = R3D_TARGET_INVALID;
-    r3d_target_t ssilSource = R3D_TARGET_INVALID;
-    r3d_target_t ssgiSource = R3D_TARGET_INVALID;
-    r3d_target_t ssrSource = R3D_TARGET_INVALID;
+    r3d_target_t ssaoSource  = R3D_TARGET_INVALID;
+    r3d_target_t ssilSource  = R3D_TARGET_INVALID;
+    r3d_target_t ssgiSource  = R3D_TARGET_INVALID;
+    r3d_target_t ssrSource   = R3D_TARGET_INVALID;
 
     r3d_driver_set_depth_mask(GL_TRUE);
     r3d_driver_set_stencil_mask(0xFF);
 
     R3D_TARGET_CLEAR(true, R3D_TARGET_ALL_DEFERRED);
 
-    if (r3d_render_has_deferred() || r3d_render_has_prepass()) {
+    if (r3d_render_has_deferred() || r3d_render_has_prepass())
+    {
         if (r3d_render_has_deferred()) pass_scene_geometry();
-        if (r3d_render_has_prepass()) pass_scene_prepass();
-        if (r3d_render_has_decal()) pass_scene_decals();
-        if (r3d_light_has_visible()) pass_deferred_lights();
+        if (r3d_render_has_prepass())  pass_scene_prepass();
+        if (r3d_render_has_decal())    pass_scene_decals();
+        if (r3d_light_has_visible())   pass_deferred_lights();
 
         bool ssao = R3D.environment.ssao.enabled;
         bool ssil = R3D.environment.ssil.enabled;
         bool ssgi = R3D.environment.ssgi.enabled;
-        bool ssr = R3D.environment.ssr.enabled;
+        bool ssr  = R3D.environment.ssr.enabled;
         bool vfog = R3D.environment.volumetricFog.enabled;
-        bool dof = R3D.environment.dof.mode;
+        bool dof  = R3D.environment.dof.mode;
 
-        if (ssao || ssil || ssgi || ssr || vfog || dof) {
+        if (ssao || ssil || ssgi || ssr || vfog || dof)
+        {
             pass_prepare_depth_pyramid();
         }
 
@@ -231,9 +235,11 @@ void R3D_End(void)
         if (ssr) ssrSource = pass_prepare_ssr();
         pass_deferred_compose(sceneTarget, ssrSource);
     }
-    else {
+    else
+    {
         int numLevels = r3d_target_get_num_levels(R3D_TARGET_DEPTH);
-        for (int i = 1; i < numLevels; i++) {
+        for (int i = 1; i < numLevels; i++)
+        {
             R3D_TARGET_CLEAR_LEVEL(i, R3D_TARGET_DEPTH);
         }
     }
@@ -242,15 +248,18 @@ void R3D_End(void)
 
     pass_scene_background(sceneTarget);
 
-    if (R3D.environment.fog.mode != R3D_FOG_DISABLED) {
+    if (R3D.environment.fog.mode != R3D_FOG_DISABLED)
+    {
         pass_deferred_fog(sceneTarget);
     }
 
-    if (R3D.environment.volumetricFog.enabled) {
+    if (R3D.environment.volumetricFog.enabled)
+    {
         pass_deferred_volumetric_fog(sceneTarget);
     }
 
-    if (r3d_render_has_forward() || r3d_render_has_prepass()) {
+    if (r3d_render_has_forward() || r3d_render_has_prepass())
+    {
         pass_scene_forward(sceneTarget);
     }
 
@@ -259,15 +268,18 @@ void R3D_End(void)
     sceneTarget = pass_post_setup(sceneTarget);
     sceneTarget = pass_post_screen(R3D_SCREEN_SHADER_STAGE_SCENE, sceneTarget);
 
-    if (R3D.environment.dof.mode != R3D_DOF_DISABLED) {
+    if (R3D.environment.dof.mode != R3D_DOF_DISABLED)
+    {
         sceneTarget = pass_post_dof(sceneTarget);
     }
 
-    if (R3D.environment.bloom.mode != R3D_BLOOM_DISABLED) {
+    if (R3D.environment.bloom.mode != R3D_BLOOM_DISABLED)
+    {
         sceneTarget = pass_post_bloom(sceneTarget);
     }
 
-    if (R3D.environment.autoExposure.enabled) {
+    if (R3D.environment.autoExposure.enabled)
+    {
         sceneTarget = pass_post_auto_exposure(sceneTarget);
     }
 
@@ -276,7 +288,8 @@ void R3D_End(void)
 
     sceneTarget = pass_post_screen(R3D_SCREEN_SHADER_STAGE_OUTPUT, sceneTarget);
 
-    switch (R3D.aaMode) {
+    switch (R3D.aaMode)
+    {
     case R3D_ANTI_ALIASING_MODE_FXAA:
         sceneTarget = pass_post_fxaa(sceneTarget);
         break;
@@ -289,19 +302,20 @@ void R3D_End(void)
 
     sceneTarget = pass_post_screen(R3D_SCREEN_SHADER_STAGE_FINAL, sceneTarget);
 
-    switch (R3D.outputMode) {
-    case R3D_OUTPUT_SCENE: blit_to_screen(r3d_target_swap_scene(sceneTarget)); break;
-    case R3D_OUTPUT_ALBEDO: visualize_to_screen(R3D_TARGET_ALBEDO); break;
-    case R3D_OUTPUT_NORMAL: visualize_to_screen(R3D_TARGET_NORMAL); break;
-    case R3D_OUTPUT_ORM: visualize_to_screen(R3D_TARGET_ORM); break;
-    case R3D_OUTPUT_DIFFUSE: visualize_to_screen(R3D_TARGET_DIFFUSE); break;
+    switch (R3D.outputMode)
+    {
+    case R3D_OUTPUT_SCENE:    blit_to_screen(r3d_target_swap_scene(sceneTarget)); break;
+    case R3D_OUTPUT_ALBEDO:   visualize_to_screen(R3D_TARGET_ALBEDO); break;
+    case R3D_OUTPUT_NORMAL:   visualize_to_screen(R3D_TARGET_NORMAL); break;
+    case R3D_OUTPUT_ORM:      visualize_to_screen(R3D_TARGET_ORM); break;
+    case R3D_OUTPUT_DIFFUSE:  visualize_to_screen(R3D_TARGET_DIFFUSE); break;
     case R3D_OUTPUT_SPECULAR: visualize_to_screen(R3D_TARGET_SPECULAR); break;
-    case R3D_OUTPUT_SSAO: visualize_to_screen(ssaoSource); break;
-    case R3D_OUTPUT_SSIL: visualize_to_screen(ssilSource); break;
-    case R3D_OUTPUT_SSGI: visualize_to_screen(ssgiSource); break;
-    case R3D_OUTPUT_SSR: visualize_to_screen(ssrSource); break;
-    case R3D_OUTPUT_BLOOM: visualize_to_screen(R3D_TARGET_BLOOM); break;
-    case R3D_OUTPUT_DOF: visualize_to_screen(R3D_TARGET_DOF_COC); break;
+    case R3D_OUTPUT_SSAO:     visualize_to_screen(ssaoSource); break;
+    case R3D_OUTPUT_SSIL:     visualize_to_screen(ssilSource); break;
+    case R3D_OUTPUT_SSGI:     visualize_to_screen(ssgiSource); break;
+    case R3D_OUTPUT_SSR:      visualize_to_screen(ssrSource); break;
+    case R3D_OUTPUT_BLOOM:    visualize_to_screen(R3D_TARGET_BLOOM); break;
+    case R3D_OUTPUT_DOF:      visualize_to_screen(R3D_TARGET_DOF_COC); break;
     }
 
     /* --- Reset internal stuff and states changed by R3D --- */
@@ -312,14 +326,16 @@ void R3D_End(void)
 
 void R3D_BeginCluster(BoundingBox aabb)
 {
-    if (!r3d_render_cluster_begin(aabb)) {
+    if (!r3d_render_cluster_begin(aabb))
+    {
         R3D_TRACELOG(LOG_WARNING, "Failed to begin cluster");
     }
 }
 
 void R3D_EndCluster(void)
 {
-    if (!r3d_render_cluster_end()) {
+    if (!r3d_render_cluster_end())
+    {
         R3D_TRACELOG(LOG_WARNING, "Failed to end cluster");
     }
 }
@@ -606,16 +622,18 @@ static inline bool view_has_target(RenderTexture target)
 
 static void view_get_target_size(RenderTexture target, int* width, int* height)
 {
-    if (view_has_target(target)) {
-        *width = target.texture.width;
+    if (view_has_target(target))
+    {
+        *width  = target.texture.width;
         *height = target.texture.height;
     }
-    else {
-        *width = GetRenderWidth();
+    else
+    {
+        *width  = GetRenderWidth();
         *height = GetRenderHeight();
     }
 
-    if (*width <= 0) *width = 1;
+    if (*width  <= 0) *width  = 1;
     if (*height <= 0) *height = 1;
 }
 
@@ -626,7 +644,8 @@ static Rectangle view_resolve_viewport(R3D_View view)
 
     view_get_target_size(view.target, &targetW, &targetH);
 
-    if (view.viewport.width <= 0.0f || view.viewport.height <= 0.0f) {
+    if (view.viewport.width <= 0.0f || view.viewport.height <= 0.0f)
+    {
         return (Rectangle) {
             0.0f,
             0.0f,
@@ -640,7 +659,8 @@ static Rectangle view_resolve_viewport(R3D_View view)
 
 static Rectangle view_fit_aspect(Rectangle rect, double aspect)
 {
-    if (rect.width <= 0.0f || rect.height <= 0.0f || aspect <= 0.0) {
+    if (rect.width <= 0.0f || rect.height <= 0.0f || aspect <= 0.0)
+    {
         return rect;
     }
 
@@ -664,8 +684,10 @@ static Rectangle view_resolve_present_rect(R3D_View view)
 {
     Rectangle viewport = view_resolve_viewport(view);
 
-    switch (R3D.aspectMode) {
-    case R3D_ASPECT_KEEP: {
+    switch (R3D.aspectMode)
+    {
+    case R3D_ASPECT_KEEP:
+    {
         int srcW = 1;
         int srcH = 1;
 
@@ -689,7 +711,8 @@ void update_view_state(R3D_View view)
     Rectangle viewport = view_resolve_present_rect(view);
 
     double aspect = 1.0;
-    if (viewport.height > 0.0f) {
+    if (viewport.height > 0.0f)
+    {
         aspect = (double)viewport.width / (double)viewport.height;
     }
 
@@ -718,8 +741,10 @@ void upload_light_array_block_for_mesh(const r3d_render_call_t* call, bool shado
     {
         // Check if the geometry "touches" the light area
         // It's not the most accurate possible but hey
-        if (light->type != R3D_LIGHT_DIR) {
-            if (!CheckCollisionBoxes(light->aabb, call->mesh.instance.aabb)) {
+        if (light->type != R3D_LIGHT_DIR)
+        {
+            if (!CheckCollisionBoxes(light->aabb, call->mesh.instance.aabb))
+            {
                 continue;
             }
         }
@@ -745,7 +770,8 @@ void upload_light_array_block_for_mesh(const r3d_render_call_t* call, bool shado
         data->shadowLayer = shadow ? light->shadowLayer : -1;
         data->type = light->type;
 
-        if (++lights.uNumLights == R3D_HINT(R3D_HINT_FORWARD_LIGHT_PER_MESH)) {
+        if (++lights.uNumLights == R3D_HINT(R3D_HINT_FORWARD_LIGHT_PER_MESH))
+        {
             break;
         }
     }
@@ -793,7 +819,8 @@ void upload_env_block(void)
     r3d_shader_block_env_t env = {0};
 
     int iProbe = 0;
-    R3D_ENV_PROBE_FOR_EACH_VISIBLE(probe) {
+    R3D_ENV_PROBE_FOR_EACH_VISIBLE(probe)
+    {
         env.uProbes[iProbe] = (struct r3d_shader_block_env_probe) {
             .position = probe->position,
             .falloff = probe->falloff,
@@ -801,7 +828,8 @@ void upload_env_block(void)
             .irradiance = probe->irradiance,
             .prefilter = probe->prefilter
         };
-        if (++iProbe >= R3D_HINT(R3D_HINT_PROBE_MAX_ACTIVE)) {
+        if (++iProbe >= R3D_HINT(R3D_HINT_PROBE_MAX_ACTIVE))
+        {
             break;
         }
     }
@@ -824,96 +852,104 @@ void upload_fx_block(void)
 
     r3d_shader_block_fx_t block = {0};
 
-    if (env->ssao.enabled) {
+    if (env->ssao.enabled)
+    {
         int wSsao = 0, hSsao = 0;
         r3d_target_get_resolution(&wSsao, &hSsao, R3D_TARGET_SSAO_0, 0);
         block.uSsao.sampleCount = env->ssao.sampleCount;
-        block.uSsao.intensity = env->ssao.intensity;
-        block.uSsao.power = env->ssao.power;
+        block.uSsao.intensity   = env->ssao.intensity;
+        block.uSsao.power       = env->ssao.power;
         block.uSsao.ssMaxRadius = env->ssao.maxRadius * (float)R3D_MIN(wSsao, hSsao);
-        block.uSsao.radius = env->ssao.radius;
-        block.uSsao.bias = env->ssao.bias;
-        block.uSsao.enabled = env->ssao.enabled;
+        block.uSsao.radius      = env->ssao.radius;
+        block.uSsao.bias        = env->ssao.bias;
+        block.uSsao.enabled     = env->ssao.enabled;
     }
 
-    if (env->ssil.enabled) {
+    if (env->ssil.enabled)
+    {
         int wSsil = 0, hSsil = 0;
         r3d_target_get_resolution(&wSsil, &hSsil, R3D_TARGET_SSAO_1, 0);
         block.uSsil.sampleCount = env->ssil.sampleCount;
         block.uSsil.giIntensity = env->ssil.giIntensity;
         block.uSsil.aoIntensity = env->ssil.aoIntensity;
-        block.uSsil.aoPower = env->ssil.aoPower;
+        block.uSsil.aoPower     = env->ssil.aoPower;
         block.uSsil.ssMaxRadius = env->ssil.maxRadius * (float)R3D_MIN(wSsil, hSsil);
-        block.uSsil.radius = env->ssil.radius;
-        block.uSsil.bias = env->ssil.bias;
-        block.uSsil.enabled = env->ssil.enabled;
+        block.uSsil.radius      = env->ssil.radius;
+        block.uSsil.bias        = env->ssil.bias;
+        block.uSsil.enabled     = env->ssil.enabled;
     }
 
-    if (env->ssgi.enabled) {
-        block.uSsgi.sliceCount = env->ssgi.sliceCount;
-        block.uSsgi.edgeFade = env->ssgi.edgeFade;
+    if (env->ssgi.enabled)
+    {
+        block.uSsgi.sliceCount      = env->ssgi.sliceCount;
+        block.uSsgi.edgeFade        = env->ssgi.edgeFade;
         block.uSsgi.distanceFalloff = env->ssgi.distanceFalloff;
         block.uSsgi.normalRejection = env->ssgi.normalRejection;
-        block.uSsgi.intensity = env->ssgi.intensity;
-        block.uSsgi.enabled = env->ssgi.enabled;
+        block.uSsgi.intensity       = env->ssgi.intensity;
+        block.uSsgi.enabled         = env->ssgi.enabled;
     }
 
-    if (env->ssr.enabled) {
+    if (env->ssr.enabled)
+    {
         block.uSsr.maxRaySteps = env->ssr.maxRaySteps;
         block.uSsr.binarySteps = env->ssr.binarySteps;
-        block.uSsr.stepSize = env->ssr.stepSize;
-        block.uSsr.thickness = env->ssr.thickness;
+        block.uSsr.stepSize    = env->ssr.stepSize;
+        block.uSsr.thickness   = env->ssr.thickness;
         block.uSsr.maxDistance = env->ssr.maxDistance;
-        block.uSsr.edgeFade = env->ssr.edgeFade;
-        block.uSsr.enabled = env->ssr.enabled;
+        block.uSsr.edgeFade    = env->ssr.edgeFade;
+        block.uSsr.enabled     = env->ssr.enabled;
     }
 
-    if (env->fog.mode != R3D_FOG_DISABLED) {
-        block.uFog.color = r3d_color_to_linear_vec4(env->fog.color, R3D.colorSpace);
-        block.uFog.start = env->fog.start;
-        block.uFog.end = env->fog.end;
-        block.uFog.density = env->fog.density;
+    if (env->fog.mode != R3D_FOG_DISABLED)
+    {
+        block.uFog.color     = r3d_color_to_linear_vec4(env->fog.color, R3D.colorSpace);
+        block.uFog.start     = env->fog.start;
+        block.uFog.end       = env->fog.end;
+        block.uFog.density   = env->fog.density;
         block.uFog.skyAffect = env->fog.skyAffect;
-        block.uFog.mode = env->fog.mode;
+        block.uFog.mode      = env->fog.mode;
     }
 
-    if (env->volumetricFog.enabled) {
-        block.uVFog.scatteringColor = r3d_color_to_linear_vec4(env->volumetricFog.scatteringColor, R3D.colorSpace);
-        block.uVFog.emissionColor = r3d_color_to_linear_vec4(env->volumetricFog.emissionColor, R3D.colorSpace);
+    if (env->volumetricFog.enabled)
+    {
+        block.uVFog.scatteringColor   = r3d_color_to_linear_vec4(env->volumetricFog.scatteringColor, R3D.colorSpace);
+        block.uVFog.emissionColor     = r3d_color_to_linear_vec4(env->volumetricFog.emissionColor, R3D.colorSpace);
         block.uVFog.scatteringDensity = env->volumetricFog.scatteringDensity;
-        block.uVFog.absortionDensity = env->volumetricFog.absortionDensity;
-        block.uVFog.anisotropy = env->volumetricFog.anisotropy;
-        block.uVFog.emissionEnergy = env->volumetricFog.emissionEnergy;
-        block.uVFog.skyAffect = env->volumetricFog.skyAffect;
-        block.uVFog.length = env->volumetricFog.length;
-        block.uVFog.stepSize = env->volumetricFog.stepSize;
-        block.uVFog.enabled = env->volumetricFog.enabled;
+        block.uVFog.absortionDensity  = env->volumetricFog.absortionDensity;
+        block.uVFog.anisotropy        = env->volumetricFog.anisotropy;
+        block.uVFog.emissionEnergy    = env->volumetricFog.emissionEnergy;
+        block.uVFog.skyAffect         = env->volumetricFog.skyAffect;
+        block.uVFog.length            = env->volumetricFog.length;
+        block.uVFog.stepSize          = env->volumetricFog.stepSize;
+        block.uVFog.enabled           = env->volumetricFog.enabled;
     }
 
-    if (env->dof.mode != R3D_DOF_DISABLED) {
-        block.uDof.focusPoint = env->dof.focusPoint;
-        block.uDof.focusScale = env->dof.focusScale;
-        block.uDof.nearScale = env->dof.nearScale;
+    if (env->dof.mode != R3D_DOF_DISABLED)
+    {
+        block.uDof.focusPoint  = env->dof.focusPoint;
+        block.uDof.focusScale  = env->dof.focusScale;
+        block.uDof.nearScale   = env->dof.nearScale;
         block.uDof.maxBlurSize = env->dof.maxBlurSize * 0.5f;
-        block.uDof.mode = env->dof.mode;
+        block.uDof.mode        = env->dof.mode;
     }
 
-    if (env->bloom.mode != R3D_BLOOM_DISABLED) {
+    if (env->bloom.mode != R3D_BLOOM_DISABLED)
+    {
         float knee = env->bloom.threshold * env->bloom.softThreshold;
         block.uBloom.prefilter.x = env->bloom.threshold;
         block.uBloom.prefilter.y = env->bloom.threshold - knee;
         block.uBloom.prefilter.z = 2.0f * knee;
         block.uBloom.prefilter.w = 0.25f / (knee + 0.00001f);
-        block.uBloom.intensity = env->bloom.intensity;
-        block.uBloom.mode = env->bloom.mode;
+        block.uBloom.intensity   = env->bloom.intensity;
+        block.uBloom.mode        = env->bloom.mode;
     }
 
-    block.uTonemap.mode = env->tonemap.mode;
+    block.uTonemap.mode     = env->tonemap.mode;
     block.uTonemap.exposure = env->tonemap.exposure;
-    block.uTonemap.white = env->tonemap.white;
+    block.uTonemap.white    = env->tonemap.white;
 
     block.uBcs.brightness = env->color.brightness;
-    block.uBcs.contrast = env->color.contrast;
+    block.uBcs.contrast   = env->color.contrast;
     block.uBcs.saturation = env->color.saturation;
 
     r3d_shader_set_uniform_block(R3D_SHADER_BLOCK_FX, &block, false);
@@ -939,18 +975,21 @@ void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, r3d_lig
 
     /* --- Send skinning related data --- */
 
-    if (group->skinTexture > 0) {
+    if (group->skinTexture > 0)
+    {
         R3D_SHADER_BIND_SAMPLER_SELECT(scene.depth, shader, uBoneMatricesTex, group->skinTexture);
         R3D_SHADER_SET_INT_SELECT(scene.depth, shader, uSkinning, true);
     }
-    else {
+    else
+    {
         R3D_SHADER_SET_INT_SELECT(scene.depth, shader, uSkinning, false);
     }
 
     /* --- Send billboard related data --- */
 
     R3D_SHADER_SET_INT_SELECT(scene.depth, shader, uBillboard, material->billboardMode);
-    if (material->billboardMode != R3D_BILLBOARD_DISABLED) {
+    if (material->billboardMode != R3D_BILLBOARD_DISABLED)
+    {
         R3D_SHADER_SET_MAT4_SELECT(scene.depth, shader, uMatInvView, R3D.viewState.invView);
     }
 
@@ -964,19 +1003,23 @@ void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, r3d_lig
     R3D_SHADER_BIND_SAMPLER_SELECT(scene.depth, shader, uAlbedoMap, R3D_TEXTURE_SELECT(material->albedo.texture.id, WHITE));
     R3D_SHADER_SET_COL4_SELECT(scene.depth, shader, uAlbedoColor, R3D.colorSpace, material->albedo.color);
 
-    if (material->transparencyMode == R3D_TRANSPARENCY_PREPASS) {
+    if (material->transparencyMode == R3D_TRANSPARENCY_PREPASS)
+    {
         R3D_SHADER_SET_FLOAT_SELECT(scene.depth, shader, uAlphaCutoff, (light != NULL) ? 0.1f : 0.99f);
     }
-    else {
+    else
+    {
         R3D_SHADER_SET_FLOAT_SELECT(scene.depth, shader, uAlphaCutoff, material->alphaCutoff);
     }
 
     /* --- Applying material parameters that are independent of shaders --- */
 
-    if (light != NULL) {
+    if (light != NULL)
+    {
         r3d_driver_set_shadow_cast_mode(mesh->shadowCastMode, material->cullMode);
     }
-    else {
+    else
+    {
         r3d_driver_set_depth_state(material->depth);
         r3d_driver_set_stencil_state(material->stencil);
         r3d_driver_set_cull_mode(material->cullMode);
@@ -984,11 +1027,13 @@ void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, r3d_lig
 
     /* --- Rendering the object corresponding to the draw call --- */
 
-    if (r3d_render_has_instances(group)) {
+    if (r3d_render_has_instances(group))
+    {
         R3D_SHADER_SET_INT_SELECT(scene.depth, shader, uInstancing, true);
         r3d_render_draw_instanced(call);
     }
-    else {
+    else
+    {
         R3D_SHADER_SET_INT_SELECT(scene.depth, shader, uInstancing, false);
         r3d_render_draw(call);
     }
@@ -1009,7 +1054,8 @@ void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, r3
 
     /* --- Set shadow related data --- */
 
-    if (light != NULL) {
+    if (light != NULL)
+    {
         R3D_SHADER_SET_FLOAT_SELECT(scene.depthCube, shader, uFar, light->far);
         R3D_SHADER_SET_VEC3_SELECT(scene.depthCube, shader, uViewPosition, light->position);
     }
@@ -1021,18 +1067,21 @@ void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, r3
 
     /* --- Send skinning related data --- */
 
-    if (group->skinTexture > 0) {
+    if (group->skinTexture > 0)
+    {
         R3D_SHADER_BIND_SAMPLER_SELECT(scene.depthCube, shader, uBoneMatricesTex, group->skinTexture);
         R3D_SHADER_SET_INT_SELECT(scene.depthCube, shader, uSkinning, true);
     }
-    else {
+    else
+    {
         R3D_SHADER_SET_INT_SELECT(scene.depthCube, shader, uSkinning, false);
     }
 
     /* --- Send billboard related data --- */
 
     R3D_SHADER_SET_INT_SELECT(scene.depthCube, shader, uBillboard, material->billboardMode);
-    if (material->billboardMode != R3D_BILLBOARD_DISABLED) {
+    if (material->billboardMode != R3D_BILLBOARD_DISABLED)
+    {
         R3D_SHADER_SET_MAT4_SELECT(scene.depthCube, shader, uMatInvView, R3D.viewState.invView);
     }
 
@@ -1046,19 +1095,23 @@ void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, r3
     R3D_SHADER_BIND_SAMPLER_SELECT(scene.depthCube, shader, uAlbedoMap, R3D_TEXTURE_SELECT(material->albedo.texture.id, WHITE));
     R3D_SHADER_SET_COL4_SELECT(scene.depthCube, shader, uAlbedoColor, R3D.colorSpace, material->albedo.color);
 
-    if (material->transparencyMode == R3D_TRANSPARENCY_PREPASS) {
+    if (material->transparencyMode == R3D_TRANSPARENCY_PREPASS)
+    {
         R3D_SHADER_SET_FLOAT_SELECT(scene.depthCube, shader, uAlphaCutoff, (light != NULL) ? 0.1f : 0.99f);
     }
-    else {
+    else
+    {
         R3D_SHADER_SET_FLOAT_SELECT(scene.depthCube, shader, uAlphaCutoff, material->alphaCutoff);
     }
 
     /* --- Applying material parameters that are independent of shaders --- */
 
-    if (light != NULL) {
+    if (light != NULL)
+    {
         r3d_driver_set_shadow_cast_mode(mesh->shadowCastMode, material->cullMode);
     }
-    else {
+    else
+    {
         r3d_driver_set_depth_state(material->depth);
         r3d_driver_set_stencil_state(material->stencil);
         r3d_driver_set_cull_mode(material->cullMode);
@@ -1066,11 +1119,13 @@ void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, r3
 
     /* --- Rendering the object corresponding to the draw call --- */
 
-    if (r3d_render_has_instances(group)) {
+    if (r3d_render_has_instances(group))
+    {
         R3D_SHADER_SET_INT_SELECT(scene.depthCube, shader, uInstancing, true);
         r3d_render_draw_instanced(call);
     }
-    else {
+    else
+    {
         R3D_SHADER_SET_INT_SELECT(scene.depthCube, shader, uInstancing, false);
         r3d_render_draw(call);
     }
@@ -1106,11 +1161,13 @@ void raster_probe_forward(const r3d_render_call_t* call, const r3d_env_probe_t* 
 
     /* --- Send skinning related data --- */
 
-    if (group->skinTexture > 0) {
+    if (group->skinTexture > 0)
+    {
         R3D_SHADER_BIND_SAMPLER_SELECT(scene.probeForward, shader, uBoneMatricesTex, group->skinTexture);
         R3D_SHADER_SET_INT_SELECT(scene.probeForward, shader, uSkinning, true);
     }
-    else {
+    else
+    {
         R3D_SHADER_SET_INT_SELECT(scene.probeForward, shader, uSkinning, false);
     }
 
@@ -1153,11 +1210,13 @@ void raster_probe_forward(const r3d_render_call_t* call, const r3d_env_probe_t* 
 
     /* --- Rendering the object corresponding to the draw call --- */
 
-    if (r3d_render_has_instances(group)) {
+    if (r3d_render_has_instances(group))
+    {
         R3D_SHADER_SET_INT_SELECT(scene.probeForward, shader, uInstancing, true);
         r3d_render_draw_instanced(call);
     }
-    else {
+    else
+    {
         R3D_SHADER_SET_INT_SELECT(scene.probeForward, shader, uInstancing, false);
         r3d_render_draw(call);
     }
@@ -1188,11 +1247,13 @@ void raster_probe_unlit(const r3d_render_call_t* call, const r3d_env_probe_t* pr
 
     /* --- Send skinning related data --- */
 
-    if (group->skinTexture > 0) {
+    if (group->skinTexture > 0)
+    {
         R3D_SHADER_BIND_SAMPLER_SELECT(scene.probeUnlit, shader, uBoneMatricesTex, group->skinTexture);
         R3D_SHADER_SET_INT_SELECT(scene.probeUnlit, shader, uSkinning, true);
     }
-    else {
+    else
+    {
         R3D_SHADER_SET_INT_SELECT(scene.probeUnlit, shader, uSkinning, false);
     }
 
@@ -1226,11 +1287,13 @@ void raster_probe_unlit(const r3d_render_call_t* call, const r3d_env_probe_t* pr
 
     /* --- Rendering the object corresponding to the draw call --- */
 
-    if (r3d_render_has_instances(group)) {
+    if (r3d_render_has_instances(group))
+    {
         R3D_SHADER_SET_INT_SELECT(scene.probeUnlit, shader, uInstancing, true);
         r3d_render_draw_instanced(call);
     }
-    else {
+    else
+    {
         R3D_SHADER_SET_INT_SELECT(scene.probeUnlit, shader, uInstancing, false);
         r3d_render_draw(call);
     }
@@ -1258,11 +1321,13 @@ void raster_geometry(const r3d_render_call_t* call, bool matchPrepass)
 
     /* --- Send skinning related data --- */
 
-    if (group->skinTexture > 0) {
+    if (group->skinTexture > 0)
+    {
         R3D_SHADER_BIND_SAMPLER_SELECT(scene.geometry, shader, uBoneMatricesTex, group->skinTexture);
         R3D_SHADER_SET_INT_SELECT(scene.geometry, shader, uSkinning, true);
     }
-    else {
+    else
+    {
         R3D_SHADER_SET_INT_SELECT(scene.geometry, shader, uSkinning, false);
     }
 
@@ -1302,11 +1367,13 @@ void raster_geometry(const r3d_render_call_t* call, bool matchPrepass)
 
     /* --- Applying material parameters that are independent of shaders --- */
 
-    if (matchPrepass) {
+    if (matchPrepass)
+    {
         r3d_driver_set_depth_offset(material->depth.offsetUnits, material->depth.offsetFactor);
         r3d_driver_set_depth_range(material->depth.rangeNear, material->depth.rangeFar);
     }
-    else {
+    else
+    {
         r3d_driver_set_depth_state(material->depth);
         r3d_driver_set_stencil_state(material->stencil);
     }
@@ -1315,11 +1382,13 @@ void raster_geometry(const r3d_render_call_t* call, bool matchPrepass)
 
     /* --- Rendering the object corresponding to the draw call --- */
 
-    if (r3d_render_has_instances(group)) {
+    if (r3d_render_has_instances(group))
+    {
         R3D_SHADER_SET_INT_SELECT(scene.geometry, shader, uInstancing, true);
         r3d_render_draw_instanced(call);
     }
-    else {
+    else
+    {
         R3D_SHADER_SET_INT_SELECT(scene.geometry, shader, uInstancing, false);
         r3d_render_draw(call);
     }
@@ -1387,11 +1456,13 @@ void raster_decal(const r3d_render_call_t* call)
 
     /* --- Rendering the object corresponding to the draw call --- */
 
-    if (r3d_render_has_instances(group)) {
+    if (r3d_render_has_instances(group))
+    {
         R3D_SHADER_SET_INT_SELECT(scene.decal, shader, uInstancing, true);
         r3d_render_draw_instanced(call);
     }
-    else {
+    else
+    {
         R3D_SHADER_SET_INT_SELECT(scene.decal, shader, uInstancing, false);
         r3d_render_draw(call);
     }
@@ -1424,11 +1495,13 @@ void raster_forward(const r3d_render_call_t* call)
 
     /* --- Send skinning related data --- */
 
-    if (group->skinTexture > 0) {
+    if (group->skinTexture > 0)
+    {
         R3D_SHADER_BIND_SAMPLER_SELECT(scene.forward, shader, uBoneMatricesTex, group->skinTexture);
         R3D_SHADER_SET_INT_SELECT(scene.forward, shader, uSkinning, true);
     }
-    else {
+    else
+    {
         R3D_SHADER_SET_INT_SELECT(scene.forward, shader, uSkinning, false);
     }
 
@@ -1471,11 +1544,13 @@ void raster_forward(const r3d_render_call_t* call)
 
     /* --- Rendering the object corresponding to the draw call --- */
 
-    if (r3d_render_has_instances(group)) {
+    if (r3d_render_has_instances(group))
+    {
         R3D_SHADER_SET_INT_SELECT(scene.forward, shader, uInstancing, true);
         r3d_render_draw_instanced(call);
     }
-    else {
+    else
+    {
         R3D_SHADER_SET_INT_SELECT(scene.forward, shader, uInstancing, false);
         r3d_render_draw(call);
     }
@@ -1503,11 +1578,13 @@ void raster_unlit(const r3d_render_call_t* call)
 
     /* --- Send skinning related data --- */
 
-    if (group->skinTexture > 0) {
+    if (group->skinTexture > 0)
+    {
         R3D_SHADER_BIND_SAMPLER_SELECT(scene.unlit, shader, uBoneMatricesTex, group->skinTexture);
         R3D_SHADER_SET_INT_SELECT(scene.unlit, shader, uSkinning, true);
     }
-    else {
+    else
+    {
         R3D_SHADER_SET_INT_SELECT(scene.unlit, shader, uSkinning, false);
     }
 
@@ -1541,11 +1618,13 @@ void raster_unlit(const r3d_render_call_t* call)
 
     /* --- Rendering the object corresponding to the draw call --- */
 
-    if (r3d_render_has_instances(group)) {
+    if (r3d_render_has_instances(group))
+    {
         R3D_SHADER_SET_INT_SELECT(scene.unlit, shader, uInstancing, true);
         r3d_render_draw_instanced(call);
     }
-    else {
+    else
+    {
         R3D_SHADER_SET_INT_SELECT(scene.unlit, shader, uInstancing, false);
         r3d_render_draw(call);
     }
@@ -1566,34 +1645,42 @@ void pass_scene_shadow(void)
 
     R3D_LIGHT_FOR_EACH_VISIBLE(light)
     {
-        if (!r3d_light_shadow_should_be_updated(light, true)) {
+        if (!r3d_light_shadow_should_be_updated(light, true))
+        {
             continue;
         }
 
-        if (light->type == R3D_LIGHT_OMNI) {
-            for (int iFace = 0; iFace < 6; iFace++) {
+        if (light->type == R3D_LIGHT_OMNI)
+        {
+            for (int iFace = 0; iFace < 6; iFace++)
+            {
                 r3d_light_shadow_bind_fbo(light->type, light->shadowLayer, iFace);
                 glClear(GL_DEPTH_BUFFER_BIT);
 
                 const R3D_Frustum* frustum = &light->frustum[iFace];
                 r3d_render_cull_groups(frustum);
 
-                R3D_RENDER_FOR_EACH(call, COND, frustum, R3D_RENDER_PACKLIST_SHADOW) {
-                    if (r3d_render_should_cast_shadow(call)) {
+                R3D_RENDER_FOR_EACH(call, COND, frustum, R3D_RENDER_PACKLIST_SHADOW)
+                {
+                    if (r3d_render_should_cast_shadow(call))
+                    {
                         raster_depth_cube(call, &light->viewProj[iFace], light);
                     }
                 }
             }
         }
-        else {
+        else
+        {
             r3d_light_shadow_bind_fbo(light->type, light->shadowLayer, 0);
             glClear(GL_DEPTH_BUFFER_BIT);
 
             const R3D_Frustum* frustum = &light->frustum[0];
             r3d_render_cull_groups(frustum);
 
-            R3D_RENDER_FOR_EACH(call, COND, frustum, R3D_RENDER_PACKLIST_SHADOW) {
-                if (r3d_render_should_cast_shadow(call)) {
+            R3D_RENDER_FOR_EACH(call, COND, frustum, R3D_RENDER_PACKLIST_SHADOW)
+            {
+                if (r3d_render_should_cast_shadow(call))
+                {
                     raster_depth(call, &light->viewProj[0], light);
                 }
             }
@@ -1610,7 +1697,8 @@ void pass_scene_probes(void)
 
     R3D_ENV_PROBE_FOR_EACH_VISIBLE(probe)
     {
-        if (!r3d_env_probe_should_be_updated(probe, true)) {
+        if (!r3d_env_probe_should_be_updated(probe, true))
+        {
             continue;
         }
 
@@ -1632,11 +1720,14 @@ void pass_scene_probes(void)
             r3d_env_capture_bind_fbo(iFace, 0);
             glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-            R3D_RENDER_FOR_EACH(call, true, frustum, R3D_RENDER_PACKLIST_PROBE) {
-                if (call->mesh.material.unlit) {
+            R3D_RENDER_FOR_EACH(call, true, frustum, R3D_RENDER_PACKLIST_PROBE)
+            {
+                if (call->mesh.material.unlit)
+                {
                     raster_probe_unlit(call, probe, iFace);
                 }
-                else {
+                else
+                {
                     upload_light_array_block_for_mesh(call, probe->shadows);
                     raster_probe_forward(call, probe, iFace);
                 }
@@ -1654,7 +1745,8 @@ void pass_scene_probes(void)
             r3d_driver_set_depth_func(GL_LEQUAL);
             r3d_driver_set_depth_mask(GL_FALSE);
 
-            if (bg->sky.texture != 0) {
+            if (bg->sky.texture != 0)
+            {
                 R3D_SHADER_USE(scene.skybox);
                 float lod = (float)r3d_get_mip_levels_1d(bg->sky.size);
                 R3D_SHADER_BIND_SAMPLER(scene.skybox, uSkyMap, bg->sky.texture);
@@ -1664,9 +1756,11 @@ void pass_scene_probes(void)
                 R3D_SHADER_SET_MAT4(scene.skybox, uMatInvView, probe->invView[iFace]);
                 R3D_SHADER_SET_MAT4(scene.skybox, uMatInvProj, probe->invProj);
             }
-            else {
+            else
+            {
                 Vector3 bgColor = r3d_color_to_linear_scaled_vec3(bg->color, R3D.colorSpace, bg->energy);
-                if (fog->mode != R3D_FOG_DISABLED) {
+                if (fog->mode != R3D_FOG_DISABLED)
+                {
                     Vector3 fogColor = r3d_color_to_linear_vec3(fog->color, R3D.colorSpace);
                     bgColor = Vector3Lerp(bgColor, fogColor, fog->skyAffect);
                 }
@@ -1681,11 +1775,13 @@ void pass_scene_probes(void)
 
         r3d_env_capture_gen_mipmaps();
 
-        if (probe->irradiance >= 0) {
+        if (probe->irradiance >= 0)
+        {
             r3d_pass_prepare_irradiance(probe->irradiance, r3d_env_capture_get(), R3D_HINT(R3D_HINT_PROBE_CAPTURE_SIZE));
         }
 
-        if (probe->prefilter >= 0) {
+        if (probe->prefilter >= 0)
+        {
             r3d_pass_prepare_prefilter(probe->prefilter, r3d_env_capture_get(), R3D_HINT(R3D_HINT_PROBE_CAPTURE_SIZE));
         }
 
@@ -1704,8 +1800,10 @@ void pass_scene_geometry(void)
     r3d_driver_set_depth_mask(GL_TRUE);
 
     const R3D_Frustum* frustum = &R3D.viewState.frustum;
-    R3D_RENDER_FOR_EACH(call, IS_MESH_VISIBLE_CAMERA(call->mesh.instance), frustum, R3D_RENDER_LIST_OPAQUE_INST, R3D_RENDER_LIST_OPAQUE) {
-        if (!call->mesh.material.unlit) {
+    R3D_RENDER_FOR_EACH(call, IS_MESH_VISIBLE_CAMERA(call->mesh.instance), frustum, R3D_RENDER_LIST_OPAQUE_INST, R3D_RENDER_LIST_OPAQUE)
+    {
+        if (!call->mesh.material.unlit)
+        {
             raster_geometry(call, false);
         }
     }
@@ -1726,8 +1824,10 @@ void pass_scene_prepass(void)
     r3d_driver_set_depth_mask(GL_TRUE);
 
     const R3D_Frustum* frustum = &R3D.viewState.frustum;
-    R3D_RENDER_FOR_EACH(call, IS_MESH_VISIBLE_CAMERA(call->mesh.instance), frustum, R3D_RENDER_LIST_TRANSPARENT_INST, R3D_RENDER_LIST_TRANSPARENT) {
-        if (r3d_render_is_prepass(call)) {
+    R3D_RENDER_FOR_EACH(call, IS_MESH_VISIBLE_CAMERA(call->mesh.instance), frustum, R3D_RENDER_LIST_TRANSPARENT_INST, R3D_RENDER_LIST_TRANSPARENT)
+    {
+        if (r3d_render_is_prepass(call))
+        {
             raster_depth(call, &R3D.viewState.viewProj, NULL);
         }
     }
@@ -1743,8 +1843,10 @@ void pass_scene_prepass(void)
     r3d_driver_set_depth_func(GL_EQUAL);
     r3d_driver_set_depth_mask(GL_FALSE);
 
-    R3D_RENDER_FOR_EACH(call, IS_MESH_VISIBLE_CAMERA(call->mesh.instance), frustum, R3D_RENDER_LIST_TRANSPARENT_INST, R3D_RENDER_LIST_TRANSPARENT) {
-        if (r3d_render_is_prepass(call)) {
+    R3D_RENDER_FOR_EACH(call, IS_MESH_VISIBLE_CAMERA(call->mesh.instance), frustum, R3D_RENDER_LIST_TRANSPARENT_INST, R3D_RENDER_LIST_TRANSPARENT)
+    {
+        if (r3d_render_is_prepass(call))
+        {
             raster_geometry(call, true);
         }
     }
@@ -1773,7 +1875,8 @@ void pass_scene_decals(void)
     glColorMaski(2, GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
 
     const R3D_Frustum* frustum = &R3D.viewState.frustum;
-    R3D_RENDER_FOR_EACH(call, true, frustum, R3D_RENDER_LIST_DECAL_INST, R3D_RENDER_LIST_DECAL) {
+    R3D_RENDER_FOR_EACH(call, true, frustum, R3D_RENDER_LIST_DECAL_INST, R3D_RENDER_LIST_DECAL)
+    {
         raster_decal(call);
     }
 
@@ -1791,7 +1894,8 @@ void pass_prepare_depth_pyramid(void)
 
     R3D_SHADER_USE(prepare.depthPyramid);
 
-    for (int iDst = 1; iDst < numLevels; iDst++) {
+    for (int iDst = 1; iDst < numLevels; iDst++)
+    {
         R3D_TARGET_BIND_LEVELS(R3D_TARGET_LEVEL_LIST(iDst, iDst-1), R3D_TARGET_DEPTH, R3D_TARGET_SELECTOR);
         R3D_SHADER_BIND_SAMPLER(prepare.depthPyramid, uDepthTex, r3d_target_get_level(R3D_TARGET_DEPTH, iDst - 1));
         R3D_RENDER_SCREEN();
@@ -1893,7 +1997,8 @@ r3d_target_t pass_prepare_ssil(void)
     R3D_SHADER_SET_FLOAT(prepare.denoiserSparse, uDepthSharpness, 100.0f);
 
     float radius = 16.0f;
-    for (int i = 0; i < 3; i++, radius *= 0.5f) {
+    for (int i = 0; i < 3; i++, radius *= 0.5f)
+    {
         R3D_TARGET_BIND(false, dst);
         R3D_SHADER_SET_FLOAT(prepare.denoiserSparse, uBlurRadius, radius);
         R3D_SHADER_SET_FLOAT(prepare.denoiserSparse, uInvBlurRadius2, 1.0f / (radius * radius));
@@ -2037,7 +2142,8 @@ r3d_target_t pass_prepare_ssr(void)
     R3D_SHADER_USE(prepare.blurDown);
     R3D_SHADER_BIND_SAMPLER(prepare.blurDown, uSourceTex, r3d_target_get(R3D_TARGET_SSR));
 
-    for (int iDst = 1; iDst < numLevels; iDst++) {
+    for (int iDst = 1; iDst < numLevels; iDst++)
+    {
         r3d_target_set_write_level(0, iDst);
         r3d_target_set_viewport(R3D_TARGET_SSR, iDst);
         R3D_SHADER_SET_INT(prepare.blurDown, uSourceLod, iDst - 1);
@@ -2049,7 +2155,8 @@ r3d_target_t pass_prepare_ssr(void)
     R3D_SHADER_USE(prepare.blurUp);
     R3D_SHADER_BIND_SAMPLER(prepare.blurUp, uSourceTex, r3d_target_get(R3D_TARGET_SSR));
 
-    for (int iDst = 1; iDst < numLevels - 1; iDst++) {
+    for (int iDst = 1; iDst < numLevels - 1; iDst++)
+    {
         r3d_target_set_write_level(0, iDst);
         r3d_target_set_viewport(R3D_TARGET_SSR, iDst);
         R3D_SHADER_SET_INT(prepare.blurUp, uSourceLod, iDst + 1);
@@ -2092,7 +2199,8 @@ void pass_deferred_lights(void)
     {
         // Set scissors rect
         r3d_rect_t dst = {0, 0, R3D_TARGET_SIZE_W, R3D_TARGET_SIZE_H};
-        if (light->type != R3D_LIGHT_DIR) {
+        if (light->type != R3D_LIGHT_DIR)
+        {
             dst = r3d_light_get_screen_rect(light, &R3D.viewState.viewProj, R3D.viewState.camera.position, dst.w, dst.h);
             if (memcmp(&dst, &(r3d_rect_t){0}, sizeof(r3d_rect_t)) == 0) continue;
         }
@@ -2238,7 +2346,8 @@ void pass_deferred_volumetric_fog(r3d_target_t sceneTarget)
         if (light->fogEnergy == 0.0f) continue;
 
         r3d_rect_t dst = {0, 0, R3D_TARGET_SIZE_W/2, R3D_TARGET_SIZE_H/2};
-        if (light->type != R3D_LIGHT_DIR) {
+        if (light->type != R3D_LIGHT_DIR)
+        {
             dst = r3d_light_get_screen_rect(light, &R3D.viewState.viewProj, R3D.viewState.camera.position, dst.w, dst.h);
             if (memcmp(&dst, &(r3d_rect_t){0}, sizeof(r3d_rect_t)) == 0) continue;
         }
@@ -2300,8 +2409,10 @@ void pass_scene_forward(r3d_target_t sceneTarget)
     r3d_driver_set_depth_mask(GL_TRUE);
 
     const R3D_Frustum* frustum = &R3D.viewState.frustum;
-    R3D_RENDER_FOR_EACH(call, IS_MESH_VISIBLE_CAMERA(call->mesh.instance), frustum, R3D_RENDER_LIST_OPAQUE_INST, R3D_RENDER_LIST_OPAQUE) {
-        if (call->mesh.material.unlit) {
+    R3D_RENDER_FOR_EACH(call, IS_MESH_VISIBLE_CAMERA(call->mesh.instance), frustum, R3D_RENDER_LIST_OPAQUE_INST, R3D_RENDER_LIST_OPAQUE)
+    {
+        if (call->mesh.material.unlit)
+        {
             raster_unlit(call);
         }
     }
@@ -2310,11 +2421,14 @@ void pass_scene_forward(r3d_target_t sceneTarget)
 
     r3d_driver_set_depth_mask(GL_FALSE);
 
-    R3D_RENDER_FOR_EACH(call, IS_MESH_VISIBLE_CAMERA(call->mesh.instance), frustum, R3D_RENDER_LIST_TRANSPARENT_INST, R3D_RENDER_LIST_TRANSPARENT) {
-        if (call->mesh.material.unlit) {
+    R3D_RENDER_FOR_EACH(call, IS_MESH_VISIBLE_CAMERA(call->mesh.instance), frustum, R3D_RENDER_LIST_TRANSPARENT_INST, R3D_RENDER_LIST_TRANSPARENT)
+    {
+        if (call->mesh.material.unlit)
+        {
             raster_unlit(call);
         }
-        else {
+        else
+        {
             upload_light_array_block_for_mesh(call, true);
             raster_forward(call);
         }
@@ -2340,7 +2454,8 @@ void pass_scene_background(r3d_target_t sceneTarget)
 
     const R3D_EnvBackground* bg = &R3D.environment.background;
 
-    if (bg->sky.texture != 0) {
+    if (bg->sky.texture != 0)
+    {
         R3D_SHADER_USE(scene.skybox);
         float lod = (float)r3d_get_mip_levels_1d(bg->sky.size);
         R3D_SHADER_BIND_SAMPLER(scene.skybox, uSkyMap, bg->sky.texture);
@@ -2350,11 +2465,10 @@ void pass_scene_background(r3d_target_t sceneTarget)
         R3D_SHADER_SET_MAT4(scene.skybox, uMatInvView, R3D.viewState.invView);
         R3D_SHADER_SET_MAT4(scene.skybox, uMatInvProj, R3D.viewState.invProj);
     }
-    else {
-        Vector3 bgColor = r3d_color_to_linear_scaled_vec3(
-            bg->color, R3D.colorSpace, bg->energy
-        );
+    else
+    {
         R3D_SHADER_USE(scene.background);
+        Vector3 bgColor = r3d_color_to_linear_scaled_vec3(bg->color, R3D.colorSpace, bg->energy);
         R3D_SHADER_SET_VEC4(scene.background, uColor, (Vector4) {bgColor.x, bgColor.y, bgColor.z, 1.0f});
     }
 
@@ -2545,7 +2659,8 @@ r3d_target_t pass_post_auto_exposure(r3d_target_t sceneTarget)
     static r3d_target_t EXPOSURE_DST = R3D_TARGET_EXPOSURE_0;
     static r3d_target_t EXPOSURE_SRC = R3D_TARGET_EXPOSURE_1;
 
-    if (!r3d_target_exists(EXPOSURE_SRC)) {
+    if (!r3d_target_exists(EXPOSURE_SRC))
+    {
         R3D_TARGET_CLEAR(false, EXPOSURE_SRC);
     }
 
@@ -2683,7 +2798,9 @@ r3d_target_t pass_post_smaa(r3d_target_t sceneTarget)
 
 void blit_to_screen(r3d_target_t source)
 {
-    if (!r3d_target_exists(source)) {
+    if (!r3d_target_exists(source))
+    {
+        // TODO: Put a log
         return;
     }
 
@@ -2702,7 +2819,9 @@ void blit_to_screen(r3d_target_t source)
     int dstW = (int)(viewport.width + 0.5f);
     int dstH = (int)(viewport.height + 0.5f);
 
-    if (dstW <= 0 || dstH <= 0) {
+    if (dstW <= 0 || dstH <= 0)
+    {
+        // TODO: Put a log
         return;
     }
 
@@ -2712,7 +2831,9 @@ void blit_to_screen(r3d_target_t source)
 
     r3d_target_get_resolution(&srcW, &srcH, source, 0);
 
-    if (srcW <= 0 || srcH <= 0) {
+    if (srcW <= 0 || srcH <= 0)
+    {
+        // TODO: Put a log
         return;
     }
 
@@ -2727,8 +2848,10 @@ void blit_to_screen(r3d_target_t source)
     r3d_driver_set_depth_mask(GL_TRUE);
     r3d_driver_set_depth_func(GL_ALWAYS);
 
-    if (sign > 0) {
-        switch (R3D.upscaleMode) {
+    if (sign > 0)
+    {
+        switch (R3D.upscaleMode)
+        {
         case R3D_UPSCALE_NEAREST:
             R3D_SHADER_USE(blit.commonNearest);
             R3D_SHADER_BIND_SAMPLER(blit.commonNearest, uSourceTex, r3d_target_get(source));
@@ -2757,8 +2880,10 @@ void blit_to_screen(r3d_target_t source)
             break;
         }
     }
-    else if (sign < 0) {
-        switch (R3D.downscaleMode) {
+    else if (sign < 0)
+    {
+        switch (R3D.downscaleMode)
+        {
         case R3D_DOWNSCALE_NEAREST:
             R3D_SHADER_USE(blit.commonNearest);
             R3D_SHADER_BIND_SAMPLER(blit.commonNearest, uSourceTex, r3d_target_get(source));
@@ -2787,7 +2912,8 @@ void blit_to_screen(r3d_target_t source)
             break;
         }
     }
-    else {
+    else
+    {
         R3D_SHADER_USE(blit.commonCopy);
         R3D_SHADER_BIND_SAMPLER(blit.commonCopy, uSourceTex, r3d_target_get(source));
         R3D_SHADER_BIND_SAMPLER(blit.commonCopy, uDepthTex, r3d_target_get_depth_buffer());
@@ -2797,7 +2923,9 @@ void blit_to_screen(r3d_target_t source)
 
 void visualize_to_screen(r3d_target_t source)
 {
-    if (!r3d_target_exists(source)) {
+    if (!r3d_target_exists(source))
+    {
+        // TODO: Put a log
         return;
     }
 
@@ -2806,15 +2934,18 @@ void visualize_to_screen(r3d_target_t source)
     int dstH = dstId ? R3D.screen.texture.height : GetRenderHeight();
 
     int dstX = 0, dstY = 0;
-    if (R3D.aspectMode == R3D_ASPECT_KEEP) {
+    if (R3D.aspectMode == R3D_ASPECT_KEEP)
+    {
         float srcRatio = (float)R3D_TARGET_SIZE_W / R3D_TARGET_SIZE_H;
         float dstRatio = (float)dstW / dstH;
-        if (srcRatio > dstRatio) {
+        if (srcRatio > dstRatio)
+        {
             int newH = (int)(dstW / srcRatio + 0.5f);
             dstY = (dstH - newH) / 2;
             dstH = newH;
         }
-        else {
+        else
+        {
             int newW = (int)(dstH * srcRatio + 0.5f);
             dstX = (dstW - newW) / 2;
             dstW = newW;
@@ -2872,8 +3003,10 @@ void cleanup_after_render(void)
     // WARNING: Make sure that everything that affects levels works in release mode!
 
 #ifndef NDEBUG
-    for (int iTarget = 0; iTarget < R3D_TARGET_COUNT; iTarget++) {
-        if (r3d_target_exists(iTarget)) {
+    for (int iTarget = 0; iTarget < R3D_TARGET_COUNT; iTarget++)
+    {
+        if (r3d_target_exists(iTarget))
+        {
             r3d_target_set_read_levels(iTarget, 0, r3d_target_get_num_levels(iTarget) - 1);
         }
     }
