@@ -54,21 +54,25 @@ R3D_Cubemap R3D_LoadCubemapFromImage(Image image, R3D_CubemapLayout layout)
 {
     R3D_Cubemap cubemap = {0};
 
-    if (layout == R3D_CUBEMAP_LAYOUT_AUTO_DETECT) {
+    if (layout == R3D_CUBEMAP_LAYOUT_AUTO_DETECT)
+    {
         layout = detect_cubemap_layout(image);
-        if (layout == R3D_CUBEMAP_LAYOUT_AUTO_DETECT) {
+        if (layout == R3D_CUBEMAP_LAYOUT_AUTO_DETECT)
+        {
             R3D_TRACELOG(LOG_WARNING, "Failed to detect cubemap image layout");
             return cubemap;
         }
     }
 
     int size = get_cubemap_size_from_layout(image, layout);
-    if (size == 0) {
+    if (size == 0)
+    {
         R3D_TRACELOG(LOG_WARNING, "Cubemap layout not recognized (layout: %i)", layout);
         return cubemap;
     }
 
-    switch (layout) {
+    switch (layout)
+    {
     case R3D_CUBEMAP_LAYOUT_LINE_VERTICAL:
         cubemap = load_cubemap_from_line_vertical(image, size);
         break;
@@ -116,9 +120,11 @@ R3D_Cubemap r3d_cubemap_allocate(int size)
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.texture);
 
     int mipCount = r3d_get_mip_levels_1d(size);
-    for (int level = 0; level < mipCount; level++) {
+    for (int level = 0; level < mipCount; level++)
+    {
         int mipSize = size >> level;
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 6; i++)
+        {
             glTexImage2D(
                 GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, level, GL_RGB16F,
                 mipSize, mipSize, 0, GL_RGB, GL_HALF_FLOAT, NULL
@@ -152,13 +158,14 @@ void r3d_cubemap_gen_mipmap(const R3D_Cubemap* cubemap)
 
 const char* get_layout_name(R3D_CubemapLayout layout)
 {
-    switch (layout) {
-    case R3D_CUBEMAP_LAYOUT_AUTO_DETECT: return "Auto";
-    case R3D_CUBEMAP_LAYOUT_LINE_VERTICAL: return "Line Vertical";
-    case R3D_CUBEMAP_LAYOUT_LINE_HORIZONTAL: return "Line Horizontal";
+    switch (layout)
+    {
+    case R3D_CUBEMAP_LAYOUT_AUTO_DETECT:         return "Auto";
+    case R3D_CUBEMAP_LAYOUT_LINE_VERTICAL:       return "Line Vertical";
+    case R3D_CUBEMAP_LAYOUT_LINE_HORIZONTAL:     return "Line Horizontal";
     case R3D_CUBEMAP_LAYOUT_CROSS_THREE_BY_FOUR: return "Cross 3/4";
     case R3D_CUBEMAP_LAYOUT_CROSS_FOUR_BY_THREE: return "Cross 4/3";
-    case R3D_CUBEMAP_LAYOUT_PANORAMA: return "Panorama";
+    case R3D_CUBEMAP_LAYOUT_PANORAMA:            return "Panorama";
     default: break;
     }
     return "Unknown";
@@ -168,27 +175,35 @@ R3D_CubemapLayout detect_cubemap_layout(Image image)
 {
     R3D_CubemapLayout layout = R3D_CUBEMAP_LAYOUT_AUTO_DETECT;
 
-    if (image.width > image.height) {
-        if (image.width / 6 == image.height) {
+    if (image.width > image.height)
+    {
+        if (image.width / 6 == image.height)
+        {
             layout = R3D_CUBEMAP_LAYOUT_LINE_HORIZONTAL;
         }
-        else if (image.width / 4 == image.height / 3) {
+        else if (image.width / 4 == image.height / 3)
+        {
             layout = R3D_CUBEMAP_LAYOUT_CROSS_FOUR_BY_THREE;
         }
-        else if (image.width / 2 == image.height) {
+        else if (image.width / 2 == image.height)
+        {
             layout = R3D_CUBEMAP_LAYOUT_PANORAMA;
         }
     }
-    else if (image.height > image.width) {
-        if (image.height / 6 == image.width) {
+    else if (image.height > image.width)
+    {
+        if (image.height / 6 == image.width)
+        {
             layout = R3D_CUBEMAP_LAYOUT_LINE_VERTICAL;
         }
-        else if (image.width / 3 == image.height/4) {
+        else if (image.width / 3 == image.height/4)
+        {
             layout = R3D_CUBEMAP_LAYOUT_CROSS_THREE_BY_FOUR;
         }
     }
     // Checking for cases where the ratio is not exactly 2:1 but close
-    else if (abs(image.width - 2 * image.height) < image.height / 10) {
+    else if (abs(image.width - 2 * image.height) < image.height / 10)
+    {
         layout = R3D_CUBEMAP_LAYOUT_PANORAMA;
     }
 
@@ -199,7 +214,8 @@ int get_cubemap_size_from_layout(Image image, R3D_CubemapLayout layout)
 {
     int size = 0;
 
-    switch (layout) {
+    switch (layout)
+    {
     case R3D_CUBEMAP_LAYOUT_LINE_VERTICAL:
         size = image.height / 6;
         break;
@@ -241,7 +257,8 @@ R3D_Cubemap load_cubemap_from_panorama(Image image, int size)
     r3d_driver_disable(GL_CULL_FACE);
     r3d_render_prepare_drawing();
 
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++)
+    {
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, cubemap.texture, 0);
         R3D_SHADER_SET_MAT4(prepare.cubemapFromEquirectangular, uMatView, R3D.matCubeViews[i]);
         R3D_RENDER_CUBE();
@@ -262,7 +279,8 @@ R3D_Cubemap load_cubemap_from_line_vertical(Image image, int size)
 {
     Image workImage = image;
 
-    if (image.format != PIXELFORMAT_UNCOMPRESSED_R16G16B16) {
+    if (image.format != PIXELFORMAT_UNCOMPRESSED_R16G16B16)
+    {
         workImage = ImageCopy(image);
         ImageFormat(&workImage, PIXELFORMAT_UNCOMPRESSED_R16G16B16);
     }
@@ -271,7 +289,8 @@ R3D_Cubemap load_cubemap_from_line_vertical(Image image, int size)
     R3D_Cubemap cubemap = r3d_cubemap_allocate(size);
 
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap.texture);
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++)
+    {
         glTexSubImage2D(
             GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0,
             0, 0, size, size, GL_RGB, GL_HALF_FLOAT,
@@ -280,7 +299,8 @@ R3D_Cubemap load_cubemap_from_line_vertical(Image image, int size)
     }
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
-    if (workImage.data != image.data) {
+    if (workImage.data != image.data)
+    {
         UnloadImage(workImage);
     }
 
@@ -306,7 +326,8 @@ R3D_Cubemap load_cubemap_from_line_horizontal(Image image, int size)
 {
     Image faces = alloc_work_faces_image(image, size);
 
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++)
+    {
         Rectangle srcRect = {(float)i * size, 0, (float)size, (float)size};
         Rectangle dstRect = {0, (float)i * size, (float)size, (float)size};
         ImageDraw(&faces, image, srcRect, dstRect, WHITE);
@@ -322,7 +343,8 @@ R3D_Cubemap load_cubemap_from_cross_three_by_four(Image image, int size)
 {
     Rectangle srcRecs[6] = {0};
 
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++)
+    {
         srcRecs[i] = (Rectangle) {0, 0, (float)size, (float)size};
     }
 
@@ -335,7 +357,8 @@ R3D_Cubemap load_cubemap_from_cross_three_by_four(Image image, int size)
 
     Image faces = alloc_work_faces_image(image, size);
 
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++)
+    {
         Rectangle dstRec = {0, (float)i * size, (float)size, (float)size};
         ImageDraw(&faces, image, srcRecs[i], dstRec, WHITE);
     }
@@ -350,7 +373,8 @@ R3D_Cubemap load_cubemap_from_cross_four_by_three(Image image, int size)
 {
     Rectangle srcRecs[6] = {0};
 
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++)
+    {
         srcRecs[i] = (Rectangle) {0, 0, (float)size, (float)size};
     }
 
@@ -363,7 +387,8 @@ R3D_Cubemap load_cubemap_from_cross_four_by_three(Image image, int size)
 
     Image faces = alloc_work_faces_image(image, size);
 
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++)
+    {
         Rectangle dstRec = {0, (float)i * size, (float)size, (float)size};
         ImageDraw(&faces, image, srcRecs[i], dstRec, WHITE);
     }
