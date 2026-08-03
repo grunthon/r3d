@@ -108,7 +108,8 @@ static inline int32_t r3d_get_mip_levels_1d(int32_t s)
     return (int32_t)index + 1;
 #else
     int32_t levels = 0;
-    while (s > 0) {
+    while (s > 0)
+    {
         levels++;
         s >>= 1;
     }
@@ -133,7 +134,8 @@ static inline int32_t r3d_lsb_index(uint32_t value)
     return (int32_t)index;
 #else
     int32_t index = 0;
-    while ((value & 1) == 0) {
+    while ((value & 1) == 0)
+    {
         value >>= 1;
         index++;
     }
