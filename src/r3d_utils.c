@@ -18,7 +18,7 @@
 
 Texture2D R3D_GetWhiteTexture(void)
 {
-    Texture2D texture = { 0 };
+    Texture2D texture = {0};
     texture.id = r3d_texture_get(R3D_TEXTURE_WHITE);
     texture.width = 1;
     texture.height = 1;
@@ -29,7 +29,7 @@ Texture2D R3D_GetWhiteTexture(void)
 
 Texture2D R3D_GetBlackTexture(void)
 {
-    Texture2D texture = { 0 };
+    Texture2D texture = {0};
     texture.id = r3d_texture_get(R3D_TEXTURE_BLACK);
     texture.width = 1;
     texture.height = 1;
@@ -40,7 +40,7 @@ Texture2D R3D_GetBlackTexture(void)
 
 Texture2D R3D_GetNormalTexture(void)
 {
-    Texture2D texture = { 0 };
+    Texture2D texture = {0};
     texture.id = r3d_texture_get(R3D_TEXTURE_NORMAL);
     texture.width = 1;
     texture.height = 1;
@@ -51,7 +51,7 @@ Texture2D R3D_GetNormalTexture(void)
 
 Texture2D R3D_GetBufferNormal(void)
 {
-    Texture2D texture = { 0 };
+    Texture2D texture = {0};
     texture.id = r3d_target_get(R3D_TARGET_NORMAL);
     texture.width = R3D_TARGET_SIZE_W;
     texture.height = R3D_TARGET_SIZE_H;
@@ -62,7 +62,7 @@ Texture2D R3D_GetBufferNormal(void)
 
 Texture2D R3D_GetBufferDepth(void)
 {
-    Texture2D texture = { 0 };
+    Texture2D texture = {0};
     texture.id = r3d_target_get(R3D_TARGET_DEPTH);
     texture.width = R3D_TARGET_SIZE_W;
     texture.height = R3D_TARGET_SIZE_H;
