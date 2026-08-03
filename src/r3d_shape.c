@@ -68,8 +68,10 @@ static inline void raycast_mesh_vertices(
 
         float t;
         Vector3 edge1, edge2;
-        if (raycast_triangle(&t, &edge1, &edge2, localOrigin, localDirection, v0, v1, v2)) {
-            if (t < *closestT) {
+        if (raycast_triangle(&t, &edge1, &edge2, localOrigin, localDirection, v0, v1, v2))
+        {
+            if (t < *closestT)
+            {
                 *closestT = t;
                 *closestEdge1 = edge1;
                 *closestEdge2 = edge2;
@@ -92,8 +94,10 @@ static inline void raycast_mesh_indexed(
 
         float t;
         Vector3 edge1, edge2;
-        if (raycast_triangle(&t, &edge1, &edge2, localOrigin, localDirection, v0, v1, v2)) {
-            if (t < *closestT) {
+        if (raycast_triangle(&t, &edge1, &edge2, localOrigin, localDirection, v0, v1, v2))
+        {
+            if (t < *closestT)
+            {
                 *closestT = t;
                 *closestEdge1 = edge1;
                 *closestEdge2 = edge2;
@@ -177,8 +181,10 @@ bool R3D_CheckCollisionOrientedBoxes(R3D_OrientedBox box1, R3D_OrientedBox box2)
 
     Vector3 d = Vector3Subtract(box2.center, box1.center);
 
-    for (int i = 0; i < 15; i++) {
-        if (Vector3LengthSqr(axes[i]) < 1e-10f) {
+    for (int i = 0; i < 15; i++)
+    {
+        if (Vector3LengthSqr(axes[i]) < 1e-10f)
+        {
             continue;
         }
 
@@ -192,7 +198,8 @@ bool R3D_CheckCollisionOrientedBoxes(R3D_OrientedBox box1, R3D_OrientedBox box2)
                  + fabsf(Vector3DotProduct(box2.axisY, axis)) * box2.halfExtents.y
                  + fabsf(Vector3DotProduct(box2.axisZ, axis)) * box2.halfExtents.z;
 
-        if (fabsf(Vector3DotProduct(d, axis)) > r1 + r2) {
+        if (fabsf(Vector3DotProduct(d, axis)) > r1 + r2)
+        {
             return false;
         }
     }
@@ -272,9 +279,11 @@ bool R3D_CheckCollisionCapsuleOrientedBox(R3D_Capsule capsule, R3D_OrientedBox b
         R3D_ClosestPointOnSegment((Vector3){0}, localStart, localEnd),
     };
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++)
+    {
         Vector3 onSeg = seeds[i];
-        for (int iter = 0; iter < 3; iter++) {
+        for (int iter = 0; iter < 3; iter++)
+        {
             Vector3 onBox = R3D_ClosestPointOnBox(onSeg, localBox);
             onSeg = R3D_ClosestPointOnSegment(onBox, localStart, localEnd);
         }
@@ -309,21 +318,25 @@ bool R3D_CheckCollisionCapsules(R3D_Capsule a, R3D_Capsule b)
     float denom = dotAA * dotBB - dotAB * dotAB;
     float s = 0.0f, t = 0.0f;
 
-    if (denom > 1e-6f) {
+    if (denom > 1e-6f)
+    {
         s = (dotAB * dotBR - dotBB * dotAR) / denom;
         s = fmaxf(0.0f, fminf(1.0f, s));
         t = (dotAB * s + dotBR) / dotBB;
 
-        if (t < 0.0f) {
+        if (t < 0.0f)
+        {
             t = 0.0f;
             s = fmaxf(0.0f, fminf(1.0f, -dotAR / dotAA));
         }
-        else if (t > 1.0f) {
+        else if (t > 1.0f)
+        {
             t = 1.0f;
             s = fmaxf(0.0f, fminf(1.0f, (dotAB - dotAR) / dotAA));
         }
     }
-    else {
+    else
+    {
         s = 0.5f;
         t = fmaxf(0.0f, fminf(1.0f, dotBR / dotBB));
     }
@@ -349,12 +362,14 @@ bool R3D_CheckCollisionCapsuleMesh(R3D_Capsule capsule, R3D_MeshData mesh, Matri
     {
         Vector3 v0, v1, v2;
 
-        if (useIndices) {
+        if (useIndices)
+        {
             v0 = mesh.vertices[mesh.indices[i*3    ]].position;
             v1 = mesh.vertices[mesh.indices[i*3 + 1]].position;
             v2 = mesh.vertices[mesh.indices[i*3 + 2]].position;
         }
-        else {
+        else
+        {
             v0 = mesh.vertices[i*3    ].position;
             v1 = mesh.vertices[i*3 + 1].position;
             v2 = mesh.vertices[i*3 + 2].position;
@@ -371,7 +386,8 @@ bool R3D_CheckCollisionCapsuleMesh(R3D_Capsule capsule, R3D_MeshData mesh, Matri
             Vector3 p = Vector3Add(capsule.start, Vector3Scale(axis, t));
 
             Vector3 closest = R3D_ClosestPointOnTriangle(p, a, b, c);
-            if (Vector3LengthSqr(Vector3Subtract(closest, p)) <= radiusSq) {
+            if (Vector3LengthSqr(Vector3Subtract(closest, p)) <= radiusSq)
+            {
                 return true;
             }
         }
@@ -398,15 +414,18 @@ R3D_Penetration R3D_CheckPenetrationBoundingBoxes(R3D_BoundingBox box1, R3D_Boun
     Vector3 normal;
     float depth;
 
-    if (ox <= oy && ox <= oz) {
+    if (ox <= oy && ox <= oz)
+    {
         depth = ox;
         normal = (Vector3) {dx >= 0 ? 1.0f : -1.0f, 0, 0};
     }
-    else if (oy <= oz) {
+    else if (oy <= oz)
+    {
         depth = oy;
         normal = (Vector3) {0, dy >= 0 ? 1.0f : -1.0f, 0};
     }
-    else {
+    else
+    {
         depth = oz;
         normal = (Vector3) {0, 0, dz >= 0 ? 1.0f : -1.0f};
     }
@@ -426,19 +445,22 @@ R3D_Penetration R3D_CheckPenetrationBoundingBoxSphere(R3D_BoundingBox box, Vecto
     float dx = center.x - cx, dy = center.y - cy, dz = center.z - cz;
     float distSq = dx*dx + dy*dy + dz*dz;
 
-    if (distSq > radius * radius) {
+    if (distSq > radius * radius)
+    {
         return (R3D_Penetration){0};
     }
 
     Vector3 normal;
     float depth;
 
-    if (distSq > 1e-10f) {
+    if (distSq > 1e-10f)
+    {
         float dist = sqrtf(distSq);
         normal = (Vector3){ dx/dist, dy/dist, dz/dist };
-        depth = radius - dist;
+        depth  = radius - dist;
     }
-    else {
+    else
+    {
         float d[6] = {
             center.x - box.min.x, box.max.x - center.x,
             center.y - box.min.y, box.max.y - center.y,
@@ -449,7 +471,8 @@ R3D_Penetration R3D_CheckPenetrationBoundingBoxSphere(R3D_BoundingBox box, Vecto
             {0,1,0}, {0,0,-1}, {0,0,1}
         };
         int best = 0;
-        for (int i = 1; i < 6; i++) {
+        for (int i = 1; i < 6; i++)
+        {
             if (d[i] < d[best]) best = i;
         }
         normal = normals[best];
@@ -483,7 +506,8 @@ R3D_Penetration R3D_CheckPenetrationOrientedBoxes(R3D_OrientedBox box1, R3D_Orie
     float minDepth = FLT_MAX;
     Vector3 minAxis = {0, 1, 0};
 
-    for (int i = 0; i < 15; i++) {
+    for (int i = 0; i < 15; i++)
+    {
         if (Vector3LengthSqr(axes[i]) < 1e-10f) continue;
         Vector3 axis = Vector3Normalize(axes[i]);
 
@@ -498,18 +522,20 @@ R3D_Penetration R3D_CheckPenetrationOrientedBoxes(R3D_OrientedBox box1, R3D_Orie
         float overlap = r1 + r2 - fabsf(Vector3DotProduct(d, axis));
         if (overlap <= 0) return (R3D_Penetration){0};
 
-        if (overlap < minDepth) {
+        if (overlap < minDepth)
+        {
             minDepth = overlap;
             minAxis = axis;
         }
     }
 
     // Ensure normal points from box1 toward box2
-    if (Vector3DotProduct(minAxis, d) < 0) {
+    if (Vector3DotProduct(minAxis, d) < 0)
+    {
         minAxis = Vector3Negate(minAxis);
     }
 
-    return (R3D_Penetration){
+    return (R3D_Penetration) {
         .collides = true, .depth = minDepth,
         .normal = minAxis, .mtv = Vector3Scale(minAxis, minDepth),
     };
@@ -534,7 +560,7 @@ R3D_Penetration R3D_CheckPenetrationOrientedBoxSphere(R3D_OrientedBox box, Vecto
         box.axisX.z * p.normal.x + box.axisY.z * p.normal.y + box.axisZ.z * p.normal.z,
     };
 
-    return (R3D_Penetration){
+    return (R3D_Penetration) {
         .collides = true, .depth = p.depth,
         .normal = worldNormal, .mtv = Vector3Scale(worldNormal, p.depth),
     };
@@ -546,7 +572,8 @@ R3D_Penetration R3D_CheckPenetrationSpheres(Vector3 c1, float r1, Vector3 c2, fl
     float distSq = dx*dx + dy*dy + dz*dz;
     float rSum = r1 + r2;
 
-    if (distSq >= rSum * rSum) {
+    if (distSq >= rSum * rSum)
+    {
         return (R3D_Penetration){0};
     }
 
@@ -585,10 +612,12 @@ R3D_Penetration R3D_CheckPenetrationCapsuleBoundingBox(R3D_Capsule capsule, Boun
     result.collides = true;
     result.depth = capsule.radius - dist;
 
-    if (dist > 1e-6f) {
+    if (dist > 1e-6f)
+    {
         result.normal = Vector3Scale(delta, 1.0f / dist);
     }
-    else {
+    else
+    {
         Vector3 boxCenter = {
             (box.min.x + box.max.x) * 0.5f,
             (box.min.y + box.max.y) * 0.5f,
@@ -600,13 +629,16 @@ R3D_Penetration R3D_CheckPenetrationCapsuleBoundingBox(R3D_Capsule capsule, Boun
         float ay = fabsf(toCenter.y);
         float az = fabsf(toCenter.z);
 
-        if (ax >= ay && ax >= az) {
+        if (ax >= ay && ax >= az)
+        {
             result.normal = (Vector3){toCenter.x > 0 ? 1.0f : -1.0f, 0, 0};
         }
-        else if (ay >= az) {
+        else if (ay >= az)
+        {
             result.normal = (Vector3){0, toCenter.y > 0 ? 1.0f : -1.0f, 0};
         }
-        else {
+        else
+        {
             result.normal = (Vector3){0, 0, toCenter.z > 0 ? 1.0f : -1.0f};
         }
     }
@@ -645,36 +677,42 @@ R3D_Penetration R3D_CheckPenetrationCapsuleOrientedBox(R3D_Capsule capsule, R3D_
     Vector3 bestOnSeg = localStart;
     Vector3 bestOnBox = R3D_ClosestPointOnBox(localStart, localBox);
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++)
+    {
         Vector3 onSeg = seeds[i];
-        for (int iter = 0; iter < 3; iter++) {
+        for (int iter = 0; iter < 3; iter++)
+        {
             Vector3 onBox = R3D_ClosestPointOnBox(onSeg, localBox);
             onSeg = R3D_ClosestPointOnSegment(onBox, localStart, localEnd);
         }
         Vector3 onBox = R3D_ClosestPointOnBox(onSeg, localBox);
         float distSq = Vector3DistanceSqr(onSeg, onBox);
 
-        if (distSq < bestDistSq) {
+        if (distSq < bestDistSq)
+        {
             bestDistSq = distSq;
             bestOnSeg = onSeg;
             bestOnBox = onBox;
         }
     }
 
-    if (bestDistSq > rSq) {
+    if (bestDistSq > rSq)
+    {
         return (R3D_Penetration){0};
     }
 
     Vector3 localNormal;
     float depth;
 
-    if (bestDistSq > 1e-10f) {
+    if (bestDistSq > 1e-10f)
+    {
         float dist = sqrtf(bestDistSq);
         Vector3 d  = Vector3Subtract(bestOnSeg, bestOnBox);
         localNormal = (Vector3){ d.x/dist, d.y/dist, d.z/dist };
         depth = capsule.radius - dist;
     }
-    else {
+    else
+    {
         float faces[6] = {
             bestOnSeg.x - localBox.min.x, localBox.max.x - bestOnSeg.x,
             bestOnSeg.y - localBox.min.y, localBox.max.y - bestOnSeg.y,
@@ -685,7 +723,8 @@ R3D_Penetration R3D_CheckPenetrationCapsuleOrientedBox(R3D_Capsule capsule, R3D_
             {0,1,0}, {0,0,-1}, {0,0,1}
         };
         int best = 0;
-        for (int i = 1; i < 6; i++) {
+        for (int i = 1; i < 6; i++)
+        {
             if (faces[i] < faces[best]) best = i;
         }
         localNormal = faceNormals[best];
@@ -721,30 +760,37 @@ R3D_Penetration R3D_CheckPenetrationCapsuleSphere(R3D_Capsule capsule, Vector3 c
     result.collides = true;
     result.depth = combinedRadius - dist;
 
-    if (dist > 1e-6f) {
+    if (dist > 1e-6f)
+    {
         result.normal = Vector3Scale(delta, 1.0f / dist);
     }
-    else {
+    else
+    {
         Vector3 capsuleDir = Vector3Subtract(capsule.end, capsule.start);
         float capsuleLengthSq = Vector3LengthSqr(capsuleDir);
         
-        if (capsuleLengthSq > 1e-6f) {
+        if (capsuleLengthSq > 1e-6f)
+        {
             result.normal = (Vector3){capsuleDir.y, -capsuleDir.x, 0};
             float normalLengthSq = Vector3LengthSqr(result.normal);
 
-            if (normalLengthSq < 1e-6f) {
+            if (normalLengthSq < 1e-6f)
+            {
                 result.normal = (Vector3){0, capsuleDir.z, -capsuleDir.y};
                 normalLengthSq = Vector3LengthSqr(result.normal);
             }
 
-            if (normalLengthSq > 1e-6f) {
+            if (normalLengthSq > 1e-6f)
+            {
                 result.normal = Vector3Normalize(result.normal);
             }
-            else {
+            else
+            {
                 result.normal = (Vector3){0, 1, 0};
             }
         }
-        else {
+        else
+        {
             result.normal = (Vector3){0, 1, 0};
         }
     }
@@ -771,21 +817,25 @@ R3D_Penetration R3D_CheckPenetrationCapsules(R3D_Capsule a, R3D_Capsule b)
 
     float s = 0.0f, t = 0.0f;
     
-    if (denom > 1e-6f) {
+    if (denom > 1e-6f)
+    {
         s = (dotAB * dotBR - dotBB * dotAR) / denom;
         s = fmaxf(0.0f, fminf(1.0f, s));
         t = (dotAB * s + dotBR) / dotBB;
 
-        if (t < 0.0f) {
+        if (t < 0.0f)
+        {
             t = 0.0f;
             s = fmaxf(0.0f, fminf(1.0f, -dotAR / dotAA));
         }
-        else if (t > 1.0f) {
+        else if (t > 1.0f)
+        {
             t = 1.0f;
             s = fmaxf(0.0f, fminf(1.0f, (dotAB - dotAR) / dotAA));
         }
     }
-    else {
+    else
+    {
         s = 0.5f;
         t = fmaxf(0.0f, fminf(1.0f, dotBR / dotBB));
     }
@@ -804,29 +854,36 @@ R3D_Penetration R3D_CheckPenetrationCapsules(R3D_Capsule a, R3D_Capsule b)
     result.collides = true;
     result.depth = combinedRadius - dist;
 
-    if (dist > 1e-6f) {
+    if (dist > 1e-6f)
+    {
         result.normal = Vector3Scale(delta, 1.0f / dist);
     }
-    else {
+    else
+    {
         Vector3 cross = Vector3CrossProduct(dirA, dirB);
         float crossLengthSq = Vector3LengthSqr(cross);
 
-        if (crossLengthSq > 1e-6f) {
+        if (crossLengthSq > 1e-6f)
+        {
             result.normal = Vector3Normalize(cross);
         }
-        else {
+        else
+        {
             Vector3 perp = (Vector3){dirA.y, -dirA.x, 0};
             float perpLengthSq = Vector3LengthSqr(perp);
 
-            if (perpLengthSq < 1e-6f) {
+            if (perpLengthSq < 1e-6f)
+            {
                 perp = (Vector3){0, dirA.z, -dirA.y};
                 perpLengthSq = Vector3LengthSqr(perp);
             }
 
-            if (perpLengthSq > 1e-6f) {
+            if (perpLengthSq > 1e-6f)
+            {
                 result.normal = Vector3Normalize(perp);
             }
-            else {
+            else
+            {
                 result.normal = (Vector3){0, 1, 0};
             }
         }
@@ -842,7 +899,8 @@ RayCollision R3D_RaycastTriangle(Ray ray, Vector3 p1, Vector3 p2, Vector3 p3)
     Vector3 edge1 = {0};
     Vector3 edge2 = {0};
 
-    if (!raycast_triangle(&t, &edge1, &edge2, ray.position, ray.direction, p1, p2, p3)) {
+    if (!raycast_triangle(&t, &edge1, &edge2, ray.position, ray.direction, p1, p2, p3))
+    {
         return (RayCollision){0};
     }
 
@@ -877,9 +935,12 @@ RayCollision R3D_RaycastBoundingBox(Ray ray, R3D_BoundingBox box)
     float boxMin[3] = {box.min.x, box.min.y, box.min.z};
     float boxMax[3] = {box.max.x, box.max.y, box.max.z};
 
-    for (int i = 0; i < 3; i++) {
-        if (fabsf(dir[i]) < 1e-8f) {
-            if (origin[i] < boxMin[i] || origin[i] > boxMax[i]) {
+    for (int i = 0; i < 3; i++)
+    {
+        if (fabsf(dir[i]) < 1e-8f)
+        {
+            if (origin[i] < boxMin[i] || origin[i] > boxMax[i])
+            {
                 return (RayCollision){0};
             }
             continue;
@@ -989,13 +1050,16 @@ RayCollision R3D_RaycastCapsule(Ray ray, R3D_Capsule capsule)
     RayCollision best = {0};
     best.distance = FLT_MAX;
 
-    if (fabsf(a) > 1e-8f) {
+    if (fabsf(a) > 1e-8f)
+    {
         float disc = b*b - a*c;
-        if (disc >= 0) {
+        if (disc >= 0)
+        {
             float sqrtDisc = sqrtf(disc);
             float t[2] = {(-b - sqrtDisc) / a, (-b + sqrtDisc) / a};
 
-            for (int i = 0; i < 2; i++) {
+            for (int i = 0; i < 2; i++)
+            {
                 if (t[i] < 0) continue;
 
                 float proj = abOri + t[i] * abDir;
@@ -1005,7 +1069,8 @@ RayCollision R3D_RaycastCapsule(Ray ray, R3D_Capsule capsule)
                 Vector3 axisPoint = Vector3Add(capsule.start, Vector3Scale(ab, proj / abLen2));
                 Vector3 normal = Vector3Normalize(Vector3Subtract(point, axisPoint));
 
-                if (t[i] < best.distance) {
+                if (t[i] < best.distance)
+                {
                     best = (RayCollision) {
                         .hit = true, .distance = t[i],
                         .point = point, .normal = normal
@@ -1030,7 +1095,8 @@ RayCollision R3D_RaycastMesh(Ray ray, R3D_MeshData mesh, Matrix transform)
     RayCollision collision = {0};
     collision.distance = FLT_MAX;
 
-    if (mesh.vertices == NULL) {
+    if (mesh.vertices == NULL)
+    {
         return collision;
     }
 
@@ -1044,14 +1110,16 @@ RayCollision R3D_RaycastMesh(Ray ray, R3D_MeshData mesh, Matrix transform)
     Vector3 closestEdge2 = {0};
     float closestT = FLT_MAX;
 
-    if (mesh.indices) {
+    if (mesh.indices)
+    {
         raycast_mesh_indexed(
             &closestT, &closestEdge1, &closestEdge2,
             mesh.vertices, mesh.indices, triangleCount,
             localOrigin, localDirection
         );
     }
-    else {
+    else
+    {
         raycast_mesh_vertices(
             &closestT, &closestEdge1, &closestEdge2,
             mesh.vertices, triangleCount,
@@ -1079,7 +1147,8 @@ RayCollision R3D_RaycastModel(Ray ray, R3D_Model model, Matrix transform)
     RayCollision collision = {0};
     collision.distance = FLT_MAX;
 
-    if (model.meshData == NULL || model.meshCount <= 0) {
+    if (model.meshData == NULL || model.meshCount <= 0)
+    {
         return collision;
     }
 
@@ -1103,14 +1172,16 @@ RayCollision R3D_RaycastModel(Ray ray, R3D_Model model, Matrix transform)
 
         int triangleCount = mesh.indices ? (mesh.indexCount / 3) : (mesh.vertexCount / 3);
 
-        if (mesh.indices) {
+        if (mesh.indices)
+        {
             raycast_mesh_indexed(
                 &closestT, &closestEdge1, &closestEdge2,
                 mesh.vertices, mesh.indices, triangleCount,
                 localOrigin, localDirection
             );
         }
-        else {
+        else
+        {
             raycast_mesh_vertices(
                 &closestT, &closestEdge1, &closestEdge2,
                 mesh.vertices, triangleCount,
@@ -1168,19 +1239,22 @@ Vector3 R3D_ClosestPointOnTriangle(Vector3 p, Vector3 a, Vector3 b, Vector3 c)
     if (d6 >= 0.0f && d5 <= d6) return c;
 
     float vc = d1 * d4 - d3 * d2;
-    if (vc <= 0.0f && d1 >= 0.0f && d3 <= 0.0f) {
+    if (vc <= 0.0f && d1 >= 0.0f && d3 <= 0.0f)
+    {
         float v = d1 / (d1 - d3);
         return Vector3Add(a, Vector3Scale(ab, v));
     }
         
     float vb = d5 * d2 - d1 * d6;
-    if (vb <= 0.0f && d2 >= 0.0f && d6 <= 0.0f) {
+    if (vb <= 0.0f && d2 >= 0.0f && d6 <= 0.0f)
+    {
         float v = d2 / (d2 - d6);
         return Vector3Add(a, Vector3Scale(ac, v));
     }
         
     float va = d3 * d6 - d5 * d4;
-    if (va <= 0.0f && (d4 - d3) >= 0.0f && (d5 - d6) >= 0.0f) {
+    if (va <= 0.0f && (d4 - d3) >= 0.0f && (d5 - d6) >= 0.0f)
+    {
         float v = (d4 - d3) / ((d4 - d3) + (d5 - d6));
         return Vector3Add(b, Vector3Scale(Vector3Subtract(c, b), v));
     }
