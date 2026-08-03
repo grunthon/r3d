@@ -26,7 +26,8 @@ Texture2D R3D_LoadTextureEx(const char* fileName, TextureWrap wrap, TextureFilte
     Texture2D texture = {0};
 
     Image image = LoadImage(fileName);
-    if (!IsImageValid(image)) {
+    if (!IsImageValid(image))
+    {
         R3D_TRACELOG(LOG_WARNING, "Failed to load texture (path: '%s')", fileName);
         return texture;
     }
@@ -34,10 +35,12 @@ Texture2D R3D_LoadTextureEx(const char* fileName, TextureWrap wrap, TextureFilte
     bool srgb = isColor ? (R3D.colorSpace == R3D_COLORSPACE_SRGB) : false;
     texture = r3d_image_upload(&image, wrap, filter, srgb);
 
-    if (texture.id != 0) {
+    if (texture.id != 0)
+    {
         R3D_TRACELOG(LOG_INFO, "Texture loaded successfully (path: '%s')", fileName);
     }
-    else {
+    else
+    {
         R3D_TRACELOG(LOG_WARNING, "Failed to load texture (path: '%s')", fileName);
     }
 
@@ -56,10 +59,12 @@ Texture2D R3D_LoadTextureFromImageEx(Image image, TextureWrap wrap, TextureFilte
     bool srgb = isColor ? (R3D.colorSpace == R3D_COLORSPACE_SRGB) : false;
     Texture2D texture = r3d_image_upload(&image, wrap, filter, srgb);
 
-    if (texture.id != 0) {
+    if (texture.id != 0)
+    {
         R3D_TRACELOG(LOG_INFO, "Texture loaded successfully from image");
     }
-    else {
+    else
+    {
         R3D_TRACELOG(LOG_WARNING, "Failed to load texture from image");
     }
 
@@ -78,7 +83,8 @@ Texture2D R3D_LoadTextureFromMemoryEx(const char* fileType, const void* fileData
     Texture2D texture = {0};
 
     Image image = LoadImageFromMemory(fileType, fileData, dataSize);
-    if (!IsImageValid(image)) {
+    if (!IsImageValid(image))
+    {
         R3D_TRACELOG(LOG_WARNING, "Failed to load texture from memory (type: '%s')", fileType);
         return texture;
     }
@@ -86,10 +92,12 @@ Texture2D R3D_LoadTextureFromMemoryEx(const char* fileType, const void* fileData
     bool srgb = isColor ? (R3D.colorSpace == R3D_COLORSPACE_SRGB) : false;
     texture = r3d_image_upload(&image, wrap, filter, srgb);
 
-    if (texture.id != 0) {
+    if (texture.id != 0)
+    {
         R3D_TRACELOG(LOG_INFO, "Texture loaded successfully from memory (type: '%s')", fileType);
     }
-    else {
+    else
+    {
         R3D_TRACELOG(LOG_WARNING, "Failed to load texture from memory (type: '%s')", fileType);
     }
 
@@ -100,7 +108,8 @@ Texture2D R3D_LoadTextureFromMemoryEx(const char* fileType, const void* fileData
 
 void R3D_UnloadTexture(Texture2D texture)
 {
-    if (texture.id == 0 || r3d_texture_is_default(texture.id)) {
+    if (texture.id == 0 || r3d_texture_is_default(texture.id))
+    {
         return;
     }
 
