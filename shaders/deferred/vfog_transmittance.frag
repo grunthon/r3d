@@ -42,7 +42,8 @@ void main()
     vec3 emission = uVFog.emissionColor.rgb * (uVFog.emissionEnergy * extinction);
 
     // Scale effect on sky pixels
-    if (depth >= uView.far) {
+    if (depth >= uView.far)
+    {
         transmittance = mix(1.0, transmittance, uVFog.skyAffect);  // 0 = no effect, 1 = full effect
         emission *= uVFog.skyAffect;                               // mix(vec3(0), emission, t) == emission * t
     }

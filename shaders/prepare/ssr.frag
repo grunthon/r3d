@@ -53,7 +53,8 @@ vec4 TraceRay(vec3 startViewPos, vec3 reflectionDir)
         float sampleZ = -textureLod(uDepthTex, uv, 0).r;
         float depthDiff = sampleZ - currentPos.z;
 
-        if (depthDiff > 0.0 && depthDiff < uSsr.thickness) {
+        if (depthDiff > 0.0 && depthDiff < uSsr.thickness)
+        {
             hitUV = uv;
             hit = true;
             break;
@@ -78,11 +79,13 @@ vec4 TraceRay(vec3 startViewPos, vec3 reflectionDir)
         float sampleZ = -textureLod(uDepthTex, uv, 0).r;
         float depthDiff = sampleZ - mid.z;
 
-        if (depthDiff > 0.0 && depthDiff < uSsr.thickness) {
+        if (depthDiff > 0.0 && depthDiff < uSsr.thickness)
+        {
             hitUV = uv;
             end = mid;
         }
-        else {
+        else
+        {
             start = mid;
         }
     }
@@ -107,7 +110,8 @@ void main()
 {
     // Early depth rejection
     float linearDepth = texelFetch(uDepthTex, ivec2(gl_FragCoord.xy), 0).r;
-    if (linearDepth >= uView.far) {
+    if (linearDepth >= uView.far)
+    {
         FragColor = vec4(0.0);
         return;
     }

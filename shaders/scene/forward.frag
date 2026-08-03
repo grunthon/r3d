@@ -142,19 +142,23 @@ void main()
 
         float shadow = 1.0;
 
-        if (light.type != LIGHT_DIR) {
+        if (light.type != LIGHT_DIR)
+        {
             float atten = pow(1.0 - clamp(Ldist / light.range, 0.0, 1.0), light.falloff);
             shadow *= atten;
         }
 
-        if (light.type == LIGHT_SPOT) {
+        if (light.type == LIGHT_SPOT)
+        {
             float theta = dot(L, -light.direction);
             float epsilon = (light.innerCutOff - light.outerCutOff);
             shadow *= smoothstep(0.0, 1.0, (theta - light.outerCutOff) / epsilon);
         }
 
-        if (light.shadowLayer >= 0 && light.shadowOpacity != 0.0 && shadow > 1e-4) {
-            switch (light.type) {
+        if (light.shadowLayer >= 0 && light.shadowOpacity != 0.0 && shadow > 1e-4)
+        {
+            switch (light.type)
+            {
             case LIGHT_DIR:  shadow *= L_SampleShadowDir(light, vPosition, vLinearDepth, NoL, diskRot); break;
             case LIGHT_SPOT: shadow *= L_SampleShadowSpot(light, vPosition, NoL, diskRot); break;
             case LIGHT_OMNI: shadow *= L_SampleShadowOmni(light, vPosition, NoL, diskRot); break;

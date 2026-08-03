@@ -158,7 +158,8 @@ vec3 Tonemapping(vec3 color, float exposure, float pWhite) // inputs are LINEAR
 
     color *= exposure;
 
-    switch (uTonemap.mode) {
+    switch (uTonemap.mode)
+    {
     case TONEMAP_REINHARD:
         color = TonemapReinhard(max(vec3(0.0), color), pWhite);
         break;

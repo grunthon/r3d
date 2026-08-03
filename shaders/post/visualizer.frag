@@ -45,7 +45,8 @@ void main()
 {
     FragColor = texture(uSourceTex, vTexCoord);
 
-    switch (uOutputMode) {
+    switch (uOutputMode)
+    {
     case OUTPUT_ALBEDO:
         FragColor = vec4(FragColor.rgb, 1.0);
         break;

@@ -46,7 +46,8 @@ void main()
         float sampleDepth = texture(uDepthTex, uv).r;
         float sampleSize = abs(sampleScene.a) * uDof.maxBlurSize;
 
-        if (sampleDepth > centerDepth) {
+        if (sampleDepth > centerDepth)
+        {
             sampleSize = clamp(sampleSize, 0.0, centerSize * 2.0);
         }
 

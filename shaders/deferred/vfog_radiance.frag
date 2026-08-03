@@ -54,7 +54,8 @@ float PhaseFunction_Schlick(vec3 w0, vec3 w1)
 // tEnter/tExit are both 0.0 when the ray never enters the light's range
 void VFog_GetMarchRange(vec3 rayOrigin, vec3 rayDir, float maxDist, out float tEnter, out float tExit)
 {
-    if (uLight.type == LIGHT_DIR) {
+    if (uLight.type == LIGHT_DIR)
+    {
         tEnter = 0.0;
         tExit = maxDist;
         return;
@@ -65,7 +66,8 @@ void VFog_GetMarchRange(vec3 rayOrigin, vec3 rayDir, float maxDist, out float tE
     float distToRaySq = dot(toLight, toLight) - tCenter * tCenter;
     float rangeSq = uLight.range * uLight.range;
 
-    if (distToRaySq >= rangeSq) {
+    if (distToRaySq >= rangeSq)
+    {
         tEnter = 0.0;
         tExit = 0.0;
         return;
@@ -97,7 +99,8 @@ void main()
     float rayDist = tExit - tEnter;
 
     // Early-out: this light's range sphere doesn't intersect the view ray
-    if (rayDist <= 0.0) {
+    if (rayDist <= 0.0)
+    {
         FragRadiance = vec3(0.0);
         return;
     }
@@ -137,8 +140,10 @@ void main()
 
         // Shadow visibility at current march position
         float visibility = 1.0;
-        if (hasShadow) {
-            switch (uLight.type) {
+        if (hasShadow)
+        {
+            switch (uLight.type)
+            {
             case LIGHT_DIR:  visibility *= L_SampleShadowDir(uLight, marchPos, depth, 1.0, diskRot); break;
             case LIGHT_SPOT: visibility *= L_SampleShadowSpot(uLight, marchPos, 1.0, diskRot); break;
             case LIGHT_OMNI: visibility *= L_SampleShadowOmni(uLight, marchPos, 1.0, diskRot); break;
@@ -146,13 +151,15 @@ void main()
         }
 
         // Range attenuation (omni and spot only)
-        if (uLight.type != LIGHT_DIR) {
+        if (uLight.type != LIGHT_DIR)
+        {
             float atten = pow(1.0 - clamp(Ldist * invRange, 0.0, 1.0), uLight.falloff);
             visibility *= atten;
         }
 
         // Angular attenuation (spot only)
-        if (uLight.type == LIGHT_SPOT) {
+        if (uLight.type == LIGHT_SPOT)
+        {
             float theta = dot(L, -uLight.direction);
             visibility *= smoothstep(0.0, 1.0, (theta - uLight.outerCutOff) * invEpsilon);
         }

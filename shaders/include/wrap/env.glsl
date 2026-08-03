@@ -17,13 +17,15 @@ void E_SampleProbe(inout vec3 irr, inout vec3 rad, inout float wIrr, inout float
 
     if (weight < 1e-6) return;
 
-    if (probe.irradiance >= 0) {
+    if (probe.irradiance >= 0)
+    {
         vec3 probeIrr = IBL_SampleIrradiance(uIrradianceTex, probe.irradiance, N);
         irr += probeIrr.rgb * weight;
         wIrr += weight;
     }
 
-    if (probe.prefilter >= 0) {
+    if (probe.prefilter >= 0)
+    {
         vec3 probeRad = IBL_SamplePrefilter(uPrefilterTex, probe.prefilter, V, N, roughness, uNumPrefilterLevels);
         rad += probeRad.rgb * weight;
         wRad += weight;
@@ -42,30 +44,35 @@ void E_ComputeAmbientAndProbes(inout vec3 diffuse, inout vec3 specular, vec3 kD,
     vec3 radiance = vec3(0.0);
     float wRadiance = 0.0;
 
-    for (int i = 0; i < uNumProbes; ++i) {
+    for (int i = 0; i < uNumProbes; ++i)
+    {
         E_SampleProbe(irradiance, radiance, wIrradiance, wRadiance, i, roughness, P, N, V);
     }
 
-    if (wIrradiance > 1.0) {
+    if (wIrradiance > 1.0)
+    {
         float invTotalWeight = 1.0 / wIrradiance;
         irradiance *= invTotalWeight;
         wIrradiance = 1.0;
     }
 
-    if (wRadiance > 1.0) {
+    if (wRadiance > 1.0)
+    {
         float invTotalWeight = 1.0 / wRadiance;
         radiance *= invTotalWeight;
         wRadiance = 1.0;
     }
 
-    if (wIrradiance < 1.0) {
+    if (wIrradiance < 1.0)
+    {
         vec3 ambientIrr = vec3(0.0);
         if (uAmbient.irradiance < 0) ambientIrr = uAmbient.color.rgb;
         else ambientIrr = IBL_SampleIrradiance(uIrradianceTex, uAmbient.irradiance, N, uAmbient.rotation);
         irradiance += ambientIrr * (1.0 - wIrradiance);
     }
 
-    if (wRadiance < 1.0 && uAmbient.prefilter >= 0) {
+    if (wRadiance < 1.0 && uAmbient.prefilter >= 0)
+    {
         vec3 ambientRad = IBL_SamplePrefilter(uPrefilterTex, uAmbient.prefilter, V, N, uAmbient.rotation, roughness, uNumPrefilterLevels);
         radiance += ambientRad * (1.0 - wRadiance);
     }
@@ -92,7 +99,8 @@ void E_ComputeAmbientOnly(inout vec3 diffuse, inout vec3 specular, vec3 kD, vec3
     irradiance *= occlusion * uAmbient.energy;
 
     vec3 radiance = vec3(0.0);
-    if (uAmbient.prefilter >= 0) {
+    if (uAmbient.prefilter >= 0)
+    {
         radiance = IBL_SamplePrefilter(uPrefilterTex, uAmbient.prefilter, V, N, uAmbient.rotation, roughness, uNumPrefilterLevels).rgb;
         radiance *= IBL_GetSpecularOcclusion(NoV, occlusion, roughness);
     }

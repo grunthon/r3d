@@ -13,7 +13,8 @@ vec3 V_GetViewPosition(vec2 texCoord, float linearDepth)
 {
     vec2 ndc = texCoord * 2.0 - 1.0;
 
-    if (uView.projMode == V_PROJ_ORTHO) {
+    if (uView.projMode == V_PROJ_ORTHO)
+    {
         vec2 xyScale = vec2(1.0 / uView.proj[0][0], 1.0 / uView.proj[1][1]);
         return vec3(ndc * xyScale, -linearDepth);
     }
@@ -116,7 +117,8 @@ bool V_OffScreen(vec2 texCoord)
 
 float V_LinearizeDepth(float depth)
 {
-    if (uView.projMode == V_PROJ_ORTHO) {
+    if (uView.projMode == V_PROJ_ORTHO)
+    {
         return uView.near + depth * (uView.far - uView.near);
     }
 
@@ -127,7 +129,8 @@ float V_LinearizeDepth(float depth)
 
 float V_LinearizeDepth01(float depth)
 {
-    if (uView.projMode == V_PROJ_ORTHO) {
+    if (uView.projMode == V_PROJ_ORTHO)
+    {
         return depth;
     }
 

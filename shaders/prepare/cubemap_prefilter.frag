@@ -97,7 +97,8 @@ void main()
 
     /* --- Handle the case where roughness = 0 (perfect mirror) --- */
 
-    if (uRoughness <= EPSILON) {
+    if (uRoughness <= EPSILON)
+    {
         FragColor = textureLod(uSourceTex, N, 0.0);
         return;
     }

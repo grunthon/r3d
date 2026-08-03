@@ -175,7 +175,8 @@ void main()
     vec3 localTangent = TANGENT.xyz;
 
 #if !defined(DECAL)
-    if (uSkinning) {
+    if (uSkinning)
+    {
         mat4 sMatModel = SkinMatrix(aBoneIndices, aBoneWeights);
         mat3 sMatNormal = mat3(transpose(inverse(sMatModel)));
         localPosition = vec3(sMatModel * vec4(localPosition, 1.0));
@@ -193,7 +194,8 @@ void main()
     mat4 decalMatModel = MATRIX_MODEL;
 #endif // DECAL
 
-    if (uInstancing) {
+    if (uInstancing)
+    {
         billboardCenter += INSTANCE_POSITION;
         finalPosition = finalPosition * INSTANCE_SCALE;
         finalPosition = M_Rotate3D(finalPosition, INSTANCE_ROTATION);
@@ -209,10 +211,12 @@ void main()
     }
 
 #if !defined(DECAL) 
-    if (uBillboard == BILLBOARD_FRONT) {
+    if (uBillboard == BILLBOARD_FRONT)
+    {
         BillboardFront(finalPosition, finalNormal, finalTangent, billboardCenter, MATRIX_INV_VIEW);
     }
-    else if (uBillboard == BILLBOARD_Y_AXIS) {
+    else if (uBillboard == BILLBOARD_Y_AXIS)
+    {
         BillboardYAxis(finalPosition, finalNormal, finalTangent, billboardCenter, MATRIX_INV_VIEW);
     }
 #endif // !DECAL

@@ -131,16 +131,19 @@ void main()
     if (uSsil.enabled || uSsao.enabled || uSsgi.enabled)
     {
         UpsampleWeights uw = ComputeUpsampleWeights(depth, NoV);
-        if (uSsil.enabled) {
+        if (uSsil.enabled)
+        {
             io = Upsample(uSsilTex, uw);
             io.rgb *= uSsil.giIntensity;
             io.a = pow(io.a, uSsil.aoPower);
         }
-        if (uSsao.enabled) {
+        if (uSsao.enabled)
+        {
             float ao = Upsample(uSsaoTex, uw).r;
             io.a *= pow(ao, uSsao.power);
         }
-        if (uSsgi.enabled) {
+        if (uSsgi.enabled)
+        {
             vec3 gi = Upsample(uSsgiTex, uw).rgb;
             io.rgb += gi * uSsgi.intensity;
         }
