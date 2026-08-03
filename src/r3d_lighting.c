@@ -70,7 +70,8 @@ void R3D_ToggleLight(R3D_Light id)
     GET_LIGHT_OR_RETURN(light, id);
     light->enabled = !light->enabled;
 
-    if (light->enabled && light->shadowLayer >= 0) {
+    if (light->enabled && light->shadowLayer >= 0)
+    {
         light->state.shadowShouldBeUpdated = true;
     }
 }
@@ -80,7 +81,8 @@ void R3D_EnableLight(R3D_Light id)
     GET_LIGHT_OR_RETURN(light, id);
     if (light->enabled) return;
 
-    if (light->shadowLayer >= 0) {
+    if (light->shadowLayer >= 0)
+    {
         light->state.shadowShouldBeUpdated = true;
     }
     light->enabled = true;
@@ -132,12 +134,14 @@ void R3D_SetLightPosition(R3D_Light id, Vector3 position)
 {
     GET_LIGHT_OR_RETURN(light, id);
 
-    if (Vector3Equals(position, light->position)) {
+    if (Vector3Equals(position, light->position))
+    {
         return;
     }
 
     // Position is dummy and unused for directional lights
-    if (light->type != R3D_LIGHT_DIR) {
+    if (light->type != R3D_LIGHT_DIR)
+    {
         light->state.matrixShouldBeUpdated = true;
     }
     light->position = position;
@@ -153,7 +157,8 @@ void R3D_SetLightDirection(R3D_Light id, Vector3 direction)
 {
     GET_LIGHT_OR_RETURN(light, id);
 
-    if (light->type == R3D_LIGHT_OMNI) {
+    if (light->type == R3D_LIGHT_OMNI)
+    {
         R3D_TRACELOG(LOG_WARNING, "Can't set direction for light [ID %i]; it's omni-directional and doesn't have a direction", id);
         return;
     }
@@ -166,7 +171,8 @@ void R3D_SetLightTarget(R3D_Light id, Vector3 position, Vector3 target)
 {
     GET_LIGHT_OR_RETURN(light, id);
 
-    if (light->type != R3D_LIGHT_OMNI) {
+    if (light->type != R3D_LIGHT_OMNI)
+    {
         light->direction = Vector3Normalize(Vector3Subtract(target, position));
     }
     light->state.matrixShouldBeUpdated = true;
@@ -230,7 +236,8 @@ float R3D_GetLightFalloff(R3D_Light id)
 void R3D_SetLightFalloff(R3D_Light id, float falloff)
 {
     GET_LIGHT_OR_RETURN(light, id);
-    if (light->type == R3D_LIGHT_DIR) {
+    if (light->type == R3D_LIGHT_DIR)
+    {
         R3D_TRACELOG(LOG_WARNING, "Can't set falloff for light [ID %i]; it's directional and doesn't have falloff", id);
         return;
     }
@@ -248,12 +255,14 @@ void R3D_GetLightAngle(R3D_Light id, float* inner, float* outer)
 void R3D_SetLightAngle(R3D_Light id, float inner, float outer)
 {
     GET_LIGHT_OR_RETURN(light, id);
-    if (light->type == R3D_LIGHT_DIR || light->type == R3D_LIGHT_OMNI) {
+    if (light->type == R3D_LIGHT_DIR || light->type == R3D_LIGHT_OMNI)
+    {
         R3D_TRACELOG(LOG_WARNING, "Can't set angle for light [ID %i]; it's directional or omni and doesn't have angle attenuation", id);
         return;
     }
 
-    if (inner > outer) {
+    if (inner > outer)
+    {
         float tmp = inner;
         inner = outer;
         outer = tmp;
@@ -262,7 +271,8 @@ void R3D_SetLightAngle(R3D_Light id, float inner, float outer)
     float i = cosf(inner * DEG2RAD);
     float o = cosf(outer * DEG2RAD);
 
-    if (fabsf(o - light->outerCutOff) > 1e-4f) {
+    if (fabsf(o - light->outerCutOff) > 1e-4f)
+    {
         light->state.matrixShouldBeUpdated = true;
     }
 
@@ -296,7 +306,8 @@ void R3D_EnableShadow(R3D_Light id)
 {
     GET_LIGHT_OR_RETURN(light, id);
 
-    if (!r3d_light_enable_shadows(light)) {
+    if (!r3d_light_enable_shadows(light))
+    {
         R3D_TRACELOG(LOG_WARNING, "Failed to enable shadows for light [ID %i]", id);
     }
 }
@@ -448,8 +459,10 @@ static void r3d_draw_light_dir_debug(const r3d_light_t* light, Color color)
 
     Vector3 origin = light->position;
 
-    for (int i = -GRID_HALF; i <= GRID_HALF; i++) {
-        for (int j = -GRID_HALF; j <= GRID_HALF; j++) {
+    for (int i = -GRID_HALF; i <= GRID_HALF; i++)
+    {
+        for (int j = -GRID_HALF; j <= GRID_HALF; j++)
+        {
             // Offset arrow origin on the plane perpendicular to direction
             Vector3 offset = Vector3Add(
                 Vector3Scale(right, (float)i * ARROW_SPREAD),
@@ -493,7 +506,8 @@ static void r3d_draw_light_spot_debug(const r3d_light_t* light, Color color)
         rlBegin(RL_LINES);
         rlColor4ub(color.r, color.g, color.b, color.a);
         const float step = (2.0f * PI) / SEGMENTS;
-        for (int i = 0; i < SEGMENTS; i++) {
+        for (int i = 0; i < SEGMENTS; i++)
+        {
             float a1 = i * step, a2 = (i + 1) * step;
             Vector3 p1 = Vector3Add(base, Vector3Add(
                 Vector3Scale(right, cosf(a1) * radius),
@@ -508,7 +522,8 @@ static void r3d_draw_light_spot_debug(const r3d_light_t* light, Color color)
 
         // 4 lines from apex to ring (cardinal points only)
         float angles[4] = { 0, PI * 0.5f, PI, PI * 1.5f };
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 4; i++)
+        {
             Vector3 rim = Vector3Add(base, Vector3Add(
                 Vector3Scale(right, cosf(angles[i]) * radius),
                 Vector3Scale(up,    sinf(angles[i]) * radius)));
@@ -531,7 +546,8 @@ static void r3d_draw_light_omni_debug(const r3d_light_t* light, Color color)
     // 3 orthogonal circles (XY, XZ, YZ planes)
     rlBegin(RL_LINES);
     rlColor4ub(color.r, color.g, color.b, color.a);
-    for (int i = 0; i < SEGMENTS; i++) {
+    for (int i = 0; i < SEGMENTS; i++)
+    {
         float a1 = i * STEP, a2 = (i + 1) * STEP;
         float c1 = cosf(a1) * range, s1 = sinf(a1) * range;
         float c2 = cosf(a2) * range, s2 = sinf(a2) * range;
@@ -563,7 +579,8 @@ void R3D_DrawLightDebug(R3D_Light id)
         200
     };
 
-    switch (light->type) {
+    switch (light->type)
+    {
     case R3D_LIGHT_DIR:
         r3d_draw_light_dir_debug(light, color);
         break;
