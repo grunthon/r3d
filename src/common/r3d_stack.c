@@ -31,9 +31,11 @@ static r3d_stack_t* stack_grow(r3d_stack_t* stack, size_t minCapacity)
 {
     size_t newCap = (stack->capacity > 0) ? stack->capacity : 64;
 
-    while (newCap < minCapacity) {
+    while (newCap < minCapacity)
+    {
         size_t doubled = newCap * 2;
-        if (doubled <= newCap) { // Overflow
+        if (doubled <= newCap) // Overflow
+        {
             newCap = minCapacity;
             break;
         }
@@ -49,7 +51,8 @@ static r3d_stack_t* stack_grow(r3d_stack_t* stack, size_t minCapacity)
 
     stack_set_pointer(newStack);
 
-    if (stack->cursor > 0) {
+    if (stack->cursor > 0)
+    {
         memcpy(newStack->memory, stack->memory, stack->cursor);
     }
 
@@ -63,7 +66,8 @@ static r3d_stack_t* stack_grow(r3d_stack_t* stack, size_t minCapacity)
 
 r3d_stack_t* r3d_stack_create(size_t capacity)
 {
-    if (capacity == 0) {
+    if (capacity == 0)
+    {
         return NULL;
     }
 
@@ -90,11 +94,13 @@ bool r3d_stack_push(r3d_stack_t** stackPtr, size_t reserve)
     r3d_stack_t* stack = *stackPtr;
 
     assert(stack->depth < R3D_STACK_MAX_DEPTH && "r3d_stack: max push() depth exceeded");
-    if (stack->depth >= R3D_STACK_MAX_DEPTH) {
+    if (stack->depth >= R3D_STACK_MAX_DEPTH)
+    {
         return false;
     }
 
-    if (reserve > 0 && stack->cursor + reserve > stack->capacity) {
+    if (reserve > 0 && stack->cursor + reserve > stack->capacity)
+    {
         stack = stack_grow(stack, stack->cursor + reserve);
         if (!stack) return false;
         *stackPtr = stack;
@@ -131,7 +137,8 @@ void* r3d_stack_alloc_aligned(r3d_stack_t** stackPtr, size_t size, size_t align)
     // the final base address (it may change if we have to grow)
     size_t worst = size + (align - 1);
 
-    if (stack->cursor + worst > stack->capacity) {
+    if (stack->cursor + worst > stack->capacity)
+    {
         stack = stack_grow(stack, stack->cursor + worst);
         if (!stack) return NULL;
         *stackPtr = stack;
