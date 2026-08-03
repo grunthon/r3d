@@ -51,7 +51,8 @@ static bool compile_shader_variants(R3D_SurfaceShader* shader, usage_hint_t usag
 R3D_SurfaceShader* R3D_LoadSurfaceShader(const char* filePath)
 {
     char* code = LoadFileText(filePath);
-    if (code == NULL) {
+    if (code == NULL)
+    {
         R3D_TRACELOG(LOG_ERROR, "Failed to load surface shader; Unable to load shader file");
         return NULL;
     }
@@ -65,18 +66,21 @@ R3D_SurfaceShader* R3D_LoadSurfaceShader(const char* filePath)
 R3D_SurfaceShader* R3D_LoadSurfaceShaderFromMemory(const char* code)
 {
     size_t userCodeLen = strlen(code);
-    if (userCodeLen > R3D_MAX_SHADER_CODE_LENGTH) {
+    if (userCodeLen > R3D_MAX_SHADER_CODE_LENGTH)
+    {
         R3D_TRACELOG(LOG_ERROR, "Failed to load surface shader; User code too long");
         return NULL;
     }
 
-    if (!strstr(code, "void vertex()") && !strstr(code, "void fragment()")) {
+    if (!strstr(code, "void vertex()") && !strstr(code, "void fragment()"))
+    {
         R3D_TRACELOG(LOG_WARNING, "Failed to load surface shader; Missing entry points");
         return NULL;
     }
 
     R3D_SurfaceShader* shader = r3d_shader_custom_alloc();
-    if (!shader) {
+    if (!shader)
+    {
         R3D_TRACELOG(LOG_ERROR, "Bad alloc during surface shader loading");
         return NULL;
     }
@@ -101,13 +105,15 @@ R3D_SurfaceShader* R3D_LoadSurfaceShaderFromMemory(const char* code)
         if (!*ptr) break;
 
         // Parse #pragma usage directive
-        if (strncmp(ptr, "#pragma", 7) == 0 && isspace(ptr[7])) {
+        if (strncmp(ptr, "#pragma", 7) == 0 && isspace(ptr[7]))
+        {
             usage |= parse_pragma_usage(&ptr);
             continue;
         }
 
         // Parse uniform declarations
-        if (r3d_rshade_match_keyword(ptr, "uniform", 7)) {
+        if (r3d_rshade_match_keyword(ptr, "uniform", 7))
+        {
             ptr += 7;
             r3d_rshade_parse_uniform(&ptr,
                 shader->data.samplers,
@@ -122,13 +128,17 @@ R3D_SurfaceShader* R3D_LoadSurfaceShaderFromMemory(const char* code)
         }
 
         // Parse varying declarations
-        if (r3d_rshade_match_varying_keyword(ptr)) {
-            if (varyingCount < 32) {
-                if (r3d_rshade_parse_varying(&ptr, &varyings[varyingCount])) {
+        if (r3d_rshade_match_varying_keyword(ptr))
+        {
+            if (varyingCount < 32)
+            {
+                if (r3d_rshade_parse_varying(&ptr, &varyings[varyingCount]))
+                {
                     varyingCount++;
                 }
             }
-            else {
+            else
+            {
                 r3d_rshade_skip_to_semicolon(&ptr);
             }
             continue;
@@ -136,9 +146,11 @@ R3D_SurfaceShader* R3D_LoadSurfaceShaderFromMemory(const char* code)
 
         // Parse vertex() and fragment() functions
         r3d_rshade_parsed_function_t* func = r3d_rshade_check_shader_entry(ptr, &vertexFunc, &fragmentFunc);
-        if (func) {
+        if (func)
+        {
             r3d_rshade_skip_to_brace(&ptr);
-            if (*ptr == '{') {
+            if (*ptr == '{')
+            {
                 func->bodyStart = ptr;
                 r3d_rshade_skip_to_matching_brace(&ptr);
                 func->bodyEnd = ptr;
@@ -176,7 +188,8 @@ R3D_SurfaceShader* R3D_LoadSurfaceShaderFromMemory(const char* code)
     r3d_rshade_write_shader_function(&writer, "fragment", &fragmentFunc);
     r3d_rshade_writer_printf(&writer, "\n#endif\n");
 
-    if (writer.overflow) {
+    if (writer.overflow)
+    {
         R3D_TRACELOG(LOG_ERROR, "Failed to load surface shader; Transformed code too long");
         MemFree(shader);
         return NULL;
@@ -186,7 +199,8 @@ R3D_SurfaceShader* R3D_LoadSurfaceShaderFromMemory(const char* code)
 
     /* --- PHASE 3: Pre-compile needed shader variants --- */
 
-    if (!compile_shader_variants(shader, usage)) {
+    if (!compile_shader_variants(shader, usage))
+    {
         R3D_UnloadSurfaceShader(shader);
         return NULL;
     }
@@ -207,7 +221,8 @@ R3D_SurfaceShader* R3D_LoadSurfaceShaderFromMemory(const char* code)
 R3D_SurfaceShader* R3D_LoadSurfaceShaderAlias(R3D_SurfaceShader* shader)
 {
     R3D_SurfaceShader* alias = r3d_shader_custom_clone(shader);
-    if (!alias) {
+    if (!alias)
+    {
         R3D_TRACELOG(LOG_ERROR, "Bad alloc during surface shader alias loading");
         return NULL;
     }
@@ -221,24 +236,28 @@ void R3D_UnloadSurfaceShader(R3D_SurfaceShader* shader)
 
 void R3D_SetSurfaceShaderUniform(R3D_SurfaceShader* shader, const char* name, const void* value)
 {
-    if (!shader) {
+    if (!shader)
+    {
         R3D_TRACELOG(LOG_WARNING, "Cannot set uniform '%s' on NULL surface shader", name);
         return;
     }
 
-    if (!r3d_shader_custom_set_uniform(shader, name, value)) {
+    if (!r3d_shader_custom_set_uniform(shader, name, value))
+    {
         R3D_TRACELOG(LOG_WARNING, "Failed to set custom uniform '%s'", name);
     }
 }
 
 void R3D_SetSurfaceShaderSampler(R3D_SurfaceShader* shader, const char* name, Texture texture)
 {
-    if (!shader) {
+    if (!shader)
+    {
         R3D_TRACELOG(LOG_WARNING, "Cannot set sampler '%s' on NULL surface shader", name);
         return;
     }
 
-    if (!r3d_shader_custom_set_sampler(shader, name, texture)) {
+    if (!r3d_shader_custom_set_sampler(shader, name, texture))
+    {
         R3D_TRACELOG(LOG_WARNING, "Failed to set custom sampler '%s'", name);
     }
 }
@@ -256,7 +275,8 @@ usage_hint_t parse_pragma_usage(const char** ptr)
     r3d_rshade_skip_whitespace(ptr);
 
     // Check for "usage" keyword
-    if (strncmp(*ptr, "usage", 5) != 0 || !isspace((*ptr)[5])) {
+    if (strncmp(*ptr, "usage", 5) != 0 || !isspace((*ptr)[5]))
+    {
         r3d_rshade_skip_to_end_of_line(ptr);
         return 0;
     }
@@ -286,7 +306,8 @@ usage_hint_t parse_pragma_usage(const char** ptr)
         };
 
         bool matched = false;
-        for (int i = 0; i < 7; i++) {
+        for (int i = 0; i < 7; i++)
+        {
             if (strncmp(*ptr, hints[i].name, hints[i].len) == 0 &&
                 (isspace((*ptr)[hints[i].len]) ||
                  (*ptr)[hints[i].len] == '\n' ||
@@ -300,7 +321,8 @@ usage_hint_t parse_pragma_usage(const char** ptr)
             }
         }
 
-        if (!matched) {
+        if (!matched)
+        {
             // Unknown hint, skip to next whitespace or end of line
             while (**ptr && !isspace(**ptr)) (*ptr)++;
         }
@@ -315,7 +337,8 @@ const char* get_usage_hint_string(usage_hint_t hints)
     static char buffer[128];
     char *p = buffer;
     
-    if (hints == 0) {
+    if (hints == 0)
+    {
         return "None";
     }
 
@@ -342,9 +365,11 @@ const char* get_usage_hint_string(usage_hint_t hints)
 
 bool compile_shader_variants(R3D_SurfaceShader* shader, usage_hint_t usage)
 {
-    if (usage == 0) {
+    if (usage == 0)
+    {
         bool ok = R3D_MOD_SHADER_LOADER.scene.geometry(shader);
-        if (!ok) {
+        if (!ok)
+        {
             R3D_TRACELOG(LOG_ERROR, "Failed to compile surface shader");
         }
         return ok;
@@ -365,9 +390,12 @@ bool compile_shader_variants(R3D_SurfaceShader* shader, usage_hint_t usage)
         {"probe-unlit",   USAGE_HINT_PROBE | USAGE_HINT_UNLIT,         R3D_MOD_SHADER_LOADER.scene.probeUnlit},
     };
 
-    for (int i = 0; i < 6; i++) {
-        if (R3D_BIT_ANY(usage, variants[i].condition)) {
-            if (!variants[i].func(shader)) {
+    for (int i = 0; i < 6; i++)
+    {
+        if (R3D_BIT_ANY(usage, variants[i].condition))
+        {
+            if (!variants[i].func(shader))
+            {
                 R3D_TRACELOG(LOG_ERROR, "Failed to compile surface shader (variant: '%s')", variants[i].name);
                 return false;
             }
