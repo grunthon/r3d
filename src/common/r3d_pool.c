@@ -28,10 +28,10 @@ static inline size_t pool_total_size(uint32_t capacity, uint32_t objSize)
 static inline void pool_set_pointers(r3d_pool_t* pool, uint32_t capacity)
 {
     uint8_t* base = (uint8_t*)pool + sizeof(r3d_pool_t);
-    pool->gens = (uint16_t*)base;
-    pool->gensRef = pool->gens + capacity;
+    pool->gens      = (uint16_t*)base;
+    pool->gensRef   = pool->gens + capacity;
     pool->freeStack = pool->gensRef + capacity;
-    pool->objects = (void*)(pool->freeStack + capacity);
+    pool->objects   = (void*)(pool->freeStack + capacity);
 }
 
 // ========================================
@@ -40,7 +40,8 @@ static inline void pool_set_pointers(r3d_pool_t* pool, uint32_t capacity)
 
 r3d_pool_t* r3d_pool_create(uint32_t objSize, uint32_t capacity)
 {
-    if (objSize == 0 || capacity == 0) {
+    if (objSize == 0 || capacity == 0)
+    {
         return NULL;
     }
 
@@ -48,9 +49,9 @@ r3d_pool_t* r3d_pool_create(uint32_t objSize, uint32_t capacity)
     if (!mem) return NULL;
 
     r3d_pool_t* pool = (r3d_pool_t*)mem;
-    pool->objSize = objSize;
-    pool->count = 0;
-    pool->capacity = capacity;
+    pool->objSize   = objSize;
+    pool->count     = 0;
+    pool->capacity  = capacity;
     pool->freeCount = 0;
 
     pool_set_pointers(pool, capacity);
@@ -116,7 +117,8 @@ r3d_pool_id_t r3d_pool_insert(r3d_pool_t** poolPtr)
     r3d_pool_t* pool = *poolPtr;
 
     // Grow if no free slot and dense array is full
-    if (pool->freeCount == 0 && pool->count >= pool->capacity) {
+    if (pool->freeCount == 0 && pool->count >= pool->capacity)
+    {
         pool = r3d_pool_grow(pool);
         if (!pool) return R3D_POOL_ID_NULL;
         *poolPtr = pool;
