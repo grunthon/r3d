@@ -106,9 +106,11 @@ BoundingBox R3D_ComputeFrustumBoundingBox(Matrix invViewProj)
         .max = (Vector3){-FLT_MAX, -FLT_MAX, -FLT_MAX}
     };
 
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 8; i++)
+    {
         Vector4 p = r3d_vector4_transform(clipCorners[i], &invViewProj);
-        if (fabsf(p.w) > 1e-6f) {
+        if (fabsf(p.w) > 1e-6f)
+        {
             float invW = 1.0f / p.w;
             p.x *= invW;
             p.y *= invW;
@@ -128,9 +130,11 @@ void R3D_ComputeFrustumCorners(Matrix invViewProj, Vector3* corners)
         {-1, -1,  1, 1}, {1, -1,  1, 1}, {1, 1,  1, 1}, {-1, 1,  1, 1}  // Far
     };
 
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 8; i++)
+    {
         Vector4 p = r3d_vector4_transform(clipCorners[i], &invViewProj);
-        if (fabsf(p.w) > 1e-6f) {
+        if (fabsf(p.w) > 1e-6f)
+        {
             float invW = 1.0f / p.w;
             p.x *= invW;
             p.y *= invW;
@@ -142,8 +146,10 @@ void R3D_ComputeFrustumCorners(Matrix invViewProj, Vector3* corners)
 
 bool R3D_FrustumContainsPoint(const R3D_Frustum* frustum, Vector3 position)
 {
-    for (int i = 0; i < R3D_PLANE_COUNT; i++) {
-        if (distance_to_plane(frustum->planes[i], position) <= 0) {
+    for (int i = 0; i < R3D_PLANE_COUNT; i++)
+    {
+        if (distance_to_plane(frustum->planes[i], position) <= 0)
+        {
             return false;
         }
     }
@@ -153,8 +159,10 @@ bool R3D_FrustumContainsPoint(const R3D_Frustum* frustum, Vector3 position)
 
 bool R3D_FrustumContainsAnyPoint(const R3D_Frustum* frustum, const Vector3* positions, int count)
 {
-    for (int i = 0; i < count; i++) {
-        if (R3D_FrustumContainsPoint(frustum, positions[i])) {
+    for (int i = 0; i < count; i++)
+    {
+        if (R3D_FrustumContainsPoint(frustum, positions[i]))
+        {
             return true;
         }
     }
@@ -164,8 +172,10 @@ bool R3D_FrustumContainsAnyPoint(const R3D_Frustum* frustum, const Vector3* posi
 
 bool R3D_FrustumIntersectsSphere(const R3D_Frustum* frustum, Vector3 position, float radius)
 {
-    for (int i = 0; i < R3D_PLANE_COUNT; i++) {
-        if (distance_to_plane(frustum->planes[i], position) < -radius) {
+    for (int i = 0; i < R3D_PLANE_COUNT; i++)
+    {
+        if (distance_to_plane(frustum->planes[i], position) < -radius)
+        {
             return false;
         }
     }
@@ -189,9 +199,7 @@ bool R3D_FrustumIntersectsBoundingBox(const R3D_Frustum* frustum, BoundingBox aa
             .z = (plane->z >= 0.0f) ? zMax : zMin
         });
 
-        if (distance < -EPSILON) {
-            return false;
-        }
+        if (distance < -EPSILON) return false;
     }
 
     return true;
