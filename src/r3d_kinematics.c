@@ -32,7 +32,8 @@ Vector3 R3D_ReflectVelocity(Vector3 velocity, Vector3 normal, float bounciness)
 
 Vector3 R3D_SlideVelocity(Vector3 velocity, R3D_SweepCollision collision, Vector3* outNormal)
 {
-    if (!collision.hit) {
+    if (!collision.hit)
+    {
         if (outNormal) *outNormal = (Vector3){0};
         return velocity;
     }
@@ -116,33 +117,37 @@ bool R3D_DepenetrateCapsuleBoundingBox(R3D_Capsule* capsule, BoundingBox box, fl
     float bestDistSq = FLT_MAX;
     Vector3 bestDelta = {0};
 
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++)
+    {
         Vector3 onSeg = Vector3Add(start, Vector3Scale(seg, tCandidates[i]));
         Vector3 onBox = R3D_ClosestPointOnBox(onSeg, box);
         Vector3 delta = Vector3Subtract(onSeg, onBox);
 
         float distSq = Vector3LengthSqr(delta);
 
-        if (distSq < bestDistSq) {
+        if (distSq < bestDistSq)
+        {
             bestDistSq = distSq;
-            bestDelta = delta;
+            bestDelta  = delta;
         }
     }
 
-    float radius = capsule->radius;
+    float radius   = capsule->radius;
     float radiusSq = radius * radius;
 
     Vector3 correction = {0};
     float penetration = 0.0f;
 
-    if (bestDistSq > 1e-12f) {
+    if (bestDistSq > 1e-12f)
+    {
         if (bestDistSq >= radiusSq) return false;
 
         float dist = sqrtf(bestDistSq);
         penetration = radius - dist;
         correction = Vector3Scale(bestDelta, penetration / dist);
     }
-    else {
+    else
+    {
         float segMinX = fminf(start.x, end.x);
         float segMaxX = fmaxf(start.x, end.x);
         float segMinY = fminf(start.y, end.y);
@@ -171,7 +176,7 @@ bool R3D_DepenetrateCapsuleBoundingBox(R3D_Capsule* capsule, BoundingBox box, fl
     }
 
     capsule->start = Vector3Add(start, correction);
-    capsule->end = Vector3Add(end, correction);
+    capsule->end   = Vector3Add(end, correction);
 
     if (outPenetration) *outPenetration = penetration;
     return true;
@@ -224,7 +229,8 @@ R3D_SweepCollision R3D_SweepSpherePoint(Vector3 center, float radius, Vector3 ve
     Vector3 m = Vector3Subtract(center, point);
     float c = Vector3DotProduct(m, m) - radius * radius;
 
-    if (c <= 0.0f) {
+    if (c <= 0.0f)
+    {
         result.hit = true;
         result.time = 0.0f;
         result.point = Vector3Add(point, Vector3Scale(Vector3Normalize(m), radius));
@@ -326,24 +332,29 @@ R3D_SweepCollision R3D_SweepSphereTriangle(Vector3 center, float radius, Vector3
     result.time = 1.0f;
 
     R3D_SweepCollision faceHit = R3D_SweepSphereTrianglePlane(center, radius, velocity, a, b, c);
-    if (faceHit.hit && faceHit.time < result.time) {
+    if (faceHit.hit && faceHit.time < result.time)
+    {
         if (faceHit.time == 0.0f) return faceHit;
         result = faceHit;
     }
 
     Vector3 edges[3][2] = {{a, b}, {b, c}, {c, a}};
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++)
+    {
         R3D_SweepCollision edgeHit = R3D_SweepSphereSegment(center, radius, velocity, edges[i][0], edges[i][1]);
-        if (edgeHit.hit && edgeHit.time < result.time) {
+        if (edgeHit.hit && edgeHit.time < result.time)
+        {
             if (edgeHit.time == 0.0f) return edgeHit;
             result = edgeHit;
         }
     }
 
     Vector3 verts[3] = {a, b, c};
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++)
+    {
         R3D_SweepCollision vertHit = R3D_SweepSpherePoint(center, radius, velocity, verts[i]);
-        if (vertHit.hit && vertHit.time < result.time) {
+        if (vertHit.hit && vertHit.time < result.time)
+        {
             if (vertHit.time == 0.0f) return vertHit;
             result = vertHit;
         }
@@ -367,7 +378,8 @@ R3D_SweepCollision R3D_SweepSphereBoundingBox(Vector3 center, float radius, Vect
     Ray ray = {center, Vector3Scale(velocity, 1.0f / velocityLength)};
     RayCollision hit = GetRayCollisionBox(ray, expandedBox);
 
-    if (hit.hit && hit.distance <= velocityLength) {
+    if (hit.hit && hit.distance <= velocityLength)
+    {
         collision.hit = true;
         collision.time = hit.distance / velocityLength;
         collision.point = hit.point;
@@ -389,12 +401,14 @@ R3D_SweepCollision R3D_SweepSphereMesh(Vector3 center, float radius, Vector3 vel
     {
         Vector3 v0, v1, v2;
 
-        if (useIndices) {
+        if (useIndices)
+        {
             v0 = mesh.vertices[mesh.indices[i * 3    ]].position;
             v1 = mesh.vertices[mesh.indices[i * 3 + 1]].position;
             v2 = mesh.vertices[mesh.indices[i * 3 + 2]].position;
         }
-        else {
+        else
+        {
             v0 = mesh.vertices[i * 3    ].position;
             v1 = mesh.vertices[i * 3 + 1].position;
             v2 = mesh.vertices[i * 3 + 2].position;
@@ -439,13 +453,15 @@ R3D_SweepCollision R3D_SweepCapsuleBoundingBox(R3D_Capsule capsule, Vector3 velo
         Ray ray = {samplePoint, velocityDir};
         RayCollision hit = GetRayCollisionBox(ray, expandedBox);
 
-        if (hit.hit && hit.distance <= velocityLength && hit.distance < bestHit.distance) {
-            bestHit = hit;
+        if (hit.hit && hit.distance <= velocityLength && hit.distance < bestHit.distance)
+        {
+            bestHit  = hit;
             foundHit = true;
         }
     }
 
-    if (foundHit) {
+    if (foundHit)
+    {
         collision.hit = true;
         collision.time = bestHit.distance / velocityLength;
         collision.point = bestHit.point;
@@ -467,12 +483,14 @@ R3D_SweepCollision R3D_SweepCapsuleMesh(R3D_Capsule capsule, Vector3 velocity, R
     {
         Vector3 v0, v1, v2;
 
-        if (useIndices) {
+        if (useIndices)
+        {
             v0 = mesh.vertices[mesh.indices[i * 3    ]].position;
             v1 = mesh.vertices[mesh.indices[i * 3 + 1]].position;
             v2 = mesh.vertices[mesh.indices[i * 3 + 2]].position;
         }
-        else {
+        else
+        {
             v0 = mesh.vertices[i * 3    ].position;
             v1 = mesh.vertices[i * 3 + 1].position;
             v2 = mesh.vertices[i * 3 + 2].position;
