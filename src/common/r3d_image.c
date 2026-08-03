@@ -23,35 +23,41 @@
 
 Image r3d_image_compose_rgb(const Image* sources[3], Color defaultColor)
 {
-    Image image = { 0 };
+    Image image = {0};
 
     /* --- Determine dimensions --- */
 
     int w = 0, h = 0;
-    for (int i = 0; i < 3; i++) {
-        if (sources[i]) {
+    for (int i = 0; i < 3; i++)
+    {
+        if (sources[i])
+        {
             w = (w < sources[i]->width) ? sources[i]->width : w;
             h = (h < sources[i]->height) ? sources[i]->height : h;
         }
     }
 
-    if (w == 0 || h == 0) {
+    if (w == 0 || h == 0)
+    {
         return image;
     }
 
     /* --- Allocation --- */
 
     uint8_t* pixels = MemAlloc(3 * w * h);
-    if (pixels == NULL) {
+    if (pixels == NULL)
+    {
         return image;
     }
 
     /* --- Calculate scales --- */
 
-    int scaleX[3] = { 0 };
-    int scaleY[3] = { 0 };
-    for (int i = 0; i < 3; i++) {
-        if (sources[i] && sources[i]->width > 0 && sources[i]->height > 0) {
+    int scaleX[3] = {0};
+    int scaleY[3] = {0};
+    for (int i = 0; i < 3; i++)
+    {
+        if (sources[i] && sources[i]->width > 0 && sources[i]->height > 0)
+        {
             scaleX[i] = (sources[i]->width << 16) / w;
             scaleY[i] = (sources[i]->height << 16) / h;
         }
@@ -127,10 +133,10 @@ Image r3d_image_compose_rgb(const Image* sources[3], Color defaultColor)
     #undef SAMPLE_B
     #undef NOOP
 
-    image.data = pixels;
-    image.width = w;
-    image.height = h;
-    image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8;
+    image.data    = pixels;
+    image.width   = w;
+    image.height  = h;
+    image.format  = PIXELFORMAT_UNCOMPRESSED_R8G8B8;
     image.mipmaps = 1;
 
     return image;
@@ -148,7 +154,8 @@ static void get_texture_format(int format, bool srgb, GLenum* glInternalFormat, 
     *glFormat = 0;
     *glType = 0;
 
-    switch (format) {
+    switch (format)
+    {
     case RL_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: *glInternalFormat = GL_R8; *glFormat = GL_RED; *glType = GL_UNSIGNED_BYTE; break;
     case RL_PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA: *glInternalFormat = GL_RG8; *glFormat = GL_RG; *glType = GL_UNSIGNED_BYTE; break;
     case RL_PIXELFORMAT_UNCOMPRESSED_R5G6B5: *glInternalFormat = GL_RGB565; *glFormat = GL_RGB; *glType = GL_UNSIGNED_SHORT_5_6_5; break;
@@ -169,8 +176,10 @@ static void get_texture_format(int format, bool srgb, GLenum* glInternalFormat, 
     default: R3D_TRACELOG(RL_LOG_WARNING, "Current format not supported (%i)", format); break;
     }
 
-    if (srgb) {
-        switch (*glInternalFormat) {
+    if (srgb)
+    {
+        switch (*glInternalFormat)
+        {
         case GL_RGBA8: *glInternalFormat = GL_SRGB8_ALPHA8; break;
         case GL_RGB8: *glInternalFormat = GL_SRGB8; break;
         // NOT SUPPORTED FOR NOW
@@ -203,13 +212,15 @@ static void upload_texture_mipmap(const uint8_t *data, int width, int height, in
     
     if (glInternalFormat == 0) return;
     
-    if (format < RL_PIXELFORMAT_COMPRESSED_DXT1_RGB) {
+    if (format < RL_PIXELFORMAT_COMPRESSED_DXT1_RGB)
+    {
         glTexImage2D(
             GL_TEXTURE_2D, level, glInternalFormat, width, height, 
             0, glFormat, glType, data
         );
     }
-    else {
+    else
+    {
         int size = GetPixelDataSize(width, height, format);
         glCompressedTexImage2D(
             GL_TEXTURE_2D, level, glInternalFormat,
@@ -220,14 +231,15 @@ static void upload_texture_mipmap(const uint8_t *data, int width, int height, in
 
 static void set_texture_swizzle(int format)
 {
-    static const GLint grayscale[] = {GL_RED, GL_RED, GL_RED, GL_ONE};
+    static const GLint grayscale[]  = {GL_RED, GL_RED, GL_RED, GL_ONE};
     static const GLint gray_alpha[] = {GL_RED, GL_RED, GL_RED, GL_GREEN};
     
     const GLint *mask = NULL;
     if (format == RL_PIXELFORMAT_UNCOMPRESSED_GRAYSCALE) mask = grayscale;
     else if (format == RL_PIXELFORMAT_UNCOMPRESSED_GRAY_ALPHA) mask = gray_alpha;
     
-    if (mask) {
+    if (mask)
+    {
         glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, mask);
     }
 }
@@ -241,7 +253,8 @@ static void set_texture_wrap(TextureWrap wrap)
         [TEXTURE_WRAP_MIRROR_CLAMP] = GL_MIRROR_CLAMP_TO_EDGE
     };
     
-    if (wrap < sizeof(wrap_modes) / sizeof(wrap_modes[0]) && wrap_modes[wrap]) {
+    if (wrap < sizeof(wrap_modes) / sizeof(wrap_modes[0]) && wrap_modes[wrap])
+    {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_modes[wrap]);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap_modes[wrap]);
     }
@@ -263,13 +276,16 @@ static void set_texture_filter(TextureFilter filter)
         [TEXTURE_FILTER_ANISOTROPIC_16X] = {GL_LINEAR, GL_LINEAR_MIPMAP_LINEAR, 16.0f}
     };
     
-    if (filter < sizeof(modes) / sizeof(modes[0]) && modes[filter].mag) {
+    if (filter < sizeof(modes) / sizeof(modes[0]) && modes[filter].mag)
+    {
         const FilterMode *m = &modes[filter];
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, m->mag);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, m->min);
-        if (m->aniso > 0) {
+        if (m->aniso > 0)
+        {
             float maxAniso = 1.0f;
-            if (r3d_driver_has_anisotropy(&maxAniso)) {
+            if (r3d_driver_has_anisotropy(&maxAniso))
+            {
                 glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, fminf(m->aniso, maxAniso));
             }
         }
@@ -286,7 +302,8 @@ Texture2D r3d_image_upload(const Image* image, TextureWrap wrap, TextureFilter f
     const uint8_t *dataPtr = image->data;
     int mipW = image->width, mipH = image->height;
 
-    for (int i = 0; i < image->mipmaps; i++) {
+    for (int i = 0; i < image->mipmaps; i++)
+    {
         upload_texture_mipmap(dataPtr, mipW, mipH, i, image->format, srgb);
         if (i == 0) set_texture_swizzle(image->format);
 
@@ -297,7 +314,8 @@ Texture2D r3d_image_upload(const Image* image, TextureWrap wrap, TextureFilter f
         mipH = (mipH > 1) ? mipH / 2 : 1;
     }
 
-    if (image->mipmaps == 1 && filter >= TEXTURE_FILTER_TRILINEAR) {
+    if (image->mipmaps == 1 && filter >= TEXTURE_FILTER_TRILINEAR)
+    {
         glGenerateMipmap(GL_TEXTURE_2D);
     }
 
