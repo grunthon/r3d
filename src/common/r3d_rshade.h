@@ -155,10 +155,13 @@ static inline void r3d_rshade_skip_to_brace(const char** ptr)
 static inline void r3d_rshade_skip_to_matching_brace(const char** ptr)
 {
     int depth = 0;
-    while (**ptr) {
+    while (**ptr)
+    {
         if (**ptr == '{') depth++;
-        else if (**ptr == '}') {
-            if (--depth == 0) {
+        else if (**ptr == '}')
+        {
+            if (--depth == 0)
+            {
                 (*ptr)++;
                 return;
             }
@@ -178,17 +181,20 @@ static inline void r3d_rshade_skip_whitespace_and_comments(const char** ptr)
 {
     while (**ptr)
     {
-        if (IS_SPACE(**ptr)) {
+        if (IS_SPACE(**ptr))
+        {
             (*ptr)++;
             continue;
         }
 
-        if (strncmp(*ptr, "//", 2) == 0) {
+        if (strncmp(*ptr, "//", 2) == 0)
+        {
             r3d_rshade_skip_to_end_of_line(ptr);
             continue;
         }
 
-        if (strncmp(*ptr, "/*", 2) == 0) {
+        if (strncmp(*ptr, "/*", 2) == 0)
+        {
             *ptr += 2;
             while (**ptr && strncmp(*ptr, "*/", 2) != 0) (*ptr)++;
             if (**ptr) *ptr += 2;
@@ -220,7 +226,8 @@ static inline bool r3d_rshade_parse_identifier(const char** ptr, char* output, s
     r3d_rshade_skip_whitespace(ptr);
 
     size_t i = 0;
-    while (**ptr && !IS_SPACE(**ptr) && **ptr != ';' && **ptr != '[' && i < maxLen - 1) {
+    while (**ptr && !IS_SPACE(**ptr) && **ptr != ';' && **ptr != '[' && i < maxLen - 1)
+    {
         output[i++] = *(*ptr)++;
     }
     output[i] = '\0';
@@ -231,12 +238,14 @@ static inline bool r3d_rshade_parse_identifier(const char** ptr, char* output, s
 /* Parse a GLSL declaration (type + name) and advance past semicolon */
 static inline bool r3d_rshade_parse_declaration(const char** ptr, char* type, char* name)
 {
-    if (!r3d_rshade_parse_identifier(ptr, type, R3D_RSHADE_MAX_VAR_TYPE_LENGTH)) {
+    if (!r3d_rshade_parse_identifier(ptr, type, R3D_RSHADE_MAX_VAR_TYPE_LENGTH))
+    {
         r3d_rshade_skip_to_semicolon(ptr);
         return false;
     }
 
-    if (!r3d_rshade_parse_identifier(ptr, name, R3D_RSHADE_MAX_VAR_NAME_LENGTH)) {
+    if (!r3d_rshade_parse_identifier(ptr, name, R3D_RSHADE_MAX_VAR_NAME_LENGTH))
+    {
         r3d_rshade_skip_to_semicolon(ptr);
         return false;
     }
@@ -255,19 +264,23 @@ static inline int r3d_rshade_count_constructor_args(const char* ptr)
 
     while (*ptr && depth > 0)
     {
-        if (*ptr == '(') {
+        if (*ptr == '(')
+        {
             depth++;
             hasContent = true;
         }
-        else if (*ptr == ')') {
+        else if (*ptr == ')')
+        {
             if (depth == 1 && hasContent) count++;
             depth--;
         }
-        else if (*ptr == ',' && depth == 1) {
+        else if (*ptr == ',' && depth == 1)
+        {
             count++;
             hasContent = false;
         }
-        else if (!IS_SPACE(*ptr)) {
+        else if (!IS_SPACE(*ptr))
+        {
             hasContent = true;
         }
         ptr++;
@@ -279,12 +292,14 @@ static inline int r3d_rshade_count_constructor_args(const char* ptr)
 /* Parse a single scalar token (float or int) from *ptr without advancing it. */
 static inline void r3d_rshade_read_scalar(const char* ptr, bool isFloat, float* fOut, int32_t* iOut)
 {
-    if (isFloat) {
+    if (isFloat)
+    {
         float  v = 0.0f;
         sscanf(ptr, "%f", &v);
         *fOut = v;
     }
-    else {
+    else
+    {
         int32_t v = 0;
         sscanf(ptr, "%d", &v);
         *iOut = v;
@@ -305,17 +320,20 @@ static inline bool r3d_rshade_parse_default_value(const char** ptr,
     uint8_t* dst = buffer + offset;
 
     // Scalars
-    if (strcmp(type, "float") == 0) {
+    if (strcmp(type, "float") == 0)
+    {
         float v = 0.0f; sscanf(*ptr, "%f", &v);
         memcpy(dst, &v, 4);
         return true;
     }
-    if (strcmp(type, "int") == 0) {
+    if (strcmp(type, "int") == 0)
+    {
         int v = 0; sscanf(*ptr, "%d", &v);
         memcpy(dst, &v, 4);
         return true;
     }
-    if (strcmp(type, "bool") == 0) {
+    if (strcmp(type, "bool") == 0)
+    {
         // Accept both true/false keywords and 1/0 literals
         int v = (strncmp(*ptr, "true", 4) == 0) ? 1
               : (strncmp(*ptr, "false", 5) == 0) ? 0
@@ -351,7 +369,8 @@ static inline bool r3d_rshade_parse_default_value(const char** ptr,
 
     int argCount = r3d_rshade_count_constructor_args(*ptr);
 
-    if (argCount == 1) {
+    if (argCount == 1)
+    {
         // Single-scalar constructor
         r3d_rshade_skip_whitespace(ptr);
 
@@ -359,19 +378,23 @@ static inline bool r3d_rshade_parse_default_value(const char** ptr,
         int32_t iScalar = 0;
         r3d_rshade_read_scalar(*ptr, isFloat, &fScalar, &iScalar);
 
-        for (int c = 0; c < cols; c++) {
-            for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < cols; c++)
+        {
+            for (int r = 0; r < rows; r++)
+            {
                 int byteOffset = c * 16 + r * 4;
 
                 /* For matrices, only the diagonal gets the scalar value.
                  * For vectors (cols == 1), every component gets it. */
                 bool active = (cols == 1) || (r == c);
 
-                if (isFloat) {
+                if (isFloat)
+                {
                     float v = active ? fScalar : 0.0f;
                     memcpy(dst + byteOffset, &v, 4);
                 }
-                else {
+                else
+                {
                     int32_t v = active ? iScalar : 0;
                     memcpy(dst + byteOffset, &v, 4);
                 }
@@ -382,18 +405,23 @@ static inline bool r3d_rshade_parse_default_value(const char** ptr,
         while (**ptr && **ptr != ')') (*ptr)++;
         if (**ptr == ')') (*ptr)++;
     }
-    else {
+    else
+    {
         // Full component list
-        for (int c = 0; c < cols; c++) {
-            for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < cols; c++)
+        {
+            for (int r = 0; r < rows; r++)
+            {
                 r3d_rshade_skip_whitespace(ptr);
 
                 int byteOffset = c * 16 + r * 4;
-                if (isFloat) {
+                if (isFloat)
+                {
                     float v = 0.0f; sscanf(*ptr, "%f", &v);
                     memcpy(dst + byteOffset, &v, 4);
                 }
-                else {
+                else
+                {
                     int32_t v = 0; sscanf(*ptr, "%d", &v);
                     memcpy(dst + byteOffset, &v, 4);
                 }
@@ -418,14 +446,16 @@ static inline bool r3d_rshade_parse_varying(const char** ptr, r3d_rshade_varying
     else if (strncmp(*ptr, "noperspective", 13) == 0 && IS_SPACE((*ptr)[13])) qualLen = 13;
     else if (strncmp(*ptr, "smooth", 6) == 0 && IS_SPACE((*ptr)[6]))          qualLen = 6;
 
-    if (qualLen > 0) {
+    if (qualLen > 0)
+    {
         memcpy(varying->qualifier, *ptr, qualLen);
         varying->qualifier[qualLen] = '\0';
         *ptr += qualLen;
         r3d_rshade_skip_whitespace(ptr);
 
         // Must be followed by "varying"
-        if (!r3d_rshade_match_keyword(*ptr, "varying", 7)) {
+        if (!r3d_rshade_match_keyword(*ptr, "varying", 7))
+        {
             r3d_rshade_skip_to_semicolon(ptr);
             return false;
         }
@@ -449,15 +479,18 @@ static inline bool r3d_rshade_parse_uniform(const char** ptr,
 
     // Stop before '=' or ';' so default value parsing can inspect what follows
     if (!r3d_rshade_parse_identifier(ptr, type, R3D_RSHADE_MAX_VAR_TYPE_LENGTH) ||
-        !r3d_rshade_parse_identifier(ptr, name, R3D_RSHADE_MAX_VAR_NAME_LENGTH)) {
+        !r3d_rshade_parse_identifier(ptr, name, R3D_RSHADE_MAX_VAR_NAME_LENGTH))
+    {
         r3d_rshade_skip_to_semicolon(ptr);
         return false;
     }
 
     // Samplers are bound by texture unit, not stored in the UBO
     GLenum samplerTarget = r3d_rshade_get_sampler_target(type);
-    if (samplerTarget != 0) {
-        if (*samplerCount < maxSamplers) {
+    if (samplerTarget != 0)
+    {
+        if (*samplerCount < maxSamplers)
+        {
             r3d_rshade_sampler_t* s = &samplers[(*samplerCount)++];
             strncpy(s->name, name, R3D_RSHADE_MAX_VAR_NAME_LENGTH - 1);
             s->name[R3D_RSHADE_MAX_VAR_NAME_LENGTH - 1] = '\0';
@@ -469,7 +502,8 @@ static inline bool r3d_rshade_parse_uniform(const char** ptr,
     }
 
     int size = r3d_rshade_get_type_size(type);
-    if (size > 0 && *uniformCount < maxUniforms) {
+    if (size > 0 && *uniformCount < maxUniforms)
+    {
         // Align offset per std140 before committing the slot
         *currentOffset = r3d_align_offset(*currentOffset, r3d_rshade_get_std140_alignment(size));
 
@@ -482,7 +516,8 @@ static inline bool r3d_rshade_parse_uniform(const char** ptr,
         u->size = size;
         *currentOffset += size;
 
-        if (r3d_rshade_parse_default_value(ptr, type, uniforms->buffer, u->offset)) {
+        if (r3d_rshade_parse_default_value(ptr, type, uniforms->buffer, u->offset))
+        {
             uniforms->dirty = true; // Just for security, but the data is necessarily uploaded when the buffer is created afterwards
         }
     }
@@ -495,7 +530,8 @@ static inline bool r3d_rshade_parse_uniform(const char** ptr,
 static inline r3d_rshade_parsed_function_t* r3d_rshade_check_shader_entry(const char* ptr,
     r3d_rshade_parsed_function_t* vertexFunc, r3d_rshade_parsed_function_t* fragmentFunc)
 {
-    if (!r3d_rshade_match_keyword(ptr, "void", 4)) {
+    if (!r3d_rshade_match_keyword(ptr, "void", 4))
+    {
         return NULL;
     }
 
@@ -521,7 +557,8 @@ static inline bool r3d_rshade_should_skip_line(const char* ptr, bool hasVaryings
 /* Write a single character to the buffer */
 static inline void r3d_rshade_writer_putc(r3d_rshade_writer_t* w, char c)
 {
-    if (w->overflow || w->remaining < 2) {
+    if (w->overflow || w->remaining < 2)
+    {
         w->overflow = true;
         return;
     }
@@ -533,7 +570,8 @@ static inline void r3d_rshade_writer_putc(r3d_rshade_writer_t* w, char c)
 static inline void r3d_rshade_writer_write(r3d_rshade_writer_t* w, const char* src, size_t len)
 {
     if (w->overflow) return;
-    if (len + 1 > w->remaining) {
+    if (len + 1 > w->remaining)
+    {
         w->overflow = true;
         return;
     }
@@ -550,7 +588,8 @@ static inline void r3d_rshade_writer_printf(r3d_rshade_writer_t* w, const char* 
     va_start(args, fmt);
     int n = vsnprintf(w->ptr, w->remaining, fmt, args);
     va_end(args);
-    if (n < 0 || (size_t)n >= w->remaining) {
+    if (n < 0 || (size_t)n >= w->remaining)
+    {
         w->overflow = true;
         return;
     }
@@ -562,12 +601,15 @@ static inline void r3d_rshade_writer_printf(r3d_rshade_writer_t* w, const char* 
 static inline void r3d_rshade_write_varyings(r3d_rshade_writer_t* w,
     const char* inout, r3d_rshade_varying_t* varyings, int count)
 {
-    for (int i = 0; i < count; i++) {
-        if (varyings[i].qualifier[0] != '\0') {
+    for (int i = 0; i < count; i++)
+    {
+        if (varyings[i].qualifier[0] != '\0')
+        {
             r3d_rshade_writer_printf(w, "%s %s %s %s;\n",
                 varyings[i].qualifier, inout, varyings[i].type, varyings[i].name);
         }
-        else {
+        else
+        {
             r3d_rshade_writer_printf(w, "%s %s %s;\n",
                 inout, varyings[i].type, varyings[i].name);
         }
@@ -579,9 +621,11 @@ static inline void r3d_rshade_write_varyings(r3d_rshade_writer_t* w,
 static inline void r3d_rshade_write_samplers(r3d_rshade_writer_t* w,
     r3d_rshade_sampler_t* samplers, int count)
 {
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++)
+    {
         const char* typeStr;
-        switch (samplers[i].target) {
+        switch (samplers[i].target)
+        {
         case GL_TEXTURE_1D:       typeStr = "sampler1D";   break;
         case GL_TEXTURE_2D:       typeStr = "sampler2D";   break;
         case GL_TEXTURE_3D:       typeStr = "sampler3D";   break;
@@ -600,7 +644,8 @@ static inline void r3d_rshade_write_uniform_block(r3d_rshade_writer_t* w,
     if (count <= 0) return;
 
     r3d_rshade_writer_printf(w, "layout(std140) uniform UserBlock {\n");
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++)
+    {
         r3d_rshade_writer_printf(w, "    %s %s;\n", entries[i].type, entries[i].name);
     }
     r3d_rshade_writer_printf(w, "};\n\n");
@@ -632,14 +677,18 @@ static inline void r3d_rshade_copy_global_code(r3d_rshade_writer_t* w,
 
         if (!*ptr) break;
 
-        if (r3d_rshade_should_skip_line(ptr, hasVaryings, vertexFunc, fragmentFunc)) {
-            if (r3d_rshade_check_shader_entry(ptr, vertexFunc, fragmentFunc)) {
+        if (r3d_rshade_should_skip_line(ptr, hasVaryings, vertexFunc, fragmentFunc))
+        {
+            if (r3d_rshade_check_shader_entry(ptr, vertexFunc, fragmentFunc))
+            {
                 r3d_rshade_skip_to_matching_brace(&ptr);
             }
-            else if (strncmp(ptr, "#pragma", 7) == 0) {
+            else if (strncmp(ptr, "#pragma", 7) == 0)
+            {
                 r3d_rshade_skip_to_end_of_line(&ptr);
             }
-            else {
+            else
+            {
                 r3d_rshade_skip_to_semicolon(&ptr);
             }
             continue;
