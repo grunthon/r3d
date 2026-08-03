@@ -35,21 +35,25 @@ R3D_MeshData R3D_LoadMeshData(int vertexCount, int indexCount)
 {
     R3D_MeshData meshData = {0};
 
-    if (vertexCount <= 0) {
+    if (vertexCount <= 0)
+    {
         R3D_TRACELOG(LOG_ERROR, "Invalid vertex count for mesh creation");
         return meshData;
     }
 
     meshData.vertices = MemAlloc(vertexCount * sizeof(*meshData.vertices));
-    if (meshData.vertices == NULL) {
+    if (meshData.vertices == NULL)
+    {
         R3D_TRACELOG(LOG_ERROR, "Failed to allocate memory for mesh vertices");
         return meshData;
     }
     meshData.vertexCapacity = vertexCount;
 
-    if (indexCount > 0) {
+    if (indexCount > 0)
+    {
         meshData.indices = MemAlloc(indexCount * sizeof(*meshData.indices));
-        if (meshData.indices == NULL) {
+        if (meshData.indices == NULL)
+        {
             R3D_TRACELOG(LOG_ERROR, "Failed to allocate memory for mesh indices");
             MemFree(meshData.vertices);
             meshData.vertexCapacity = 0;
@@ -77,18 +81,19 @@ R3D_MeshData R3D_GenMeshDataQuad(float width, float length, int resX, int resZ, 
 {
     R3D_MeshData meshData = {0};
 
-    Vector3 normal = Vector3Normalize(frontDir);
+    Vector3 normal    = Vector3Normalize(frontDir);
     Vector3 reference = (fabsf(normal.y) < 0.9f) ? (Vector3){0.0f, 1.0f, 0.0f} : (Vector3){1.0f, 0.0f, 0.0f};
-    Vector3 tangent = Vector3Normalize(Vector3CrossProduct(normal, reference));
+    Vector3 tangent   = Vector3Normalize(Vector3CrossProduct(normal, reference));
     Vector3 bitangent = Vector3CrossProduct(normal, tangent);
 
     Vector4 tangent4 = {tangent.x, tangent.y, tangent.z, 1.0f};
-    float invResX = 1.0f / resX;
-    float invResZ = 1.0f / resZ;
+    float invResX  = 1.0f / resX;
+    float invResZ  = 1.0f / resZ;
     int vertCountX = resX + 1;
     int vertCountZ = resZ + 1;
 
-    if (!alloc_mesh(&meshData, vertCountX * vertCountZ, resX * resZ * 6)) {
+    if (!alloc_mesh(&meshData, vertCountX * vertCountZ, resX * resZ * 6))
+    {
         return meshData;
     }
 
@@ -138,14 +143,16 @@ R3D_MeshData R3D_GenMeshDataPlane(float width, float length, int resX, int resZ)
 {
     R3D_MeshData meshData = {0};
 
-    if (width <= 0.0f || length <= 0.0f || resX < 1 || resZ < 1) {
+    if (width <= 0.0f || length <= 0.0f || resX < 1 || resZ < 1)
+    {
         return meshData;
     }
 
     int vertCountX = resX + 1;
     int vertCountZ = resZ + 1;
 
-    if (!alloc_mesh(&meshData, vertCountX * vertCountZ, resX * resZ * 6)) {
+    if (!alloc_mesh(&meshData, vertCountX * vertCountZ, resX * resZ * 6))
+    {
         return meshData;
     }
 
@@ -202,17 +209,19 @@ R3D_MeshData R3D_GenMeshDataPoly(int sides, float radius, Vector3 frontDir)
 {
     R3D_MeshData meshData = {0};
 
-    if (sides < 3 || radius <= 0.0f) {
+    if (sides < 3 || radius <= 0.0f)
+    {
         return meshData;
     }
 
-    if (!alloc_mesh(&meshData, sides + 1, sides * 3)) {
+    if (!alloc_mesh(&meshData, sides + 1, sides * 3))
+    {
         return meshData;
     }
 
-    Vector3 normal = Vector3Normalize(frontDir);
+    Vector3 normal    = Vector3Normalize(frontDir);
     Vector3 reference = (fabsf(normal.y) < 0.9f) ? (Vector3){0.0f, 1.0f, 0.0f} : (Vector3){1.0f, 0.0f, 0.0f};
-    Vector3 tangent = Vector3Normalize(Vector3CrossProduct(normal, reference));
+    Vector3 tangent   = Vector3Normalize(Vector3CrossProduct(normal, reference));
     Vector3 bitangent = Vector3CrossProduct(normal, tangent);
 
     Vector4 tangent4 = {tangent.x, tangent.y, tangent.z, 1.0f};
@@ -263,11 +272,13 @@ R3D_MeshData R3D_GenMeshDataCube(float width, float height, float length)
 {
     R3D_MeshData meshData = {0};
 
-    if (width <= 0.0f || height <= 0.0f || length <= 0.0f) {
+    if (width <= 0.0f || height <= 0.0f || length <= 0.0f)
+    {
         return meshData;
     }
 
-    if (!alloc_mesh(&meshData, 24, 36)) {
+    if (!alloc_mesh(&meshData, 24, 36))
+    {
         return meshData;
     }
 
@@ -320,7 +331,8 @@ R3D_MeshData R3D_GenMeshDataCube(float width, float height, float length)
 
     // Indices
     uint32_t* index = meshData.indices;
-    for (int face = 0; face < 6; face++) {
+    for (int face = 0; face < 6; face++)
+    {
         uint32_t base = face * 4;
         *index++ = base; *index++ = base + 1; *index++ = base + 2;
         *index++ = base + 2; *index++ = base + 3; *index++ = base;
@@ -399,7 +411,8 @@ R3D_MeshData R3D_GenMeshDataCubeEx(float width, float height, float length, int 
 {
     R3D_MeshData meshData = {0};
 
-    if (width <= 0 || height <= 0 || length <= 0 || resX < 1 || resY < 1 || resZ < 1) {
+    if (width <= 0 || height <= 0 || length <= 0 || resX < 1 || resY < 1 || resZ < 1)
+    {
         return meshData;
     }
 
@@ -414,7 +427,8 @@ R3D_MeshData R3D_GenMeshDataCubeEx(float width, float height, float length, int 
     int totalVertices = 2 * (vertXY + vertXZ + vertYZ);
     int totalIndices  = 2 * (idxXY + idxXZ + idxYZ);
 
-    if (!alloc_mesh(&meshData, totalVertices, totalIndices)) {
+    if (!alloc_mesh(&meshData, totalVertices, totalIndices))
+    {
         return meshData;
     }
 
@@ -469,7 +483,8 @@ R3D_MeshData R3D_GenMeshDataSlope(float width, float height, float length, Vecto
 {
     R3D_MeshData meshData = {0};
 
-    if (width <= 0.0f || height <= 0.0f || length <= 0.0f) {
+    if (width <= 0.0f || height <= 0.0f || length <= 0.0f)
+    {
         return meshData;
     }
 
@@ -487,13 +502,15 @@ R3D_MeshData R3D_GenMeshDataSlope(float width, float height, float length, Vecto
     };
 
     bool keepCorner[8];
-    int keptCount = 0;
-    for (int i = 0; i < 8; i++) {
+    int  keptCount = 0;
+    for (int i = 0; i < 8; i++)
+    {
         keepCorner[i] = (Vector3DotProduct(corners[i], normal) <= 0.0f);
         keptCount += keepCorner[i];
     }
 
-    if (keptCount == 0 || keptCount == 8) {
+    if (keptCount == 0 || keptCount == 8)
+    {
         return meshData;
     }
 
@@ -507,9 +524,11 @@ R3D_MeshData R3D_GenMeshDataSlope(float width, float height, float length, Vecto
     bool hasIntersection[12] = {0};
     int intersectionCount = 0;
     
-    for (int i = 0; i < 12; i++) {
+    for (int i = 0; i < 12; i++)
+    {
         int c1 = edges[i][0], c2 = edges[i][1];
-        if (keepCorner[c1] != keepCorner[c2]) {
+        if (keepCorner[c1] != keepCorner[c2])
+        {
             Vector3 p1 = corners[c1], p2 = corners[c2];
             float d1 = Vector3DotProduct(p1, normal);
             float d2 = Vector3DotProduct(p2, normal);
@@ -520,7 +539,8 @@ R3D_MeshData R3D_GenMeshDataSlope(float width, float height, float length, Vecto
         }
     }
 
-    if (!alloc_mesh(&meshData, 32, 48)) {
+    if (!alloc_mesh(&meshData, 32, 48))
+    {
         return meshData;
     }
 
@@ -542,9 +562,11 @@ R3D_MeshData R3D_GenMeshDataSlope(float width, float height, float length, Vecto
 
         if (keptInFace == 0) continue;
 
-        if (keptInFace == 4) {
+        if (keptInFace == 4)
+        {
             int baseV = vertexCount;
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < 4; i++)
+            {
                 v[vertexCount++] = R3D_MakeVertex(
                     corners[ci[i]], uvs[i], faceNormals[f],
                     (Vector4){faceTangents[f].x, faceTangents[f].y, faceTangents[f].z, 1.0f},
@@ -566,15 +588,19 @@ R3D_MeshData R3D_GenMeshDataSlope(float width, float height, float length, Vecto
         Vector3 faceMin = {1e6f, 1e6f, 1e6f};
         Vector3 faceMax = {-1e6f, -1e6f, -1e6f};
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 4; i++)
+        {
             int curr = ci[i], next = ci[(i+1)%4];
-            if (keepCorner[curr]) {
+            if (keepCorner[curr])
+            {
                 polygon[polyCount] = corners[curr];
                 polyCount++;
             }
-            for (int e = 0; e < 12; e++) {
+            for (int e = 0; e < 12; e++)
+            {
                 if (((edges[e][0] == curr && edges[e][1] == next) ||
-                     (edges[e][0] == next && edges[e][1] == curr)) && hasIntersection[e]) {
+                     (edges[e][0] == next && edges[e][1] == curr)) && hasIntersection[e])
+                {
                     polygon[polyCount] = intersections[e];
                     polyCount++;
                     break;
@@ -582,7 +608,8 @@ R3D_MeshData R3D_GenMeshDataSlope(float width, float height, float length, Vecto
             }
         }
 
-        for (int i = 0; i < polyCount; i++) {
+        for (int i = 0; i < polyCount; i++)
+        {
             float u = Vector3DotProduct(polygon[i], faceU);
             float v = Vector3DotProduct(polygon[i], faceV);
             if (u < faceMin.x) faceMin.x = u;
@@ -596,23 +623,27 @@ R3D_MeshData R3D_GenMeshDataSlope(float width, float height, float length, Vecto
         if (rangeU < 0.001f) rangeU = 1.0f;
         if (rangeV < 0.001f) rangeV = 1.0f;
 
-        for (int i = 0; i < polyCount; i++) {
+        for (int i = 0; i < polyCount; i++)
+        {
             float u = Vector3DotProduct(polygon[i], faceU);
             float v = Vector3DotProduct(polygon[i], faceV);
             polyUVs[i].x = (u - faceMin.x) / rangeU;
             polyUVs[i].y = (v - faceMin.y) / rangeV;
         }
 
-        if (polyCount >= 3) {
+        if (polyCount >= 3)
+        {
             int baseV = vertexCount;
-            for (int i = 0; i < polyCount; i++) {
+            for (int i = 0; i < polyCount; i++)
+            {
                 v[vertexCount++] = R3D_MakeVertex(
                     polygon[i], polyUVs[i], faceNormals[f],
                     (Vector4){faceTangents[f].x, faceTangents[f].y, faceTangents[f].z, 1.0f},
                     WHITE
                 );
             }
-            for (int i = 1; i < polyCount - 1; i++) {
+            for (int i = 1; i < polyCount - 1; i++)
+            {
                 idx[indexCount++] = baseV;
                 idx[indexCount++] = baseV+i+1;
                 idx[indexCount++] = baseV+i;
@@ -620,13 +651,16 @@ R3D_MeshData R3D_GenMeshDataSlope(float width, float height, float length, Vecto
         }
     }
 
-    if (intersectionCount >= 3) {
+    if (intersectionCount >= 3)
+    {
         Vector3 center = {0};
         Vector3 cutPolygon[12];
         int cutCount = 0;
 
-        for (int i = 0; i < 12; i++) {
-            if (hasIntersection[i]) {
+        for (int i = 0; i < 12; i++)
+        {
+            if (hasIntersection[i])
+            {
                 cutPolygon[cutCount++] = intersections[i];
                 center = Vector3Add(center, intersections[i]);
             }
@@ -641,14 +675,18 @@ R3D_MeshData R3D_GenMeshDataSlope(float width, float height, float length, Vecto
         Vector3 w = Vector3CrossProduct(cutNormal, u);
 
         float angles[12];
-        for (int i = 0; i < cutCount; i++) {
+        for (int i = 0; i < cutCount; i++)
+        {
             Vector3 vec = Vector3Subtract(cutPolygon[i], center);
             angles[i] = atan2f(Vector3DotProduct(vec, w), Vector3DotProduct(vec, u));
         }
 
-        for (int i = 0; i < cutCount - 1; i++) {
-            for (int j = 0; j < cutCount - i - 1; j++) {
-                if (angles[j] > angles[j+1]) {
+        for (int i = 0; i < cutCount - 1; i++)
+        {
+            for (int j = 0; j < cutCount - i - 1; j++)
+            {
+                if (angles[j] > angles[j+1])
+                {
                     float tmpA = angles[j]; angles[j] = angles[j+1]; angles[j+1] = tmpA;
                     Vector3 tmpV = cutPolygon[j]; cutPolygon[j] = cutPolygon[j+1]; cutPolygon[j+1] = tmpV;
                 }
@@ -658,7 +696,8 @@ R3D_MeshData R3D_GenMeshDataSlope(float width, float height, float length, Vecto
         Vector3 uvMin = {1e6f, 1e6f, 1e6f};
         Vector3 uvMax = {-1e6f, -1e6f, -1e6f};
 
-        for (int i = 0; i < cutCount; i++) {
+        for (int i = 0; i < cutCount; i++)
+        {
             float projU = Vector3DotProduct(cutPolygon[i], u);
             float projV = Vector3DotProduct(cutPolygon[i], w);
             if (projU < uvMin.x) uvMin.x = projU;
@@ -673,7 +712,8 @@ R3D_MeshData R3D_GenMeshDataSlope(float width, float height, float length, Vecto
         if (rangeV < 0.001f) rangeV = 1.0f;
 
         int baseV = vertexCount;
-        for (int i = 0; i < cutCount; i++) {
+        for (int i = 0; i < cutCount; i++)
+        {
             float projU = Vector3DotProduct(cutPolygon[i], u);
             float projV = Vector3DotProduct(cutPolygon[i], w);
             Vector2 uv = {
@@ -688,7 +728,8 @@ R3D_MeshData R3D_GenMeshDataSlope(float width, float height, float length, Vecto
             );
         }
 
-        for (int i = 1; i < cutCount - 1; i++) {
+        for (int i = 1; i < cutCount - 1; i++)
+        {
             idx[indexCount++] = baseV;
             idx[indexCount++] = baseV+i;
             idx[indexCount++] = baseV+i+1;
@@ -705,12 +746,14 @@ R3D_MeshData R3D_GenMeshDataSphere(float radius, int rings, int slices)
 {
     R3D_MeshData meshData = {0};
 
-    if (radius <= 0.0f || rings < 2 || slices < 3) {
+    if (radius <= 0.0f || rings < 2 || slices < 3)
+    {
         return meshData;
     }
 
     int vertCountPerRing = slices + 1;
-    if (!alloc_mesh(&meshData, (rings + 1) * vertCountPerRing, rings * slices * 6)) {
+    if (!alloc_mesh(&meshData, (rings + 1) * vertCountPerRing, rings * slices * 6))
+    {
         return meshData;
     }
 
@@ -774,7 +817,8 @@ R3D_MeshData R3D_GenMeshDataHemiSphere(float radius, int rings, int slices)
 {
     R3D_MeshData meshData = {0};
 
-    if (radius <= 0.0f || rings < 1 || slices < 3) {
+    if (radius <= 0.0f || rings < 1 || slices < 3)
+    {
         return meshData;
     }
 
@@ -783,7 +827,8 @@ R3D_MeshData R3D_GenMeshDataHemiSphere(float radius, int rings, int slices)
     int totalVertCount = hemisphereVertCount + 1 + vertCountPerRing;
     int totalIndexCount = rings * slices * 6 + slices * 3;
 
-    if (!alloc_mesh(&meshData, totalVertCount, totalIndexCount)) {
+    if (!alloc_mesh(&meshData, totalVertCount, totalIndexCount))
+    {
         return meshData;
     }
 
@@ -887,11 +932,13 @@ R3D_MeshData R3D_GenMeshDataCylinderEx(float bottomRadius, float topRadius, floa
 {
     R3D_MeshData meshData = {0};
 
-    if (bottomRadius < 0.0f || topRadius < 0.0f || height <= 0.0f || slices < 3 || stacks < 1) {
+    if (bottomRadius < 0.0f || topRadius < 0.0f || height <= 0.0f || slices < 3 || stacks < 1)
+    {
         return meshData;
     }
 
-    if (bottomRadius == 0.0f && topRadius == 0.0f) {
+    if (bottomRadius == 0.0f && topRadius == 0.0f)
+    {
         return meshData;
     }
 
@@ -908,7 +955,8 @@ R3D_MeshData R3D_GenMeshDataCylinderEx(float bottomRadius, float topRadius, floa
     int capIndexCount = (hasBottom ? slices * 3 : 0) + (hasTop ? slices * 3 : 0);
     int totalIndexCount = bodyIndexCount + capIndexCount;
 
-    if (!alloc_mesh(&meshData, totalVertCount, totalIndexCount)) {
+    if (!alloc_mesh(&meshData, totalVertCount, totalIndexCount))
+    {
         return meshData;
     }
 
@@ -1010,8 +1058,10 @@ R3D_MeshData R3D_GenMeshDataCylinderEx(float bottomRadius, float topRadius, floa
 
     uint32_t* index = meshData.indices;
 
-    for (int stack = 0; stack < stacks; stack++) {
-        for (int slice = 0; slice < slices; slice++) {
+    for (int stack = 0; stack < stacks; stack++)
+    {
+        for (int slice = 0; slice < slices; slice++)
+        {
             uint32_t b0 = (uint32_t)(stack * ringStride + slice);
             uint32_t b1 = b0 + 1;
             uint32_t t0 = b0 + (uint32_t)ringStride;
@@ -1021,20 +1071,24 @@ R3D_MeshData R3D_GenMeshDataCylinderEx(float bottomRadius, float topRadius, floa
         }
     }
 
-    if (hasBottom) {
+    if (hasBottom)
+    {
         uint32_t center = bottomCapStart;
         uint32_t peri = bottomCapStart + 1;
-        for (int slice = 0; slice < slices; slice++) {
+        for (int slice = 0; slice < slices; slice++)
+        {
             *index++ = center;
             *index++ = peri + (slice + 1) % slices;
             *index++ = peri + slice;
         }
     }
 
-    if (hasTop) {
+    if (hasTop)
+    {
         uint32_t center = topCapStart;
         uint32_t peri = topCapStart + 1;
-        for (int slice = 0; slice < slices; slice++) {
+        for (int slice = 0; slice < slices; slice++)
+        {
             *index++ = center;
             *index++ = peri + slice;
             *index++ = peri + (slice + 1) % slices;
@@ -1048,7 +1102,8 @@ R3D_MeshData R3D_GenMeshDataCapsule(float radius, float height, int rings, int s
 {
     R3D_MeshData meshData = {0};
 
-    if (radius <= 0.0f || height < 0.0f || rings < 1 || slices < 3) {
+    if (radius <= 0.0f || height < 0.0f || rings < 1 || slices < 3)
+    {
         return meshData;
     }
 
@@ -1058,7 +1113,8 @@ R3D_MeshData R3D_GenMeshDataCapsule(float radius, float height, int rings, int s
     int totalVertCount = totalRings * vertCountPerRing;
     int totalIndexCount = (totalRings - 1) * slices * 6;
 
-    if (!alloc_mesh(&meshData, totalVertCount, totalIndexCount)) {
+    if (!alloc_mesh(&meshData, totalVertCount, totalIndexCount))
+    {
         return meshData;
     }
 
@@ -1169,14 +1225,16 @@ R3D_MeshData R3D_GenMeshDataTorus(float radius, float size, int radSeg, int side
 {
     R3D_MeshData meshData = {0};
 
-    if (radius <= 0.0f || size <= 0.0f || radSeg < 3 || sides < 3) {
+    if (radius <= 0.0f || size <= 0.0f || radSeg < 3 || sides < 3)
+    {
         return meshData;
     }
 
     int rings = radSeg + 1;
     int segments = sides + 1;
 
-    if (!alloc_mesh(&meshData, rings * segments, radSeg * sides * 6)) {
+    if (!alloc_mesh(&meshData, rings * segments, radSeg * sides * 6))
+    {
         return meshData;
     }
 
@@ -1249,14 +1307,16 @@ R3D_MeshData R3D_GenMeshDataKnot(float radius, float size, int radSeg, int sides
 {
     R3D_MeshData meshData = {0};
 
-    if (radius <= 0.0f || size <= 0.0f || radSeg < 6 || sides < 3) {
+    if (radius <= 0.0f || size <= 0.0f || radSeg < 6 || sides < 3)
+    {
         return meshData;
     }
 
     int knotSegments = radSeg + 1;
     int tubeSides = sides + 1;
 
-    if (!alloc_mesh(&meshData, knotSegments * tubeSides, radSeg * sides * 6)) {
+    if (!alloc_mesh(&meshData, knotSegments * tubeSides, radSeg * sides * 6))
+    {
         return meshData;
     }
 
@@ -1292,7 +1352,8 @@ R3D_MeshData R3D_GenMeshDataKnot(float radius, float size, int radSeg, int sides
             -3.0f * cos3T
         };
         float tangentLen = sqrtf(tangent.x * tangent.x + tangent.y * tangent.y + tangent.z * tangent.z);
-        if (tangentLen > 0.0f) {
+        if (tangentLen > 0.0f)
+        {
             float invTangentLen = 1.0f / tangentLen;
             tangent.x *= invTangentLen;
             tangent.y *= invTangentLen;
@@ -1305,7 +1366,8 @@ R3D_MeshData R3D_GenMeshDataKnot(float radius, float size, int radSeg, int sides
             9.0f * sin3T
         };
         float binormalLen = sqrtf(binormal.x * binormal.x + binormal.y * binormal.y + binormal.z * binormal.z);
-        if (binormalLen > 0.0f) {
+        if (binormalLen > 0.0f)
+        {
             float invBinormalLen = 1.0f / binormalLen;
             binormal.x *= invBinormalLen;
             binormal.y *= invBinormalLen;
@@ -1373,18 +1435,21 @@ R3D_MeshData R3D_GenMeshDataHeightmap(Image heightmap, Vector3 size)
 {
     R3D_MeshData meshData = {0};
 
-    if (heightmap.data == NULL || heightmap.width <= 1 || heightmap.height <= 1) {
+    if (heightmap.data == NULL || heightmap.width <= 1 || heightmap.height <= 1)
+    {
         return meshData;
     }
 
-    if (size.x <= 0.0f || size.y <= 0.0f || size.z <= 0.0f) {
+    if (size.x <= 0.0f || size.y <= 0.0f || size.z <= 0.0f)
+    {
         return meshData;
     }
 
     const int mapWidth = heightmap.width;
     const int mapHeight = heightmap.height;
 
-    if (!alloc_mesh(&meshData, mapWidth * mapHeight, (mapWidth - 1) * (mapHeight - 1) * 6)) {
+    if (!alloc_mesh(&meshData, mapWidth * mapHeight, (mapWidth - 1) * (mapHeight - 1) * 6))
+    {
         return meshData;
     }
 
@@ -1402,7 +1467,8 @@ R3D_MeshData R3D_GenMeshDataHeightmap(Image heightmap, Vector3 size)
             ? 0.0f : ((float)GetImageColor(heightmap, x, y).r / 255)
 
     int vertexIndex = 0;
-    for (int z = 0; z < mapHeight; z++) {
+    for (int z = 0; z < mapHeight; z++)
+    {
         for (int x = 0; x < mapWidth; x++)
         {
             float posX = -halfSizeX + x * stepX;
@@ -1432,7 +1498,8 @@ R3D_MeshData R3D_GenMeshDataHeightmap(Image heightmap, Vector3 size)
     }
 
     int indexOffset = 0;
-    for (int z = 0; z < mapHeight - 1; z++) {
+    for (int z = 0; z < mapHeight - 1; z++)
+    {
         for (int x = 0; x < mapWidth - 1; x++)
         {
             uint32_t topLeft = z * mapWidth + x;
@@ -1473,11 +1540,13 @@ R3D_MeshData R3D_GenMeshDataCubicmap(Image cubicmap, Vector3 cubeSize)
 
     R3D_MeshData meshData = {0};
 
-    if (cubicmap.width <= 0 || cubicmap.height <= 0) {
+    if (cubicmap.width <= 0 || cubicmap.height <= 0)
+    {
         return meshData;
     }
 
-    if (cubeSize.x <= 0.0f || cubeSize.y <= 0.0f || cubeSize.z <= 0.0f) {
+    if (cubeSize.x <= 0.0f || cubeSize.y <= 0.0f || cubeSize.z <= 0.0f)
+    {
         return meshData;
     }
 
@@ -1512,11 +1581,13 @@ R3D_MeshData R3D_GenMeshDataCubicmap(Image cubicmap, Vector3 cubeSize)
     };
 
     int maxFaces = 0;
-    for (int i = 0; i < W * H; i++) {
+    for (int i = 0; i < W * H; i++)
+    {
         maxFaces += IS_WALL(pixels[i]) ? 6 : 2;
     }
 
-    if (!alloc_mesh(&meshData, maxFaces * 4, maxFaces * 6)) {
+    if (!alloc_mesh(&meshData, maxFaces * 4, maxFaces * 6))
+    {
         UnloadImageColors(pixels);
         return meshData;
     }
@@ -1525,8 +1596,10 @@ R3D_MeshData R3D_GenMeshDataCubicmap(Image cubicmap, Vector3 cubeSize)
     uint32_t*   indices  = meshData.indices;
     int vc = 0, ic = 0;
 
-    for (int z = 0; z < H; z++) {
-        for (int x = 0; x < W; x++) {
+    for (int z = 0; z < H; z++)
+    {
+        for (int x = 0; x < W; x++)
+        {
             Color px = PIXEL(x, z);
 
             float cx = cubeSize.x * (x - W * 0.5f + 0.5f);
@@ -1537,7 +1610,8 @@ R3D_MeshData R3D_GenMeshDataCubicmap(Image cubicmap, Vector3 cubeSize)
             Vector3 BLF={cx-hw, 0,cz-hl}, BRF={cx+hw, 0,cz-hl};
             Vector3 BLB={cx-hw, 0,cz+hl}, BRB={cx+hw, 0,cz+hl};
 
-            if (IS_WALL(px)) {
+            if (IS_WALL(px))
+            {
                 // Wall top / bottom
                 QUAD(TLF,TLB,TRB,TRF,  UV(2,0,0),UV(2,0,1),UV(2,1,1),UV(2,1,0),  2,2);
                 QUAD(BRF,BRB,BLB,BLF,  UV(3,1,0),UV(3,1,1),UV(3,0,1),UV(3,0,0),  3,3);
@@ -1548,7 +1622,8 @@ R3D_MeshData R3D_GenMeshDataCubicmap(Image cubicmap, Vector3 cubeSize)
                 if (x==W-1 || !IS_WALL(PIXEL(x+1,z))) QUAD(TRB,BRB,BRF,TRF,  UV(0,0,0),UV(0,0,1),UV(0,1,1),UV(0,1,0),  0,0); // +X
                 if (x==0   || !IS_WALL(PIXEL(x-1,z))) QUAD(TLF,BLF,BLB,TLB,  UV(1,0,0),UV(1,0,1),UV(1,1,1),UV(1,1,0),  1,1); // -X
             }
-            else {
+            else
+            {
                 QUAD(TLF,TRF,TRB,TLB,  UV(3,0,0),UV(3,1,0),UV(3,1,1),UV(3,0,1),  3,3);
                 QUAD(BLF,BLB,BRB,BRF,  UV(2,0,0),UV(2,0,1),UV(2,1,1),UV(2,1,0),  2,2);
             }
@@ -1569,9 +1644,11 @@ R3D_MeshData R3D_GenMeshDataCubicmap(Image cubicmap, Vector3 cubeSize)
 
 void R3D_ReserveMeshData(R3D_MeshData* meshData, int vertexCount, int indexCount)
 {
-    if (vertexCount > meshData->vertexCapacity) {
+    if (vertexCount > meshData->vertexCapacity)
+    {
         void* vertices = MemRealloc(meshData->vertices, vertexCount * sizeof(*meshData->vertices));
-        if (vertices == NULL) {
+        if (vertices == NULL)
+        {
             R3D_TRACELOG(LOG_WARNING, "Failed to reserve vertices memory");
             return;
         }
@@ -1579,9 +1656,11 @@ void R3D_ReserveMeshData(R3D_MeshData* meshData, int vertexCount, int indexCount
         meshData->vertices = vertices;
     }
 
-    if (indexCount > meshData->indexCapacity) {
+    if (indexCount > meshData->indexCapacity)
+    {
         void* indices = MemRealloc(meshData->indices, indexCount * sizeof(*meshData->indices));
-        if (indices == NULL) {
+        if (indices == NULL)
+        {
             R3D_TRACELOG(LOG_WARNING, "Failed to reserve indices memory");
             return;
         }
@@ -1592,9 +1671,11 @@ void R3D_ReserveMeshData(R3D_MeshData* meshData, int vertexCount, int indexCount
 
 void R3D_ShrinkMeshData(R3D_MeshData* meshData)
 {
-    if (meshData->vertexCount > 0 && meshData->vertexCount != meshData->vertexCapacity) {
+    if (meshData->vertexCount > 0 && meshData->vertexCount != meshData->vertexCapacity)
+    {
         void* vertices = MemRealloc(meshData->vertices, meshData->vertexCount * sizeof(*meshData->vertices));
-        if (vertices == NULL) {
+        if (vertices == NULL)
+        {
             R3D_TRACELOG(LOG_WARNING, "Failed to shrink vertices memory");
             return;
         }
@@ -1602,9 +1683,11 @@ void R3D_ShrinkMeshData(R3D_MeshData* meshData)
         meshData->vertices = vertices;
     }
 
-    if (meshData->indexCount > 0 && meshData->indexCount != meshData->indexCapacity) {
+    if (meshData->indexCount > 0 && meshData->indexCount != meshData->indexCapacity)
+    {
         void* indices = MemRealloc(meshData->indices, meshData->indexCount * sizeof(*meshData->indices));
-        if (indices == NULL) {
+        if (indices == NULL)
+        {
             R3D_TRACELOG(LOG_WARNING, "Failed to shrink indices memory");
             return;
         }
@@ -1623,19 +1706,22 @@ R3D_MeshData R3D_CopyMeshData(R3D_MeshData meshData)
 {
     R3D_MeshData duplicate = {0};
 
-    if (meshData.vertices == NULL) {
+    if (meshData.vertices == NULL)
+    {
         R3D_TRACELOG(LOG_ERROR, "Cannot duplicate null mesh data");
         return duplicate;
     }
 
     duplicate = R3D_LoadMeshData(meshData.vertexCount, meshData.indexCount);
-    if (duplicate.vertices == NULL) {
+    if (duplicate.vertices == NULL)
+    {
         return duplicate;
     }
 
     memcpy(duplicate.vertices, meshData.vertices, meshData.vertexCount * sizeof(*meshData.vertices));
 
-    if (meshData.indexCount > 0 && meshData.indices != NULL && duplicate.indices != NULL) {
+    if (meshData.indexCount > 0 && meshData.indices != NULL && duplicate.indices != NULL)
+    {
         memcpy(duplicate.indices, meshData.indices, meshData.indexCount * sizeof(*meshData.indices));
     }
 
@@ -1646,7 +1732,8 @@ R3D_MeshData R3D_MergeMeshData(R3D_MeshData a, R3D_MeshData b)
 {
     R3D_MeshData merged = {0};
 
-    if (a.vertices == NULL || b.vertices == NULL) {
+    if (a.vertices == NULL || b.vertices == NULL)
+    {
         R3D_TRACELOG(LOG_ERROR, "Cannot merge null mesh data");
         return merged;
     }
@@ -1656,19 +1743,23 @@ R3D_MeshData R3D_MergeMeshData(R3D_MeshData a, R3D_MeshData b)
 
     merged = R3D_LoadMeshData(totalVertices, totalIndices);
 
-    if (merged.vertices == NULL) {
+    if (merged.vertices == NULL)
+    {
         return merged;
     }
 
     memcpy(merged.vertices, a.vertices, a.vertexCount * sizeof(*merged.vertices));
     memcpy(merged.vertices + a.vertexCount, b.vertices, b.vertexCount * sizeof(*merged.vertices));
 
-    if (a.indexCount > 0 && a.indices != NULL) {
+    if (a.indexCount > 0 && a.indices != NULL)
+    {
         memcpy(merged.indices, a.indices, a.indexCount * sizeof(*merged.indices));
     }
 
-    if (b.indexCount > 0 && b.indices != NULL) {
-        for (int i = 0; i < b.indexCount; i++) {
+    if (b.indexCount > 0 && b.indices != NULL)
+    {
+        for (int i = 0; i < b.indexCount; i++)
+        {
             merged.indices[a.indexCount + i] = b.indices[i] + a.vertexCount;
         }
     }
@@ -1680,11 +1771,13 @@ void R3D_AppendMeshData(R3D_MeshData* meshData, R3D_Vertex* vertices, int vertex
 {
     R3D_ReserveMeshData(meshData, meshData->vertexCount + vertexCount, meshData->indexCount + indexCount);
 
-    for (int i = 0; i < vertexCount; i++) {
+    for (int i = 0; i < vertexCount; i++)
+    {
         meshData->vertices[meshData->vertexCount++] = vertices[i];
     }
 
-    for (int i = 0; i < indexCount; i++) {
+    for (int i = 0; i < indexCount; i++)
+    {
         meshData->indices[meshData->indexCount++] = indices[i];
     }
 }
@@ -1713,7 +1806,8 @@ void R3D_TranslateMeshData(R3D_MeshData* meshData, Vector3 translation)
 {
     if (meshData == NULL || meshData->vertices == NULL) return;
 
-    for (int i = 0; i < meshData->vertexCount; i++) {
+    for (int i = 0; i < meshData->vertexCount; i++)
+    {
         meshData->vertices[i].position.x += translation.x;
         meshData->vertices[i].position.y += translation.y;
         meshData->vertices[i].position.z += translation.z;
@@ -1759,7 +1853,8 @@ void R3D_ScaleMeshData(R3D_MeshData* meshData, Vector3 scale)
         v->position.y *= scale.y;
         v->position.z *= scale.z;
 
-        if (!uniform) {
+        if (!uniform)
+        {
             Vector3 normal = R3D_UnpackNormal((int8_t*)v->normal);
             normal = Vector3Normalize((Vector3){normal.x * invScale.x, normal.y * invScale.y, normal.z * invScale.z});
             R3D_PackNormal((int8_t*)v->normal, normal);
@@ -1781,7 +1876,8 @@ void R3D_GenMeshDataUVsPlanar(R3D_MeshData* meshData, Vector2 uvScale, Vector3 a
     Vector3 tangent = Vector3Normalize(Vector3CrossProduct(up, axis));
     Vector3 bitangent = Vector3CrossProduct(axis, tangent);
     
-    for (int i = 0; i < meshData->vertexCount; i++) {
+    for (int i = 0; i < meshData->vertexCount; i++)
+    {
         Vector3 pos = meshData->vertices[i].position;
         float u = Vector3DotProduct(pos, tangent) * uvScale.x;
         float v = Vector3DotProduct(pos, bitangent) * uvScale.y;
@@ -1793,7 +1889,8 @@ void R3D_GenMeshDataUVsSpherical(R3D_MeshData* meshData)
 {
     if (meshData == NULL || meshData->vertices == NULL) return;
 
-    for (int i = 0; i < meshData->vertexCount; i++) {
+    for (int i = 0; i < meshData->vertexCount; i++)
+    {
         Vector3 pos = Vector3Normalize(meshData->vertices[i].position);
         float u = 0.5f + atan2f(pos.z, pos.x) / (2.0f * PI);
         float v = 0.5f - asinf(pos.y) * (1.0f / PI);
@@ -1805,7 +1902,8 @@ void R3D_GenMeshDataUVsCylindrical(R3D_MeshData* meshData)
 {
     if (meshData == NULL || meshData->vertices == NULL) return;
 
-    for (int i = 0; i < meshData->vertexCount; i++) {
+    for (int i = 0; i < meshData->vertexCount; i++)
+    {
         Vector3 pos = meshData->vertices[i].position;
         float u = 0.5f + atan2f(pos.z, pos.x) / (2.0f * PI);
         float v = pos.y;
@@ -1831,13 +1929,16 @@ static void accumulate_face_normal(Vector3* normals, R3D_MeshData* meshData, uin
 
 void R3D_GenMeshDataNormals(R3D_MeshData* meshData, R3D_PrimitiveType type)
 {
-    if (meshData == NULL || meshData->vertices == NULL || meshData->vertexCount == 0) {
+    if (meshData == NULL || meshData->vertices == NULL || meshData->vertexCount == 0)
+    {
         return;
     }
 
-    if (type == R3D_PRIMITIVE_POINTS ||  type == R3D_PRIMITIVE_LINES ||
-        type == R3D_PRIMITIVE_LINE_STRIP ||  type == R3D_PRIMITIVE_LINE_LOOP) {
-        for (int i = 0; i < meshData->vertexCount; i++) {
+    if (type == R3D_PRIMITIVE_POINTS     || type == R3D_PRIMITIVE_LINES ||
+        type == R3D_PRIMITIVE_LINE_STRIP || type == R3D_PRIMITIVE_LINE_LOOP)
+    {
+        for (int i = 0; i < meshData->vertexCount; i++)
+        {
             R3D_PackNormal((int8_t*)meshData->vertices[i].normal, (Vector3){0.0f, 0.0f, 1.0f});
         }
         return;
@@ -1854,9 +1955,11 @@ void R3D_GenMeshDataNormals(R3D_MeshData* meshData, R3D_PrimitiveType type)
 
         int count = meshData->indexCount > 0 ? meshData->indexCount : meshData->vertexCount;
 
-        switch (type) {
+        switch (type)
+        {
         case R3D_PRIMITIVE_TRIANGLES:
-            for (int i = 0; i + 2 < count; i += 3) {
+            for (int i = 0; i + 2 < count; i += 3)
+            {
                 accumulate_face_normal(normals, meshData,
                     get_index(meshData, i),
                     get_index(meshData, i + 1),
@@ -1864,17 +1967,22 @@ void R3D_GenMeshDataNormals(R3D_MeshData* meshData, R3D_PrimitiveType type)
                 );
             }
             break;
+
         case R3D_PRIMITIVE_TRIANGLE_STRIP:
-            for (int i = 0; i + 2 < count; i++) {
+            for (int i = 0; i + 2 < count; i++)
+            {
                 uint32_t i0 = get_index(meshData, i % 2 == 0 ? i     : i + 1);
                 uint32_t i1 = get_index(meshData, i % 2 == 0 ? i + 1 : i    );
                 uint32_t i2 = get_index(meshData, i + 2);
                 accumulate_face_normal(normals, meshData, i0, i1, i2);
             }
             break;
-        case R3D_PRIMITIVE_TRIANGLE_FAN: {
+
+        case R3D_PRIMITIVE_TRIANGLE_FAN:
+        {
             uint32_t center = get_index(meshData, 0);
-            for (int i = 1; i + 1 < count; i++) {
+            for (int i = 1; i + 1 < count; i++)
+            {
                 accumulate_face_normal(normals, meshData,
                     center,
                     get_index(meshData, i),
@@ -1882,16 +1990,19 @@ void R3D_GenMeshDataNormals(R3D_MeshData* meshData, R3D_PrimitiveType type)
                 );
             }
         } break;
+
         default:
             break;
         }
 
-        for (int i = 0; i < meshData->vertexCount; i++) {
+        for (int i = 0; i < meshData->vertexCount; i++)
+        {
             R3D_PackNormal((int8_t*)meshData->vertices[i].normal, Vector3Normalize(normals[i]));
         }
     }
 
-    if (!ok) {
+    if (!ok)
+    {
         R3D_TRACELOG(LOG_ERROR, "Failed to allocate temporary vertex buffer to generate normals");
     }
 }
@@ -1932,6 +2043,7 @@ static void process_triangle_tangents(Vector3* tangents, Vector3* bitangents, R3
     tangents[i0] = Vector3Add(tangents[i0], tangent);
     tangents[i1] = Vector3Add(tangents[i1], tangent);
     tangents[i2] = Vector3Add(tangents[i2], tangent);
+
     bitangents[i0] = Vector3Add(bitangents[i0], bitangent);
     bitangents[i1] = Vector3Add(bitangents[i1], bitangent);
     bitangents[i2] = Vector3Add(bitangents[i2], bitangent);
@@ -1939,13 +2051,16 @@ static void process_triangle_tangents(Vector3* tangents, Vector3* bitangents, R3
 
 void R3D_GenMeshDataTangents(R3D_MeshData* meshData, R3D_PrimitiveType type)
 {
-    if (meshData == NULL || meshData->vertices == NULL || meshData->vertexCount == 0) {
+    if (meshData == NULL || meshData->vertices == NULL || meshData->vertexCount == 0)
+    {
         return;
     }
 
-    if (type == R3D_PRIMITIVE_POINTS || type == R3D_PRIMITIVE_LINES ||
-        type == R3D_PRIMITIVE_LINE_STRIP || type == R3D_PRIMITIVE_LINE_LOOP) {
-        for (int i = 0; i < meshData->vertexCount; i++) {
+    if (type == R3D_PRIMITIVE_POINTS     || type == R3D_PRIMITIVE_LINES ||
+        type == R3D_PRIMITIVE_LINE_STRIP || type == R3D_PRIMITIVE_LINE_LOOP)
+    {
+        for (int i = 0; i < meshData->vertexCount; i++)
+        {
             R3D_PackTangent((int8_t*)meshData->vertices[i].tangent, (Vector4){1.0f, 0.0f, 0.0f, 1.0f});
         }
         return;
@@ -1965,9 +2080,11 @@ void R3D_GenMeshDataTangents(R3D_MeshData* meshData, R3D_PrimitiveType type)
         int count = meshData->indexCount > 0
             ? meshData->indexCount : meshData->vertexCount;
 
-        switch (type) {
+        switch (type)
+        {
         case R3D_PRIMITIVE_TRIANGLES:
-            for (int i = 0; i + 2 < count; i += 3) {
+            for (int i = 0; i + 2 < count; i += 3)
+            {
                 process_triangle_tangents(tangents, bitangents, meshData,
                     get_index(meshData, i),
                     get_index(meshData, i + 1),
@@ -1976,16 +2093,19 @@ void R3D_GenMeshDataTangents(R3D_MeshData* meshData, R3D_PrimitiveType type)
             }
             break;
         case R3D_PRIMITIVE_TRIANGLE_STRIP:
-            for (int i = 0; i + 2 < count; i++) {
+            for (int i = 0; i + 2 < count; i++)
+            {
                 uint32_t i0 = get_index(meshData, i % 2 == 0 ? i     : i + 1);
                 uint32_t i1 = get_index(meshData, i % 2 == 0 ? i + 1 : i    );
                 uint32_t i2 = get_index(meshData, i + 2);
                 process_triangle_tangents(tangents, bitangents, meshData, i0, i1, i2);
             }
             break;
-        case R3D_PRIMITIVE_TRIANGLE_FAN: {
+        case R3D_PRIMITIVE_TRIANGLE_FAN:
+        {
             uint32_t center = get_index(meshData, 0);
-            for (int i = 1; i + 1 < count; i++) {
+            for (int i = 1; i + 1 < count; i++)
+            {
                 process_triangle_tangents(tangents, bitangents, meshData,
                     center,
                     get_index(meshData, i),
@@ -2006,9 +2126,12 @@ void R3D_GenMeshDataTangents(R3D_MeshData* meshData, R3D_PrimitiveType type)
             // Gram-Schmidt orthogonalization
             t = Vector3Subtract(t, Vector3Scale(n, Vector3DotProduct(n, t)));
             float tLength = Vector3Length(t);
-            if (tLength > 1e-6f) {
+            if (tLength > 1e-6f)
+            {
                 t = Vector3Scale(t, 1.0f / tLength);
-            } else {
+            }
+            else
+            {
                 // Fallback: generate an arbitrary tangent perpendicular to the normal
                 t = fabsf(n.x) < 0.9f ? (Vector3){1.0f, 0.0f, 0.0f} : (Vector3){0.0f, 1.0f, 0.0f};
                 t = Vector3Normalize(Vector3Subtract(t, Vector3Scale(n, Vector3DotProduct(n, t))));
@@ -2019,7 +2142,8 @@ void R3D_GenMeshDataTangents(R3D_MeshData* meshData, R3D_PrimitiveType type)
         }
     }
 
-    if (!ok) {
+    if (!ok)
+    {
         R3D_TRACELOG(LOG_ERROR, "Failed to allocate temporary vertex buffer to generate tangents");
     }
 }
@@ -2028,14 +2152,16 @@ BoundingBox R3D_CalculateMeshDataBoundingBox(R3D_MeshData meshData)
 {
     BoundingBox bounds = {0};
 
-    if (meshData.vertices == NULL || meshData.vertexCount == 0) {
+    if (meshData.vertices == NULL || meshData.vertexCount == 0)
+    {
         return bounds;
     }
 
     bounds.min = meshData.vertices[0].position;
     bounds.max = meshData.vertices[0].position;
 
-    for (int i = 1; i < meshData.vertexCount; i++) {
+    for (int i = 1; i < meshData.vertexCount; i++)
+    {
         Vector3 pos = meshData.vertices[i].position;
         bounds.min = Vector3Min(bounds.min, pos);
         bounds.max = Vector3Max(bounds.max, pos);
@@ -2053,7 +2179,8 @@ bool alloc_mesh(R3D_MeshData* meshData, int vertexCount, int indexCount)
     meshData->vertices = MemAlloc(vertexCount * sizeof(*meshData->vertices));
     meshData->indices = MemAlloc(indexCount * sizeof(*meshData->indices));
 
-    if (!meshData->vertices || !meshData->indices) {
+    if (!meshData->vertices || !meshData->indices)
+    {
         if (meshData->vertices) MemFree(meshData->vertices);
         if (meshData->indices) MemFree(meshData->indices);
         return false;
