@@ -133,7 +133,8 @@ static struct r3d_driver {
 /* Returns -1 if capability is not tracked */
 static int get_capability_index(GLenum cap)
 {
-    switch (cap) {
+    switch (cap)
+    {
     case GL_BLEND: return CAP_INDEX_BLEND;
     case GL_CULL_FACE: return CAP_INDEX_CULL_FACE;
     case GL_DEPTH_TEST: return CAP_INDEX_DEPTH_TEST;
@@ -153,7 +154,8 @@ static bool query_ext(const char* name)
     GLint numExtensions = 0;
     glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
 
-    for (GLint i = 0; i < numExtensions; i++) {
+    for (GLint i = 0; i < numExtensions; i++)
+    {
         const char* ext = (const char*)glGetStringi(GL_EXTENSIONS, i);
         if (ext && strcmp(ext, name) == 0) return true;
     }
@@ -174,7 +176,8 @@ bool r3d_driver_init(void)
 void r3d_driver_quit(void)
 {
     extension_entry_t* current, * tmp;
-    HASH_ITER(hh, R3D_MOD_DRIVER.extCache.head, current, tmp) {
+    HASH_ITER(hh, R3D_MOD_DRIVER.extCache.head, current, tmp)
+    {
         HASH_DEL(R3D_MOD_DRIVER.extCache.head, current);
     }
 }
@@ -184,7 +187,8 @@ bool r3d_driver_check_ext(const char* name)
     if (!name) return false;
 
     // Name too long: skip cache, query directly
-    if (strlen(name) >= R3D_OPENGL_EXT_NAME_MAX) {
+    if (strlen(name) >= R3D_OPENGL_EXT_NAME_MAX)
+    {
         return query_ext(name);
     }
 
@@ -196,7 +200,8 @@ bool r3d_driver_check_ext(const char* name)
     // Query OpenGL and cache the result if space available
     bool supported = query_ext(name);
 
-    if (R3D_MOD_DRIVER.extCache.count < R3D_OPENGL_EXT_CACHE_MAX) {
+    if (R3D_MOD_DRIVER.extCache.count < R3D_OPENGL_EXT_CACHE_MAX)
+    {
         extension_entry_t* entry = &R3D_MOD_DRIVER.extCache.array[R3D_MOD_DRIVER.extCache.count++];
         strncpy(entry->name, name, R3D_OPENGL_EXT_NAME_MAX - 1);
         entry->name[R3D_OPENGL_EXT_NAME_MAX - 1] = '\0';
@@ -215,15 +220,18 @@ bool r3d_driver_has_anisotropy(float* max)
 
     if (max) *max = 1.0f;
 
-    if (!checked) {
+    if (!checked)
+    {
         hasAniso = r3d_driver_check_ext("GL_EXT_texture_filter_anisotropic");
-        if (hasAniso) {
+        if (hasAniso)
+        {
             glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
         }
         checked = true;
     }
 
-    if (max && hasAniso) {
+    if (max && hasAniso)
+    {
         *max = maxAniso;
     }
 
@@ -238,7 +246,8 @@ void r3d_driver_clear_errors(void)
 bool r3d_driver_check_error(const char* msg)
 {
     int err = glGetError();
-    if (err != GL_NO_ERROR) {
+    if (err != GL_NO_ERROR)
+    {
         R3D_TRACELOG(LOG_ERROR, "OpenGL Error (%s): 0x%04x", msg, err);
         return true;
     }
@@ -250,7 +259,8 @@ void r3d_driver_enable(GLenum cap)
     int index = get_capability_index(cap);
     if (index < 0) { glEnable(cap); return; }
 
-    if (R3D_MOD_DRIVER.pipeCache.capStates[index] != CAP_STATE_ENABLED) {
+    if (R3D_MOD_DRIVER.pipeCache.capStates[index] != CAP_STATE_ENABLED)
+    {
         R3D_MOD_DRIVER.pipeCache.capStates[index] = CAP_STATE_ENABLED;
         glEnable(cap);
     }
@@ -261,7 +271,8 @@ void r3d_driver_disable(GLenum cap)
     int index = get_capability_index(cap);
     if (index < 0) { glDisable(cap); return; }
 
-    if (R3D_MOD_DRIVER.pipeCache.capStates[index] != CAP_STATE_DISABLED) {
+    if (R3D_MOD_DRIVER.pipeCache.capStates[index] != CAP_STATE_DISABLED)
+    {
         R3D_MOD_DRIVER.pipeCache.capStates[index] = CAP_STATE_DISABLED;
         glDisable(cap);
     }
@@ -269,7 +280,8 @@ void r3d_driver_disable(GLenum cap)
 
 void r3d_driver_set_cull_face(GLenum face)
 {
-    if (CHECK_PIPE(cullFace, enum, face)) {
+    if (CHECK_PIPE(cullFace, enum, face))
+    {
         SET_PIPE(cullFace, enum, face);
         glCullFace(face);
     }
@@ -277,7 +289,8 @@ void r3d_driver_set_cull_face(GLenum face)
 
 void r3d_driver_set_depth_func(GLenum func)
 {
-    if (CHECK_PIPE(depthFunc, enum, func)) {
+    if (CHECK_PIPE(depthFunc, enum, func))
+    {
         SET_PIPE(depthFunc, enum, func);
         glDepthFunc(func);
     }
@@ -285,7 +298,8 @@ void r3d_driver_set_depth_func(GLenum func)
 
 void r3d_driver_set_depth_mask(GLboolean mask)
 {
-    if (CHECK_PIPE(depthMask, bool, mask)) {
+    if (CHECK_PIPE(depthMask, bool, mask))
+    {
         SET_PIPE(depthMask, bool, mask);
         glDepthMask(mask);
     }
@@ -293,7 +307,8 @@ void r3d_driver_set_depth_mask(GLboolean mask)
 
 void r3d_driver_set_depth_range(float dNear, float dFar)
 {
-    if (CHECK_PIPE(depthNear, float, dNear) || CHECK_PIPE(depthFar, float, dFar)) {
+    if (CHECK_PIPE(depthNear, float, dNear) || CHECK_PIPE(depthFar, float, dFar))
+    {
         SET_PIPE(depthNear, float, dNear);
         SET_PIPE(depthFar, float, dFar);
         glDepthRange(dNear, dFar);
@@ -307,13 +322,15 @@ void r3d_driver_set_depth_offset(float units, float factor)
         SET_PIPE(depthUnits, float, units);
         SET_PIPE(depthFactor, float, factor);
 
-        if (units != 0.0f || factor != 0.0f) {
+        if (units != 0.0f || factor != 0.0f)
+        {
             r3d_driver_enable(GL_POLYGON_OFFSET_POINT);
             r3d_driver_enable(GL_POLYGON_OFFSET_LINE);
             r3d_driver_enable(GL_POLYGON_OFFSET_FILL);
             glPolygonOffset(factor, units);
         }
-        else {
+        else
+        {
             r3d_driver_disable(GL_POLYGON_OFFSET_POINT);
             r3d_driver_disable(GL_POLYGON_OFFSET_LINE);
             r3d_driver_disable(GL_POLYGON_OFFSET_FILL);
@@ -323,7 +340,8 @@ void r3d_driver_set_depth_offset(float units, float factor)
 
 void r3d_driver_set_stencil_func(GLenum func, uint8_t ref, uint8_t mask)
 {
-    if (CHECK_PIPE(stencilFunc, enum, func) || CHECK_PIPE(stencilRef, byte, ref) || CHECK_PIPE(stencilMask, byte, mask)) {
+    if (CHECK_PIPE(stencilFunc, enum, func) || CHECK_PIPE(stencilRef, byte, ref) || CHECK_PIPE(stencilMask, byte, mask))
+    {
         SET_PIPE(stencilFunc, enum, func);
         SET_PIPE(stencilMask, byte, mask);
         SET_PIPE(stencilRef, byte, ref);
@@ -333,7 +351,8 @@ void r3d_driver_set_stencil_func(GLenum func, uint8_t ref, uint8_t mask)
 
 void r3d_driver_set_stencil_op(GLenum fail, GLenum zFail, GLenum zPass)
 {
-    if (CHECK_PIPE(stencilOpFail, enum, fail) || CHECK_PIPE(stencilOpZFail, enum, zFail) || CHECK_PIPE(stencilOpZPass, enum, zPass)) {
+    if (CHECK_PIPE(stencilOpFail, enum, fail) || CHECK_PIPE(stencilOpZFail, enum, zFail) || CHECK_PIPE(stencilOpZPass, enum, zPass))
+    {
         SET_PIPE(stencilOpFail, enum, fail);
         SET_PIPE(stencilOpZFail, enum, zFail);
         SET_PIPE(stencilOpZPass, enum, zPass);
@@ -343,7 +362,8 @@ void r3d_driver_set_stencil_op(GLenum fail, GLenum zFail, GLenum zPass)
 
 void r3d_driver_set_stencil_mask(uint8_t mask)
 {
-    if (CHECK_PIPE(stencilMask, byte, mask)) {
+    if (CHECK_PIPE(stencilMask, byte, mask))
+    {
         SET_PIPE(stencilMask, byte, mask);
         glStencilMask(mask);
     }
@@ -351,15 +371,17 @@ void r3d_driver_set_stencil_mask(uint8_t mask)
 
 void r3d_driver_set_blend_func_separate(GLenum equation, GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha)
 {
-    if (CHECK_PIPE(blendEquation, enum, equation)) {
+    if (CHECK_PIPE(blendEquation, enum, equation))
+    {
         SET_PIPE(blendEquation, enum, equation);
         glBlendEquation(equation);
     }
 
-    bool rgbDirty   = CHECK_PIPE(blendSrcFactor, enum, srcRGB)  || CHECK_PIPE(blendDstFactor, enum, dstRGB);
+    bool rgbDirty   = CHECK_PIPE(blendSrcFactor, enum, srcRGB)   || CHECK_PIPE(blendDstFactor, enum, dstRGB);
     bool alphaDirty = CHECK_PIPE(blendSrcAlpha,  enum, srcAlpha) || CHECK_PIPE(blendDstAlpha,  enum, dstAlpha);
 
-    if (rgbDirty || alphaDirty) {
+    if (rgbDirty || alphaDirty)
+    {
         SET_PIPE(blendSrcFactor, enum, srcRGB);
         SET_PIPE(blendDstFactor, enum, dstRGB);
         SET_PIPE(blendSrcAlpha,  enum, srcAlpha);
@@ -370,7 +392,8 @@ void r3d_driver_set_blend_func_separate(GLenum equation, GLenum srcRGB, GLenum d
 
 void r3d_driver_set_blend_func(GLenum equation, GLenum srcFactor, GLenum dstFactor)
 {
-    if (CHECK_PIPE(blendEquation, enum, equation)) {
+    if (CHECK_PIPE(blendEquation, enum, equation))
+    {
         SET_PIPE(blendEquation, enum, equation);
         glBlendEquation(equation);
     }
@@ -389,7 +412,8 @@ void r3d_driver_set_blend_func(GLenum equation, GLenum srcFactor, GLenum dstFact
 void r3d_driver_set_depth_state(R3D_DepthState state)
 {
     GLenum glFunc;
-    switch (state.mode) {
+    switch (state.mode)
+    {
     case R3D_COMPARE_LESS:     glFunc = GL_LESS; break;
     case R3D_COMPARE_LEQUAL:   glFunc = GL_LEQUAL; break;
     case R3D_COMPARE_EQUAL:    glFunc = GL_EQUAL; break;
@@ -409,7 +433,8 @@ void r3d_driver_set_depth_state(R3D_DepthState state)
 void r3d_driver_set_stencil_state(R3D_StencilState state)
 {
     GLenum glFunc;
-    switch (state.mode) {
+    switch (state.mode)
+    {
     case R3D_COMPARE_LESS:     glFunc = GL_LESS; break;
     case R3D_COMPARE_LEQUAL:   glFunc = GL_LEQUAL; break;
     case R3D_COMPARE_EQUAL:    glFunc = GL_EQUAL; break;
@@ -423,7 +448,8 @@ void r3d_driver_set_stencil_state(R3D_StencilState state)
 
     GLenum glOpFail, glOpZFail, glOpPass;
 
-    switch (state.opFail) {
+    switch (state.opFail)
+    {
     case R3D_STENCIL_KEEP:    glOpFail = GL_KEEP; break;
     case R3D_STENCIL_ZERO:    glOpFail = GL_ZERO; break;
     case R3D_STENCIL_REPLACE: glOpFail = GL_REPLACE; break;
@@ -432,7 +458,8 @@ void r3d_driver_set_stencil_state(R3D_StencilState state)
     default:                  glOpFail = GL_KEEP; break;
     }
 
-    switch (state.opZFail) {
+    switch (state.opZFail)
+    {
     case R3D_STENCIL_KEEP:    glOpZFail = GL_KEEP; break;
     case R3D_STENCIL_ZERO:    glOpZFail = GL_ZERO; break;
     case R3D_STENCIL_REPLACE: glOpZFail = GL_REPLACE; break;
@@ -441,7 +468,8 @@ void r3d_driver_set_stencil_state(R3D_StencilState state)
     default:                  glOpZFail = GL_KEEP; break;
     }
 
-    switch (state.opPass) {
+    switch (state.opPass)
+    {
     case R3D_STENCIL_KEEP:    glOpPass = GL_KEEP; break;
     case R3D_STENCIL_ZERO:    glOpPass = GL_ZERO; break;
     case R3D_STENCIL_REPLACE: glOpPass = GL_REPLACE; break;
@@ -456,20 +484,25 @@ void r3d_driver_set_stencil_state(R3D_StencilState state)
 
 void r3d_driver_set_blend_mode(R3D_BlendMode blend, R3D_TransparencyMode transparency)
 {
-    switch (blend) {
+    switch (blend)
+    {
     case R3D_BLEND_MIX:
-        if (transparency == R3D_TRANSPARENCY_DISABLED) {
+        if (transparency == R3D_TRANSPARENCY_DISABLED)
+        {
             r3d_driver_set_blend_func(GL_FUNC_ADD, GL_ONE, GL_ZERO);
         }
-        else {
+        else
+        {
             r3d_driver_set_blend_func(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         }
         break;
     case R3D_BLEND_ADDITIVE:
-        if (transparency == R3D_TRANSPARENCY_DISABLED) {
+        if (transparency == R3D_TRANSPARENCY_DISABLED)
+        {
             r3d_driver_set_blend_func(GL_FUNC_ADD, GL_ONE, GL_ONE);
         }
-        else {
+        else
+        {
             r3d_driver_set_blend_func(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE);
         }
         break;
@@ -486,7 +519,8 @@ void r3d_driver_set_blend_mode(R3D_BlendMode blend, R3D_TransparencyMode transpa
 
 void r3d_driver_set_cull_mode(R3D_CullMode mode)
 {
-    switch (mode) {
+    switch (mode)
+    {
     case R3D_CULL_NONE:
         r3d_driver_disable(GL_CULL_FACE);
         break;
@@ -505,7 +539,8 @@ void r3d_driver_set_cull_mode(R3D_CullMode mode)
 
 void r3d_driver_set_shadow_cast_mode(R3D_ShadowCastMode castMode, R3D_CullMode cullMode)
 {
-    switch (castMode) {
+    switch (castMode)
+    {
     case R3D_SHADOW_CAST_ON_AUTO:
     case R3D_SHADOW_CAST_ONLY_AUTO:
         r3d_driver_set_cull_mode(cullMode);
@@ -551,7 +586,8 @@ void r3d_driver_timer_start(const char* label)
     driver_timer_t* t = &R3D_MOD_DRIVER.timer;
     t->label = label;
 
-    if (t->queryID == 0) {
+    if (t->queryID == 0)
+    {
         glGenQueries(1, &t->queryID);
     }
 
@@ -568,7 +604,8 @@ double r3d_driver_timer_stop(void)
 
     double ms = (double)timeElapsed / 1e6;
 
-    if (t->label) {
+    if (t->label)
+    {
         R3D_TRACELOG(LOG_INFO, "[TIMER] %s: %.3f ms\n", t->label, ms);
     }
 
