@@ -71,7 +71,8 @@ void R3D_UpdateProceduralSky(R3D_Cubemap* cubemap, R3D_ProceduralSky params)
     R3D_SHADER_SET_FLOAT(prepare.cubemapProceduralSky, uSunCurve, params.sunCurve);
     R3D_SHADER_SET_FLOAT(prepare.cubemapProceduralSky, uSunEnergy, params.sunEnergy);
 
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++)
+    {
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, cubemap->texture, 0);
         R3D_SHADER_SET_MAT4(prepare.cubemapProceduralSky, uMatView, R3D.matCubeViews[i]);
         R3D_RENDER_CUBE();
@@ -88,7 +89,8 @@ void R3D_UpdateProceduralSky(R3D_Cubemap* cubemap, R3D_ProceduralSky params)
 
 void R3D_UpdateCustomSky(R3D_Cubemap* cubemap, R3D_SkyShader* shader)
 {
-    if (shader == NULL) {
+    if (shader == NULL)
+    {
         R3D_TRACELOG(LOG_WARNING, "Failed to generate custom sky; The sky shader is NULL");
         return;
     }
@@ -107,7 +109,8 @@ void R3D_UpdateCustomSky(R3D_Cubemap* cubemap, R3D_SkyShader* shader)
 
     R3D_SHADER_SET_MAT4_CUSTOM(shader, prepare.cubemapCustomSky, uMatProj, matProj);
 
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++)
+    {
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, cubemap->texture, 0);
         R3D_SHADER_SET_MAT4_CUSTOM(shader, prepare.cubemapCustomSky, uMatView, R3D.matCubeViews[i]);
         R3D_RENDER_CUBE();
