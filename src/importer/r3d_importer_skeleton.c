@@ -48,13 +48,15 @@ static void build_skeleton_recursive(
     // Check if this node is a bone
     int currentIndex = r3d_importer_get_bone_index(ctx->importer, node->mName.data);
 
-    if (currentIndex >= 0) {
+    if (currentIndex >= 0)
+    {
         // Store bone matrices
         ctx->localBind[currentIndex] = localTransform;
         ctx->modelBind[currentIndex] = modelTransform;
 
         // Store bind root matrix
-        if (parentIndex == -1) {
+        if (parentIndex == -1)
+        {
             Matrix invLocalTransform = MatrixInvert(localTransform);
             *ctx->rootBind = MatrixMultiply(invLocalTransform, modelTransform);
         }
@@ -69,7 +71,8 @@ static void build_skeleton_recursive(
     }
 
     // Recursively process children
-    for (unsigned int i = 0; i < node->mNumChildren; i++) {
+    for (unsigned int i = 0; i < node->mNumChildren; i++)
+    {
         build_skeleton_recursive(ctx, node->mChildren[i], modelTransform, parentIndex);
     }
 }
@@ -81,7 +84,8 @@ static void build_skeleton_recursive(
 static void upload_skeleton_bind_pose(R3D_Skeleton* skeleton)
 {
     Matrix* skinBuffer = MemAlloc(skeleton->boneCount * sizeof(Matrix));
-    for (int i = 0; i < skeleton->boneCount; i++) {
+    for (int i = 0; i < skeleton->boneCount; i++)
+    {
         skinBuffer[i] = MatrixMultiply(skeleton->invBind[i], skeleton->modelBind[i]);
     }
 
@@ -102,13 +106,15 @@ static void upload_skeleton_bind_pose(R3D_Skeleton* skeleton)
 
 bool r3d_importer_load_skeleton(const R3D_Importer* importer, R3D_Skeleton* skeleton)
 {
-    if (!importer || !r3d_importer_is_valid(importer)) {
+    if (!importer || !r3d_importer_is_valid(importer))
+    {
         R3D_TRACELOG(LOG_ERROR, "Invalid importer for skeleton processing");
         return false;
     }
 
     int boneCount = r3d_importer_get_bone_count(importer);
-    if (boneCount == 0) {
+    if (boneCount == 0)
+    {
         return true; // No skeleton in this model
     }
 
@@ -119,7 +125,8 @@ bool r3d_importer_load_skeleton(const R3D_Importer* importer, R3D_Skeleton* skel
     skeleton->modelBind = MemAlloc(boneCount * sizeof(Matrix));
     skeleton->boneCount = boneCount;
 
-    if (!skeleton->bones || !skeleton->invBind || !skeleton->localBind || !skeleton->modelBind) {
+    if (!skeleton->bones || !skeleton->invBind || !skeleton->localBind || !skeleton->modelBind)
+    {
         R3D_TRACELOG(LOG_ERROR, "Failed to allocate memory for skeleton bones");
         MemFree(skeleton->bones);
         MemFree(skeleton->invBind);
@@ -130,20 +137,24 @@ bool r3d_importer_load_skeleton(const R3D_Importer* importer, R3D_Skeleton* skel
     }
 
     // Initialize parent indices to -1 (no parent)
-    for (int i = 0; i < boneCount; i++) {
+    for (int i = 0; i < boneCount; i++)
+    {
         skeleton->bones[i].parent = -1;
         memset(skeleton->bones[i].name, 0, sizeof(skeleton->bones[i].name));
     }
 
     // Fill bone offsets from meshes
-    for (int m = 0; m < r3d_importer_get_mesh_count(importer); m++) {
+    for (int m = 0; m < r3d_importer_get_mesh_count(importer); m++)
+    {
         const struct aiMesh* mesh = r3d_importer_get_mesh(importer, m);
 
-        for (unsigned int b = 0; b < mesh->mNumBones; b++) {
+        for (unsigned int b = 0; b < mesh->mNumBones; b++)
+        {
             const struct aiBone* bone = mesh->mBones[b];
             int boneIdx = r3d_importer_get_bone_index(importer, bone->mName.data);
 
-            if (boneIdx >= 0) {
+            if (boneIdx >= 0)
+            {
                 skeleton->invBind[boneIdx] = r3d_importer_cast(bone->mOffsetMatrix);
             }
         }
