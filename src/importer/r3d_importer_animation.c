@@ -19,63 +19,66 @@
 
 static bool load_vector3_track(R3D_AnimationTrack* track, unsigned int count, const struct aiVectorKey* keys)
 {
-    track->count = (int)count;
-    track->times = NULL;
+    track->count  = (int)count;
+    track->times  = NULL;
     track->values = NULL;
 
-    if (track->count == 0)
-        return true;
+    if (track->count == 0) return true;
 
-    float* times = MemAlloc(sizeof(float) * track->count);
+    float* times    = MemAlloc(sizeof(float) * track->count);
     Vector3* values = MemAlloc(sizeof(Vector3) * track->count);
 
-    if (!times || !values) {
+    if (!times || !values)
+    {
         MemFree(times);
         MemFree(values);
         return false;
     }
 
-    for (int i = 0; i < track->count; ++i) {
-        times[i] = (float)keys[i].mTime;
+    for (int i = 0; i < track->count; ++i)
+    {
+        times[i]  = (float)keys[i].mTime;
         values[i] = r3d_importer_cast(keys[i].mValue);
     }
 
-    track->times = times;
+    track->times  = times;
     track->values = values;
     return true;
 }
 
 static bool load_quaternion_track(R3D_AnimationTrack* track, unsigned int count, const struct aiQuatKey* keys)
 {
-    track->count = (int)count;
-    track->times = NULL;
+    track->count  = (int)count;
+    track->times  = NULL;
     track->values = NULL;
 
-    if (track->count == 0)
-        return true;
+    if (track->count == 0) return true;
 
-    float* times = MemAlloc(sizeof(float) * track->count);
+    float* times       = MemAlloc(sizeof(float) * track->count);
     Quaternion* values = MemAlloc(sizeof(Quaternion) * track->count);
 
-    if (!times || !values) {
+    if (!times || !values)
+    {
         MemFree(times);
         MemFree(values);
         return false;
     }
 
-    for (int i = 0; i < track->count; ++i) {
-        times[i] = (float)keys[i].mTime;
+    for (int i = 0; i < track->count; ++i)
+    {
+        times[i]  = (float)keys[i].mTime;
         values[i] = r3d_importer_cast(keys[i].mValue);
     }
 
-    track->times = times;
+    track->times  = times;
     track->values = values;
     return true;
 }
 
 static bool load_channel(R3D_AnimationChannel* channel, const R3D_Importer* importer, const struct aiNodeAnim* aiChannel)
 {
-    if (!aiChannel) {
+    if (!aiChannel)
+    {
         R3D_TRACELOG(LOG_ERROR, "Invalid animation channel");
         return false;
     }
@@ -83,20 +86,24 @@ static bool load_channel(R3D_AnimationChannel* channel, const R3D_Importer* impo
     const char* boneName = aiChannel->mNodeName.data;
     channel->boneIndex = r3d_importer_get_bone_index(importer, boneName);
 
-    if (channel->boneIndex < 0) {
+    if (channel->boneIndex < 0)
+    {
         R3D_TRACELOG(LOG_WARNING, "Bone '%s' from animation not found in skeleton", boneName);
         return false;
     }
 
-    if (!load_vector3_track(&channel->translation, aiChannel->mNumPositionKeys, aiChannel->mPositionKeys)) {
+    if (!load_vector3_track(&channel->translation, aiChannel->mNumPositionKeys, aiChannel->mPositionKeys))
+    {
         goto fail;
     }
 
-    if (!load_quaternion_track(&channel->rotation, aiChannel->mNumRotationKeys, aiChannel->mRotationKeys)) {
+    if (!load_quaternion_track(&channel->rotation, aiChannel->mNumRotationKeys, aiChannel->mRotationKeys))
+    {
         goto fail;
     }
 
-    if (!load_vector3_track(&channel->scale, aiChannel->mNumScalingKeys, aiChannel->mScalingKeys)) {
+    if (!load_vector3_track(&channel->scale, aiChannel->mNumScalingKeys, aiChannel->mScalingKeys))
+    {
         goto fail;
     }
 
@@ -120,14 +127,16 @@ fail:
 static bool load_animation(R3D_Animation* animation, const R3D_Importer* importer, const struct aiAnimation* aiAnim)
 {
     // Basic validation
-    if (!aiAnim || aiAnim->mNumChannels == 0) {
+    if (!aiAnim || aiAnim->mNumChannels == 0)
+    {
         R3D_TRACELOG(LOG_ERROR, "Invalid animation or no channels");
         return false;
     }
 
     // Check that we have bones in the skeleton
     const int boneCount = r3d_importer_get_bone_count(importer);
-    if (boneCount == 0) {
+    if (boneCount == 0)
+    {
         R3D_TRACELOG(LOG_ERROR, "No bones in skeleton");
         return false;
     }
@@ -141,7 +150,8 @@ static bool load_animation(R3D_Animation* animation, const R3D_Importer* importe
 
     // Copy animation name
     size_t nameLen = strlen(aiAnim->mName.data);
-    if (nameLen >= sizeof(animation->name)) {
+    if (nameLen >= sizeof(animation->name))
+    {
         nameLen = sizeof(animation->name) - 1;
     }
     memcpy(animation->name, aiAnim->mName.data, nameLen);
@@ -150,35 +160,43 @@ static bool load_animation(R3D_Animation* animation, const R3D_Importer* importe
     // Allocate channels
     animation->channelCount = aiAnim->mNumChannels;
     animation->channels = MemAlloc(animation->channelCount * sizeof(R3D_AnimationChannel));
-    if (!animation->channels) {
+    if (!animation->channels)
+    {
         R3D_TRACELOG(LOG_ERROR, "Failed to allocate animation channels");
         return false;
     }
 
     // Load each channel
     int successChannels = 0;
-    for (unsigned int i = 0; i < aiAnim->mNumChannels; i++) {
-        if (load_channel(&animation->channels[successChannels], importer, aiAnim->mChannels[i])) {
+    for (unsigned int i = 0; i < aiAnim->mNumChannels; i++)
+    {
+        if (load_channel(&animation->channels[successChannels], importer, aiAnim->mChannels[i]))
+        {
             successChannels++;
-        } else {
+        }
+        else
+        {
             R3D_TRACELOG(LOG_WARNING, "Failed to load channel %u", i);
         }
     }
 
-    if (successChannels == 0) {
+    if (successChannels == 0)
+    {
         R3D_TRACELOG(LOG_ERROR, "No channels were successfully loaded");
         MemFree(animation->channels);
         return false;
     }
 
     // Adjust channel count if some failed
-    if (successChannels < animation->channelCount) {
+    if (successChannels < animation->channelCount)
+    {
         animation->channelCount = successChannels;
         R3D_AnimationChannel* resized = MemRealloc(
             animation->channels,
             successChannels * sizeof(R3D_AnimationChannel)
         );
-        if (resized) {
+        if (resized)
+        {
             animation->channels = resized;
         }
     }
@@ -195,46 +213,56 @@ static bool load_animation(R3D_Animation* animation, const R3D_Importer* importe
 
 bool r3d_importer_load_animations(const R3D_Importer* importer, R3D_AnimationLib* animLib)
 {
-    if (!importer || !r3d_importer_is_valid(importer)) {
+    if (!importer || !r3d_importer_is_valid(importer))
+    {
         R3D_TRACELOG(LOG_ERROR, "Invalid importer for animation loading");
         return false;
     }
 
     int animCount = r3d_importer_get_animation_count(importer);
-    if (animCount == 0) {
+    if (animCount == 0)
+    {
         R3D_TRACELOG(LOG_WARNING, "No animations found in the imported scene");
         return false;
     }
 
     // Allocate temporary animations array
     R3D_Animation* animations = MemAlloc(animCount * sizeof(R3D_Animation));
-    if (!animations) {
+    if (!animations)
+    {
         R3D_TRACELOG(LOG_ERROR, "Unable to allocate memory for animations");
         return false;
     }
 
     // Load each animation
     int successCount = 0;
-    for (int i = 0; i < animCount; i++) {
+    for (int i = 0; i < animCount; i++)
+    {
         const struct aiAnimation* aiAnim = r3d_importer_get_animation(importer, i);
-        if (load_animation(&animations[successCount], importer, aiAnim)) {
+        if (load_animation(&animations[successCount], importer, aiAnim))
+        {
             successCount++;
-        } else {
+        }
+        else
+        {
             R3D_TRACELOG(LOG_ERROR, "Failed to process animation %d", i);
         }
     }
 
-    if (successCount == 0) {
+    if (successCount == 0)
+    {
         R3D_TRACELOG(LOG_ERROR, "No animations were successfully loaded");
         MemFree(animations);
         return false;
     }
 
     // Resize if some animations failed
-    if (successCount < animCount) {
+    if (successCount < animCount)
+    {
         R3D_TRACELOG(LOG_WARNING, "Only %d out of %d animations were successfully loaded", successCount, animCount);
         R3D_Animation* resized = MemRealloc(animations, successCount * sizeof(R3D_Animation));
-        if (resized) {
+        if (resized)
+        {
             animations = resized;
         }
     }
