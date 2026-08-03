@@ -35,7 +35,8 @@ void r3d_pass_prepare_irradiance(int layerMap, GLuint srcCubemap, int srcSize)
     R3D_SHADER_BIND_SAMPLER(prepare.cubemapIrradiance, uSourceTex, srcCubemap);
     R3D_SHADER_SET_MAT4(prepare.cubemapIrradiance, uMatProj, matProj);
 
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++)
+    {
         r3d_env_irradiance_bind_fbo(layerMap, i);
         R3D_SHADER_SET_MAT4(prepare.cubemapIrradiance, uMatView, R3D.matCubeViews[i]);
         R3D_RENDER_CUBE();
@@ -62,11 +63,13 @@ void r3d_pass_prepare_prefilter(int layerMap, GLuint srcCubemap, int srcSize)
 
     int numLevels = r3d_get_mip_levels_1d(R3D_HINT(R3D_HINT_IBL_PREFILTER_SIZE));
 
-    for (int mip = 0; mip < numLevels; mip++) {
+    for (int mip = 0; mip < numLevels; mip++)
+    {
         float roughness = (float)mip / (float)(numLevels - 1);
         R3D_SHADER_SET_FLOAT(prepare.cubemapPrefilter, uRoughness, roughness);
 
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 6; i++)
+        {
             r3d_env_prefilter_bind_fbo(layerMap, i, mip);
             R3D_SHADER_SET_MAT4(prepare.cubemapPrefilter, uMatView, R3D.matCubeViews[i]);
             R3D_RENDER_CUBE();
