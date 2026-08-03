@@ -17,21 +17,24 @@ static void find_key_frames(const float* times, uint32_t count, float time,
                             float* outT)
 {
     // No keys
-    if (count == 0) {
+    if (count == 0)
+    {
         *outIdx0 = *outIdx1 = 0;
         *outT = 0.0f;
         return;
     }
 
     // Single key or before first
-    if (count == 1 || time <= times[0]) {
+    if (count == 1 || time <= times[0])
+    {
         *outIdx0 = *outIdx1 = 0;
         *outT = 0.0f;
         return;
     }
 
     // After last
-    if (time >= times[count - 1]) {
+    if (time >= times[count - 1])
+    {
         *outIdx0 = *outIdx1 = count - 1;
         *outT = 0.0f;
         return;
@@ -40,7 +43,8 @@ static void find_key_frames(const float* times, uint32_t count, float time,
     // Binary search
     uint32_t left = 0;
     uint32_t right = count - 1;
-    while(right - left > 1) {
+    while(right - left > 1)
+    {
         uint32_t mid = (left + right) >> 1;
         if (times[mid] <= time) left  = mid;
         else right = mid;
@@ -64,8 +68,8 @@ Transform r3d_anim_transform_lerp(Transform a, Transform b, float value)
 {
     Transform result;
     result.translation = Vector3Lerp(a.translation, b.translation, value);
-    result.rotation = QuaternionSlerp(a.rotation, b.rotation, value);
-    result.scale = Vector3Lerp(a.scale, b.scale, value);
+    result.rotation    = QuaternionSlerp(a.rotation, b.rotation, value);
+    result.scale       = Vector3Lerp(a.scale, b.scale, value);
     return result;
 }
 
@@ -73,8 +77,8 @@ Transform r3d_anim_transform_add(Transform a, Transform b)
 {
     Transform result;
     result.translation = Vector3Add(a.translation, b.translation);
-    result.rotation = QuaternionAdd(a.rotation, b.rotation);
-    result.scale = Vector3Add(a.scale, b.scale);
+    result.rotation    = QuaternionAdd(a.rotation, b.rotation);
+    result.scale       = Vector3Add(a.scale, b.scale);
     return result;
 }
 
@@ -82,8 +86,8 @@ Transform r3d_anim_transform_add_v(Transform a, Transform b, float value)
 {
     Transform result;
     result.translation = Vector3Add(a.translation, Vector3Scale(b.translation, value));
-    result.rotation = QuaternionAdd(a.rotation, QuaternionScale(b.rotation, value));
-    result.scale = Vector3Add(a.scale, Vector3Scale(b.scale, value));
+    result.rotation    = QuaternionAdd(a.rotation, QuaternionScale(b.rotation, value));
+    result.scale       = Vector3Add(a.scale, Vector3Scale(b.scale, value));
     return result;
 }
 
@@ -91,8 +95,8 @@ Transform r3d_anim_transform_addx_v(Transform a, Transform b, float value)
 {
     Transform result;
     result.translation = Vector3Add(a.translation, Vector3Scale(b.translation, value));
-    result.rotation = QuaternionSlerp(a.rotation, b.rotation, value);
-    result.scale = Vector3Add(a.scale, Vector3Scale(b.scale, value));
+    result.rotation    = QuaternionSlerp(a.rotation, b.rotation, value);
+    result.scale       = Vector3Add(a.scale, Vector3Scale(b.scale, value));
     return result;
 }
 
@@ -100,8 +104,8 @@ Transform r3d_anim_transform_subtr(Transform a, Transform b)
 {
     Transform result;
     result.translation = Vector3Subtract(a.translation, b.translation);
-    result.rotation = QuaternionSubtract(a.rotation, b.rotation);
-    result.scale = Vector3Subtract(a.scale, b.scale);
+    result.rotation    = QuaternionSubtract(a.rotation, b.rotation);
+    result.scale       = Vector3Subtract(a.scale, b.scale);
     return result;
 }
 
@@ -109,20 +113,21 @@ Transform r3d_anim_transform_scale(Transform tf, float val)
 {
     Transform result;
     result.translation = Vector3Scale(tf.translation, val);
-    result.rotation = QuaternionScale(tf.rotation, val);
-    result.scale = Vector3Scale(tf.scale, val);
+    result.rotation    = QuaternionScale(tf.rotation, val);
+    result.scale       = Vector3Scale(tf.scale, val);
     return result;
 }
 
 void r3d_anim_matrices_compute(R3D_AnimationPlayer* player)
 {
     const R3D_BoneInfo* bones = player->skeleton.bones;
-    const Matrix rootBind = player->skeleton.rootBind;
-    const Matrix* localPose = player->localPose;
-    const int boneCount = player->skeleton.boneCount;
+    const Matrix rootBind     = player->skeleton.rootBind;
+    const Matrix* localPose   = player->localPose;
+    const int boneCount       = player->skeleton.boneCount;
 
     Matrix* pose = player->modelPose;
-    for (int boneIdx = 0; boneIdx < boneCount; boneIdx++) {
+    for (int boneIdx = 0; boneIdx < boneCount; boneIdx++)
+    {
         int parentIdx  = bones[boneIdx].parent;
         Matrix parentPose = parentIdx >= 0 ? pose[parentIdx] : rootBind;
         pose[boneIdx] = MatrixMultiply(localPose[boneIdx], parentPose);
@@ -135,8 +140,10 @@ void r3d_anim_matrices_compute(R3D_AnimationPlayer* player)
 
 const R3D_AnimationChannel* r3d_anim_channel_find(const R3D_Animation* anim, int boneIdx)
 {
-    for (int i = 0; i < anim->channelCount; i++) {
-        if (anim->channels[i].boneIndex == boneIdx) {
+    for (int i = 0; i < anim->channelCount; i++)
+    {
+        if (anim->channels[i].boneIndex == boneIdx)
+        {
             return &anim->channels[i];
         }
     }
@@ -151,7 +158,8 @@ Transform r3d_anim_channel_lerp(const R3D_AnimationChannel* channel, float time,
         .scale = {1.0f, 1.0f, 1.0f}
     };
 
-    if (channel->translation.count > 0) {
+    if (channel->translation.count > 0)
+    {
         const Vector3* values = (const Vector3*)channel->translation.values;
         uint32_t i0, i1;
         float t;
@@ -165,7 +173,8 @@ Transform r3d_anim_channel_lerp(const R3D_AnimationChannel* channel, float time,
         if (restN) restN->translation = values[channel->translation.count-1];
     }
 
-    if (channel->rotation.count > 0) {
+    if (channel->rotation.count > 0)
+    {
         const Quaternion* values = (const Quaternion*)channel->rotation.values;
         uint32_t i0, i1;
         float t;
@@ -179,7 +188,8 @@ Transform r3d_anim_channel_lerp(const R3D_AnimationChannel* channel, float time,
         if (restN) restN->rotation = values[channel->rotation.count-1];
     }
 
-    if (channel->scale.count > 0) {
+    if (channel->scale.count > 0)
+    {
         const Vector3* values = (const Vector3*)channel->scale.values;
         uint32_t i0, i1;
         float t;
