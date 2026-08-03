@@ -115,7 +115,8 @@ static void alloc_target_texture(r3d_target_t target)
 
     int numLevels = r3d_target_get_num_levels(target);
 
-    for (int i = 0; i < numLevels; ++i) {
+    for (int i = 0; i < numLevels; ++i)
+    {
         int wLevel = 0, hLevel = 0;
         r3d_target_get_resolution(&wLevel, &hLevel, target, i);
         glTexImage2D(GL_TEXTURE_2D, i, format->internal, wLevel, hLevel, 0, format->format, format->type, NULL);
@@ -160,10 +161,13 @@ static int get_or_create_fbo(const r3d_target_t* targets, int count, bool depth)
 
     /* --- Search if the combination is already cached --- */
 
-    for (int i = 0; i < R3D_MOD_TARGET.fboCount; i++) {
+    for (int i = 0; i < R3D_MOD_TARGET.fboCount; i++)
+    {
         const r3d_target_fbo_t* fbo = &R3D_MOD_TARGET.fbo[i];
-        if (fbo->targetCount == count && fbo->hasDepth == depth) {
-            if (count == 0 || memcmp(fbo->targets, targets, count * sizeof(*targets)) == 0) {
+        if (fbo->targetCount == count && fbo->hasDepth == depth)
+        {
+            if (count == 0 || memcmp(fbo->targets, targets, count * sizeof(*targets)) == 0)
+            {
                 return i;
             }
         }
@@ -182,8 +186,10 @@ static int get_or_create_fbo(const r3d_target_t* targets, int count, bool depth)
     GLenum glColor[R3D_TARGET_MAX_ATTACHMENTS];
     int locCount = 0;
 
-    for (int i = 0; i < count; ++i) {
-        if (!R3D_MOD_TARGET.targetLoaded[targets[i]]) {
+    for (int i = 0; i < count; ++i)
+    {
+        if (!R3D_MOD_TARGET.targetLoaded[targets[i]])
+        {
             alloc_target_texture(targets[i]);
         }
 
@@ -196,7 +202,8 @@ static int get_or_create_fbo(const r3d_target_t* targets, int count, bool depth)
         glColor[locCount++] = attachment;
     }
 
-    if (depth) {
+    if (depth)
+    {
         glFramebufferTexture2D(
             GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
             GL_TEXTURE_2D, R3D_MOD_TARGET.depthTexture,
@@ -207,16 +214,19 @@ static int get_or_create_fbo(const r3d_target_t* targets, int count, bool depth)
     fbo->targetCount = count;
     fbo->hasDepth = depth;
 
-    if (locCount > 0) {
+    if (locCount > 0)
+    {
         glDrawBuffers(locCount, glColor);
     }
-    else {
+    else
+    {
         glDrawBuffer(GL_NONE);
         glReadBuffer(GL_NONE);
     }
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if (status != GL_FRAMEBUFFER_COMPLETE) {
+    if (status != GL_FRAMEBUFFER_COMPLETE)
+    {
         R3D_TRACELOG(LOG_ERROR, "Framebuffer incomplete (status: 0x%04x)", status);
     }
 
@@ -250,8 +260,10 @@ void r3d_target_quit(void)
     glDeleteTextures(R3D_TARGET_COUNT, R3D_MOD_TARGET.targetTextures);
     glDeleteTextures(1, &R3D_MOD_TARGET.depthTexture);
 
-    for (int i = 0; i < R3D_MOD_TARGET.fboCount; i++) {
-        if (R3D_MOD_TARGET.fbo[i].id != 0) {
+    for (int i = 0; i < R3D_MOD_TARGET.fboCount; i++)
+    {
+        if (R3D_MOD_TARGET.fbo[i].id != 0)
+        {
             glDeleteFramebuffers(1, &R3D_MOD_TARGET.fbo[i].id);
         }
     }
@@ -261,7 +273,8 @@ void r3d_target_resize(int resW, int resH)
 {
     assert(resW > 0 && resH > 0);
 
-    if (R3D_MOD_TARGET.resW == resW && R3D_MOD_TARGET.resH == resH) {
+    if (R3D_MOD_TARGET.resW == resW && R3D_MOD_TARGET.resH == resH)
+    {
         return;
     }
 
@@ -272,8 +285,10 @@ void r3d_target_resize(int resW, int resH)
 
     alloc_depth_stencil_texture(resW, resH);
 
-    for (int i = 0; i < R3D_TARGET_COUNT; i++) {
-        if (R3D_MOD_TARGET.targetLoaded[i]) {
+    for (int i = 0; i < R3D_TARGET_COUNT; i++)
+    {
+        if (R3D_MOD_TARGET.targetLoaded[i])
+        {
             alloc_target_texture(i);
         }
     }
@@ -294,7 +309,8 @@ void r3d_target_get_resolution(int* w, int* h, r3d_target_t target, int level)
 {
     const target_config_t* config = &TARGET_CONFIG[target];
 
-    if (config->resolutionFactor <= 0.0f) {
+    if (config->resolutionFactor <= 0.0f)
+    {
         if (w) *w = 1;
         if (h) *h = 1;
         return;
@@ -303,7 +319,8 @@ void r3d_target_get_resolution(int* w, int* h, r3d_target_t target, int level)
     if (w) *w = (int)((float)R3D_MOD_TARGET.resW * config->resolutionFactor);
     if (h) *h = (int)((float)R3D_MOD_TARGET.resH * config->resolutionFactor);
 
-    if (level > 0) {
+    if (level > 0)
+    {
         if (w) *w = *w >> level, *w = *w > 1 ? *w : 1;
         if (h) *h = *h >> level, *h = *h > 1 ? *h : 1;
     }
@@ -313,7 +330,8 @@ void r3d_target_get_texel_size(float* w, float* h, r3d_target_t target, int leve
 {
     const target_config_t* config = &TARGET_CONFIG[target];
 
-    if (config->resolutionFactor <= 0.0f) {
+    if (config->resolutionFactor <= 0.0f)
+    {
         if (w) *w = 1.0f;
         if (h) *h = 1.0f;
         return;
@@ -322,7 +340,8 @@ void r3d_target_get_texel_size(float* w, float* h, r3d_target_t target, int leve
     if (w) *w = R3D_MOD_TARGET.txlW / config->resolutionFactor;
     if (h) *h = R3D_MOD_TARGET.txlH / config->resolutionFactor;
 
-    if (level > 0) {
+    if (level > 0)
+    {
         float scale = (float)(1 << level);
         if (w) *w *= scale;
         if (h) *h *= scale;
@@ -331,7 +350,8 @@ void r3d_target_get_texel_size(float* w, float* h, r3d_target_t target, int leve
 
 r3d_target_t r3d_target_swap_scene(r3d_target_t scene)
 {
-    if (scene == R3D_TARGET_SCENE_0) {
+    if (scene == R3D_TARGET_SCENE_0)
+    {
         return R3D_TARGET_SCENE_1;
     }
     return R3D_TARGET_SCENE_0;
@@ -343,23 +363,27 @@ void r3d_target_clear(const r3d_target_t* targets, int count, int level, bool de
     assert(count > 0 || depth);
 
     int fboIndex = get_or_create_fbo(targets, count, depth);
-    if (fboIndex != R3D_MOD_TARGET.currentFbo) {
+    if (fboIndex != R3D_MOD_TARGET.currentFbo)
+    {
         glBindFramebuffer(GL_FRAMEBUFFER, R3D_MOD_TARGET.fbo[fboIndex].id);
         R3D_MOD_TARGET.currentFbo = fboIndex;
     }
 
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++)
+    {
         r3d_target_set_write_level(i, level);
     }
 
     if (count > 0) r3d_target_set_viewport(targets[0], level);
     else glViewport(0, 0, R3D_MOD_TARGET.resW, R3D_MOD_TARGET.resH);
 
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++)
+    {
         glClearBufferfv(GL_COLOR, i, TARGET_CONFIG[targets[i]].clear);
     }
 
-    if (depth) {
+    if (depth)
+    {
         glClearBufferfi(GL_DEPTH_STENCIL, 0, 1.0f, 0);
     }
 }
@@ -370,12 +394,14 @@ void r3d_target_bind(const r3d_target_t* targets, int count, int level, bool dep
     assert(count > 0 || depth);
 
     int fboIndex = get_or_create_fbo(targets, count, depth);
-    if (fboIndex != R3D_MOD_TARGET.currentFbo) {
+    if (fboIndex != R3D_MOD_TARGET.currentFbo)
+    {
         glBindFramebuffer(GL_FRAMEBUFFER, R3D_MOD_TARGET.fbo[fboIndex].id);
         R3D_MOD_TARGET.currentFbo = fboIndex;
     }
 
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++)
+    {
         r3d_target_set_write_level(i, level);
     }
 
@@ -388,12 +414,14 @@ void r3d_target_bind_levels(const r3d_target_t* targets, int* levels, int count)
     assert(count > 0);
 
     int fboIndex = get_or_create_fbo(targets, count, false);
-    if (fboIndex != R3D_MOD_TARGET.currentFbo) {
+    if (fboIndex != R3D_MOD_TARGET.currentFbo)
+    {
         glBindFramebuffer(GL_FRAMEBUFFER, R3D_MOD_TARGET.fbo[fboIndex].id);
         R3D_MOD_TARGET.currentFbo = fboIndex;
     }
 
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++)
+    {
         r3d_target_set_write_level(i, levels[i]);
     }
 
@@ -418,7 +446,8 @@ void r3d_target_set_write_level(int attachment, int level)
     assert(level < r3d_target_get_num_levels(target));
     r3d_target_attachment_state_t* state = &fbo->targetStates[attachment];
 
-    if (state->writeLevel != level) {
+    if (state->writeLevel != level)
+    {
         glFramebufferTexture2D(
             GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachment,
             GL_TEXTURE_2D, R3D_MOD_TARGET.targetTextures[target], level
@@ -440,7 +469,8 @@ void r3d_target_set_read_levels(r3d_target_t target, int baseLevel, int maxLevel
 
     r3d_target_state_t* state = &R3D_MOD_TARGET.targetStates[target];
 
-    if (state->baseLevel != baseLevel || state->maxLevel != maxLevel) {
+    if (state->baseLevel != baseLevel || state->maxLevel != maxLevel)
+    {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, R3D_MOD_TARGET.targetTextures[target]);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, baseLevel);
@@ -510,25 +540,30 @@ void r3d_target_blit(r3d_target_t target, bool depth, GLuint dstFbo, int dstX, i
     assert(target > R3D_TARGET_INVALID || depth);
 
     int fboIndex = -1;
-    if (target > R3D_TARGET_INVALID) {
+    if (target > R3D_TARGET_INVALID)
+    {
         fboIndex = get_or_create_fbo(&target, 1, depth);
     }
-    else {
+    else
+    {
         fboIndex = get_or_create_fbo(NULL, 0, true);
     }
 
     glBindFramebuffer(GL_READ_FRAMEBUFFER, R3D_MOD_TARGET.fbo[fboIndex].id);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dstFbo);
 
-    if (linear) {
-        if (target > R3D_TARGET_INVALID) {
+    if (linear)
+    {
+        if (target > R3D_TARGET_INVALID)
+        {
             glBlitFramebuffer(
                 0, 0, R3D_MOD_TARGET.resW, R3D_MOD_TARGET.resH,
                 dstX, dstY, dstX + dstW, dstY + dstH, GL_COLOR_BUFFER_BIT,
                 GL_LINEAR
             );
         }
-        if (depth) {
+        if (depth)
+        {
             glBlitFramebuffer(
                 0, 0, R3D_MOD_TARGET.resW, R3D_MOD_TARGET.resH,
                 dstX, dstY, dstX + dstW, dstY + dstH, GL_DEPTH_BUFFER_BIT,
