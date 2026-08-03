@@ -44,11 +44,13 @@ static enum aiPostProcessSteps build_flags(R3D_ImportFlags flags)
         ? aiProcess_GenSmoothNormals
         : aiProcess_GenNormals;
 
-    if (R3D_BIT_ANY(flags, R3D_IMPORT_OPTIMIZE_MESH)) {
+    if (R3D_BIT_ANY(flags, R3D_IMPORT_OPTIMIZE_MESH))
+    {
         aiFlags |= aiProcess_ImproveCacheLocality | aiProcess_SplitLargeMeshes;
     }
 
-    if (R3D_BIT_ANY(flags, R3D_IMPORT_VALIDATE_DATA)) {
+    if (R3D_BIT_ANY(flags, R3D_IMPORT_VALIDATE_DATA))
+    {
         aiFlags |= aiProcess_FindDegenerates | aiProcess_FindInvalidData;
     }
 
@@ -59,9 +61,11 @@ static void determine_importer_name(char* outName, size_t outSize, const struct 
 {
     if (!outName || outSize == 0) return;
 
-    if (scene && scene->mMetaData) {
+    if (scene && scene->mMetaData)
+    {
         struct aiMetadata* meta = scene->mMetaData;
-        for (unsigned int i = 0; i < meta->mNumProperties; i++) {
+        for (unsigned int i = 0; i < meta->mNumProperties; i++)
+        {
             if ((strcmp(meta->mKeys[i].data, "SourceAsset_Filename") == 0 ||
                  strcmp(meta->mKeys[i].data, "FileName") == 0) &&
                 meta->mValues[i].mType == AI_AISTRING)
@@ -76,7 +80,8 @@ static void determine_importer_name(char* outName, size_t outSize, const struct 
         }
     }
 
-    if (hint && hint[0] != '\0') {
+    if (hint && hint[0] != '\0')
+    {
         r3d_string_format(outName, outSize, "memory data (%s)", hint);
         return;
     }
@@ -87,12 +92,14 @@ static void determine_importer_name(char* outName, size_t outSize, const struct 
 static void build_bone_mapping(R3D_Importer* importer)
 {
     int totalBones = 0;
-    for (uint32_t meshIdx = 0; meshIdx < importer->scene->mNumMeshes; meshIdx++) {
+    for (uint32_t meshIdx = 0; meshIdx < importer->scene->mNumMeshes; meshIdx++)
+    {
         const struct aiMesh* mesh = importer->scene->mMeshes[meshIdx];
         if (mesh && mesh->mNumBones) totalBones += mesh->mNumBones;
     }
 
-    if (totalBones == 0) {
+    if (totalBones == 0)
+    {
         importer->bones.array = NULL;
         importer->bones.head = NULL;
         importer->bones.count = 0;
@@ -130,7 +137,8 @@ static void build_bone_mapping(R3D_Importer* importer)
         }
     }
 
-    if (importer->bones.count > 0) {
+    if (importer->bones.count > 0)
+    {
         R3D_TRACELOG(LOG_DEBUG, "Built bone mapping with %d bones", importer->bones.count);
     }
 }
@@ -146,7 +154,8 @@ R3D_Importer* R3D_LoadImporter(const char* filePath, R3D_ImportFlags flags)
 #ifdef R3D_SUPPORT_ASSIMP
     enum aiPostProcessSteps aiFlags = build_flags(flags);
     const struct aiScene* scene = aiImportFile(filePath, aiFlags);
-    if (!scene || !scene->mRootNode || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE)) {
+    if (!scene || !scene->mRootNode || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE))
+    {
         R3D_TRACELOG(LOG_ERROR, "Assimp failed to load '%s': %s", filePath, aiGetErrorString());
         return NULL;
     }
@@ -176,11 +185,14 @@ R3D_Importer* R3D_LoadImporterFromMemory(const void* data, unsigned int size, co
 #ifdef R3D_SUPPORT_ASSIMP
     enum aiPostProcessSteps aiFlags = build_flags(flags);
     const struct aiScene* scene = aiImportFileFromMemory(data, size, aiFlags, hint);
-    if (!scene || !scene->mRootNode || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE)) {
-        if (hint && hint[0] != '\0') {
+    if (!scene || !scene->mRootNode || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE))
+    {
+        if (hint && hint[0] != '\0')
+        {
             R3D_TRACELOG(LOG_ERROR, "Assimp failed to load memory asset '%s': %s", hint, aiGetErrorString());
         }
-        else {
+        else
+        {
             R3D_TRACELOG(LOG_ERROR, "Assimp failed to load memory asset: %s", aiGetErrorString());
         }
         return NULL;
@@ -193,20 +205,24 @@ R3D_Importer* R3D_LoadImporterFromMemory(const void* data, unsigned int size, co
     determine_importer_name(importer->name, sizeof(importer->name), scene, hint);
     build_bone_mapping(importer);
 
-    if (hint && hint[0] != '\0') {
+    if (hint && hint[0] != '\0')
+    {
         R3D_TRACELOG(LOG_INFO, "Importer loaded successfully from memory: '%s'", hint);
     }
-    else {
+    else
+    {
         R3D_TRACELOG(LOG_INFO, "Importer loaded successfully from memory");
     }
 
     return importer;
 
 #else
-    if (hint && hint[0] != '\0') {
+    if (hint && hint[0] != '\0')
+    {
         R3D_TRACELOG(LOG_WARNING, "Cannot load '%s' from memory: built without Assimp support", hint);
     }
-    else {
+    else
+    {
         R3D_TRACELOG(LOG_WARNING, "Cannot load asset from memory: built without Assimp support");
     }
 
@@ -222,7 +238,8 @@ void R3D_UnloadImporter(R3D_Importer* importer)
 
     HASH_CLEAR(hh, importer->bones.head);
 
-    if (importer->bones.array) {
+    if (importer->bones.array)
+    {
         MemFree(importer->bones.array);
     }
 
