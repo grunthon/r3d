@@ -144,7 +144,8 @@ static inline Color r3d_color_linear_to_srgb_vec4(Vector4 linear)
 
 static inline Vector3 r3d_color_to_linear_vec3(Color color, R3D_ColorSpace space)
 {
-    switch (space) {
+    switch (space)
+    {
     case R3D_COLORSPACE_SRGB: return r3d_color_srgb_to_linear_vec3(color);
     default: break;
     }
@@ -154,7 +155,8 @@ static inline Vector3 r3d_color_to_linear_vec3(Color color, R3D_ColorSpace space
 
 static inline Vector4 r3d_color_to_linear_vec4(Color color, R3D_ColorSpace space)
 {
-    switch (space) {
+    switch (space)
+    {
     case R3D_COLORSPACE_SRGB: return r3d_color_srgb_to_linear_vec4(color);
     default: break;
     }
@@ -193,7 +195,8 @@ static inline Vector3 r3d_vector3_normalize_or(Vector3 v, Vector3 fallback)
 {
     float len_sqr = v.x*v.x + v.y*v.y + v.z*v.z;
 
-    if (len_sqr <= 1e-12f) {
+    if (len_sqr <= 1e-12f)
+    {
         return fallback;
     }
 
@@ -209,7 +212,7 @@ static inline Vector3 r3d_vector3_normalize_or(Vector3 v, Vector3 fallback)
 static inline Vector3 r3d_vector3_transform(Vector3 v, const Matrix* m)
 {
     float x = v.x, y = v.y, z = v.z;
-    return (Vector3){
+    return (Vector3) {
         m->m0 * x + m->m4 * y + m->m8  * z + m->m12,
         m->m1 * x + m->m5 * y + m->m9  * z + m->m13,
         m->m2 * x + m->m6 * y + m->m10 * z + m->m14
@@ -219,7 +222,7 @@ static inline Vector3 r3d_vector3_transform(Vector3 v, const Matrix* m)
 static inline Vector3 r3d_vector3_transform_normal(Vector3 v, const Matrix* m)
 {
     float x = v.x, y = v.y, z = v.z;
-    return (Vector3){
+    return (Vector3) {
         m->m0 * x + m->m4 * y + m->m8  * z,
         m->m1 * x + m->m5 * y + m->m9  * z,
         m->m2 * x + m->m6 * y + m->m10 * z
@@ -229,7 +232,7 @@ static inline Vector3 r3d_vector3_transform_normal(Vector3 v, const Matrix* m)
 static inline Vector3 r3d_vector3_transform_linear(Vector3 v, const Matrix* m)
 {
     float x = v.x, y = v.y, z = v.z;
-    return (Vector3){
+    return (Vector3) {
         m->m0 * x + m->m4 * y + m->m8 * z,
         m->m1 * x + m->m5 * y + m->m9 * z,
         m->m2 * x + m->m6 * y + m->m10 * z
@@ -239,7 +242,7 @@ static inline Vector3 r3d_vector3_transform_linear(Vector3 v, const Matrix* m)
 static inline Vector4 r3d_vector4_transform(Vector4 v, const Matrix* m)
 {
     float x = v.x, y = v.y, z = v.z, w = v.w;
-    return (Vector4){
+    return (Vector4) {
         m->m0 * x + m->m4 * y + m->m8 * z + m->m12 * w,
         m->m1 * x + m->m5 * y + m->m9 * z + m->m13 * w,
         m->m2 * x + m->m6 * y + m->m10 * z + m->m14 * w,
@@ -251,7 +254,8 @@ static inline Quaternion r3d_quaternion_normalize_or_id(Quaternion q)
 {
     float len_sqr = q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w;
 
-    if (len_sqr <= 1e-12f) {
+    if (len_sqr <= 1e-12f)
+    {
         return (Quaternion) {0, 0, 0, 1};
     }
 
@@ -300,7 +304,8 @@ static inline Matrix r3d_matrix_st(Vector3 scale, Vector3 translate)
 static inline Matrix r3d_matrix_srt_axis(Vector3 scale, Vector4 axis, Vector3 translate)
 {
     float axisLen = sqrtf(axis.x*axis.x + axis.y*axis.y + axis.z*axis.z);
-    if (axisLen < 1e-6f) {
+    if (axisLen < 1e-6f)
+    {
         return r3d_matrix_st(scale, translate);
     }
 
@@ -346,7 +351,8 @@ static inline Matrix r3d_matrix_srt_euler(Vector3 scale, Vector3 euler, Vector3 
 static inline Matrix r3d_matrix_srt_quat(Vector3 scale, Quaternion quat, Vector3 translate)
 {
     float qlen = sqrtf(quat.x*quat.x + quat.y*quat.y + quat.z*quat.z + quat.w*quat.w);
-    if (qlen < 1e-6f) {
+    if (qlen < 1e-6f)
+    {
         return r3d_matrix_st(scale, translate);
     }
 
