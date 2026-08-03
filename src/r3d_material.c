@@ -62,10 +62,12 @@ R3D_Material* R3D_LoadMaterialsFromMemory(const void* data, unsigned int size, c
     R3D_UnloadImporter(importer);
 
 #else
-    if (hint && hint[0] != '\0') {
+    if (hint && hint[0] != '\0')
+    {
         R3D_TRACELOG(LOG_WARNING, "Cannot load '%s' from memory: built without Assimp support", hint);
     }
-    else {
+    else
+    {
         R3D_TRACELOG(LOG_WARNING, "Cannot load asset from memory: built without Assimp support");
     }
 
@@ -79,7 +81,8 @@ R3D_Material* R3D_LoadMaterialsFromImporter(const R3D_Importer* importer, int* m
     R3D_Material* materials = NULL;
 
 #ifdef R3D_SUPPORT_ASSIMP
-    if (importer == NULL) {
+    if (importer == NULL)
+    {
         R3D_TRACELOG(LOG_WARNING, "Cannot load materials from importer: NULL importer");
         return materials;
     }
@@ -87,11 +90,13 @@ R3D_Material* R3D_LoadMaterialsFromImporter(const R3D_Importer* importer, int* m
     r3d_importer_texture_cache_t* textureCache = r3d_importer_load_texture_cache(
         importer, R3D.colorSpace, R3D.textureFilter);
 
-    //if (textureCache == NULL) {
+    //if (textureCache == NULL)
+    //{
     //    R3D_TRACELOG(LOG_INFO, "The material will not have textures");
     //}
 
-    if (!r3d_importer_load_materials(importer, &materials, materialCount, textureCache)) {
+    if (!r3d_importer_load_materials(importer, &materials, materialCount, textureCache))
+    {
         r3d_importer_unload_texture_cache(textureCache, true);
         return NULL;
     }
@@ -118,7 +123,7 @@ R3D_AlbedoMap R3D_LoadAlbedoMap(const char* fileName, Color color)
 {
     R3D_AlbedoMap map = {0};
     map.texture = R3D_LoadTexture(fileName, true);
-    map.color = color;
+    map.color   = color;
     return map;
 }
 
@@ -126,7 +131,7 @@ R3D_AlbedoMap R3D_LoadAlbedoMapFromMemory(const char* fileType, const void* file
 {
     R3D_AlbedoMap map = {0};
     map.texture = R3D_LoadTextureFromMemory(fileType, fileData, dataSize, true);
-    map.color = color;
+    map.color   = color;
     return map;
 }
 
@@ -139,8 +144,8 @@ R3D_EmissionMap R3D_LoadEmissionMap(const char* fileName, Color color, float ene
 {
     R3D_EmissionMap map = {0};
     map.texture = R3D_LoadTexture(fileName, true);
-    map.color = color;
-    map.energy = energy;
+    map.color   = color;
+    map.energy  = energy;
     return map;
 }
 
@@ -148,8 +153,8 @@ R3D_EmissionMap R3D_LoadEmissionMapFromMemory(const char* fileType, const void* 
 {
     R3D_EmissionMap map = {0};
     map.texture = R3D_LoadTextureFromMemory(fileType, fileData, dataSize, true);
-    map.color = color;
-    map.energy = energy;
+    map.color   = color;
+    map.energy  = energy;
     return map;
 }
 
@@ -162,7 +167,7 @@ R3D_NormalMap R3D_LoadNormalMap(const char* fileName, float scale)
 {
     R3D_NormalMap map = {0};
     map.texture = R3D_LoadTexture(fileName, false);
-    map.scale = scale;
+    map.scale   = scale;
     return map;
 }
 
@@ -170,7 +175,7 @@ R3D_NormalMap R3D_LoadNormalMapFromMemory(const char* fileType, const void* file
 {
     R3D_NormalMap map = {0};
     map.texture = R3D_LoadTextureFromMemory(fileType, fileData, dataSize, false);
-    map.scale = scale;
+    map.scale   = scale;
     return map;
 }
 
@@ -182,11 +187,11 @@ void R3D_UnloadNormalMap(R3D_NormalMap map)
 R3D_OrmMap R3D_LoadOrmMap(const char* fileName, float occlusion, float roughness, float metalness, float specular)
 {
     R3D_OrmMap map = {0};
-    map.texture = R3D_LoadTexture(fileName, false);
+    map.texture   = R3D_LoadTexture(fileName, false);
     map.occlusion = occlusion;
     map.roughness = roughness;
     map.metalness = metalness;
-    map.specular = specular;
+    map.specular  = specular;
     return map;
 }
 
@@ -194,11 +199,11 @@ R3D_OrmMap R3D_LoadOrmMapFromMemory(const char* fileType, const void* fileData, 
                                     float occlusion, float roughness, float metalness, float specular)
 {
     R3D_OrmMap map = {0};
-    map.texture = R3D_LoadTextureFromMemory(fileType, fileData, dataSize, false);
+    map.texture   = R3D_LoadTextureFromMemory(fileType, fileData, dataSize, false);
     map.occlusion = occlusion;
     map.roughness = roughness;
     map.metalness = metalness;
-    map.specular = specular;
+    map.specular  = specular;
     return map;
 }
 
