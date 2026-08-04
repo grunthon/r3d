@@ -38,7 +38,8 @@ static void tex_params(GLenum target, GLint filter, GLint wrap)
     glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filter);
     glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filter);
     glTexParameteri(target, GL_TEXTURE_WRAP_S, wrap);
-    if (target != GL_TEXTURE_1D) {
+    if (target != GL_TEXTURE_1D)
+    {
         glTexParameteri(target, GL_TEXTURE_WRAP_T, wrap);
     }
 }
@@ -67,47 +68,54 @@ static const texture_loader_func LOADERS[] = {
     [R3D_TEXTURE_SMAA_SEARCH] = load_smaa_search,
 };
 
-void load_white(void) {
+void load_white(void)
+{
     const uint8_t px[4] = {255, 255, 255, 255};
     glBindTexture(GL_TEXTURE_2D, R3D_MOD_TEXTURE.textures[R3D_TEXTURE_WHITE]);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, px);
     tex_params(GL_TEXTURE_2D, GL_NEAREST, GL_CLAMP_TO_EDGE);
 }
 
-void load_black(void) {
+void load_black(void)
+{
     const uint8_t px[4] = {0, 0, 0, 255};
     glBindTexture(GL_TEXTURE_2D, R3D_MOD_TEXTURE.textures[R3D_TEXTURE_BLACK]);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, px);
     tex_params(GL_TEXTURE_2D, GL_NEAREST, GL_CLAMP_TO_EDGE);
 }
 
-void load_blank(void) {
+void load_blank(void)
+{
     const uint8_t px[4] = {0, 0, 0, 0};
     glBindTexture(GL_TEXTURE_2D, R3D_MOD_TEXTURE.textures[R3D_TEXTURE_BLANK]);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, px);
     tex_params(GL_TEXTURE_2D, GL_NEAREST, GL_CLAMP_TO_EDGE);
 }
 
-void load_normal(void) {
+void load_normal(void)
+{
     const uint8_t px[4] = {127, 127, 255, 0};
     glBindTexture(GL_TEXTURE_2D, R3D_MOD_TEXTURE.textures[R3D_TEXTURE_NORMAL]);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, px);
     tex_params(GL_TEXTURE_2D, GL_NEAREST, GL_CLAMP_TO_EDGE);
 }
 
-void load_ibl_brdf_lut(void) {
+void load_ibl_brdf_lut(void)
+{
     glBindTexture(GL_TEXTURE_2D, R3D_MOD_TEXTURE.textures[R3D_TEXTURE_BRDF_LUT]);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, 512, 512, 0, GL_RG, GL_HALF_FLOAT, BRDF_LUT_512_RG16_FLOAT_RAW);
     tex_params(GL_TEXTURE_2D, GL_LINEAR, GL_CLAMP_TO_EDGE);
 }
 
-void load_smaa_area(void) {
+void load_smaa_area(void)
+{
     glBindTexture(GL_TEXTURE_2D, R3D_MOD_TEXTURE.textures[R3D_TEXTURE_SMAA_AREA]);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RG8, 160, 560, 0, GL_RG, GL_UNSIGNED_BYTE, SMAA_AREA_160X560_RG8_RAW);
     tex_params(GL_TEXTURE_2D, GL_LINEAR, GL_CLAMP_TO_EDGE);
 }
 
-void load_smaa_search(void) {
+void load_smaa_search(void)
+{
     glBindTexture(GL_TEXTURE_2D, R3D_MOD_TEXTURE.textures[R3D_TEXTURE_SMAA_SEARCH]);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 64, 16, 0, GL_RED, GL_UNSIGNED_BYTE, SMAA_SEARCH_64X16_R8_RAW);
     tex_params(GL_TEXTURE_2D, GL_NEAREST, GL_CLAMP_TO_EDGE);
@@ -131,7 +139,8 @@ void r3d_texture_quit(void)
 
 bool r3d_texture_is_default(GLuint id)
 {
-    for (int i = 0; i < R3D_TEXTURE_COUNT; i++) {
+    for (int i = 0; i < R3D_TEXTURE_COUNT; i++)
+    {
         if (id == R3D_MOD_TEXTURE.textures[i]) return true;
     }
     return false;
@@ -139,7 +148,8 @@ bool r3d_texture_is_default(GLuint id)
 
 GLuint r3d_texture_get(r3d_texture_t texture)
 {
-    if (!R3D_MOD_TEXTURE.loaded[texture]) {
+    if (!R3D_MOD_TEXTURE.loaded[texture])
+    {
         R3D_MOD_TEXTURE.loaded[texture] = true;
         LOADERS[texture]();
     }

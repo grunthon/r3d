@@ -24,13 +24,16 @@ R3D_Mesh R3D_LoadMesh(R3D_PrimitiveType type, R3D_MeshData data, const BoundingB
 {
     R3D_Mesh mesh = {0};
 
-    if (!r3d_render_alloc_vertices(data.vertexCount, &mesh.vertexOffset)) {
+    if (!r3d_render_alloc_vertices(data.vertexCount, &mesh.vertexOffset))
+    {
         R3D_TRACELOG(LOG_WARNING, "Failed to load mesh; Vertices allocation in VRAM failed");
         return mesh;
     }
 
-    if (data.indexCount > 0) {
-        if (!r3d_render_alloc_elements(data.indexCount, &mesh.indexOffset)) {
+    if (data.indexCount > 0)
+    {
+        if (!r3d_render_alloc_elements(data.indexCount, &mesh.indexOffset))
+        {
             R3D_TRACELOG(LOG_WARNING, "Failed to load mesh; Elements allocation in VRAM failed");
             r3d_render_free_vertices(mesh.vertexOffset, data.vertexCount);
             mesh.vertexOffset = 0;
@@ -39,7 +42,8 @@ R3D_Mesh R3D_LoadMesh(R3D_PrimitiveType type, R3D_MeshData data, const BoundingB
     }
 
     r3d_render_upload_vertices(mesh.vertexOffset, data.vertices, data.vertexCount);
-    if (data.indexCount > 0) {
+    if (data.indexCount > 0)
+    {
         r3d_render_upload_elements(mesh.indexOffset, data.indices, data.indexCount);
     }
 
@@ -58,11 +62,13 @@ R3D_Mesh R3D_LoadMesh(R3D_PrimitiveType type, R3D_MeshData data, const BoundingB
 
 void R3D_UnloadMesh(R3D_Mesh mesh)
 {
-    if (mesh.vertexCapacity > 0) {
+    if (mesh.vertexCapacity > 0)
+    {
         r3d_render_free_vertices(mesh.vertexOffset, mesh.vertexCapacity);
     }
 
-    if (mesh.indexCapacity > 0) {
+    if (mesh.indexCapacity > 0)
+    {
         r3d_render_free_elements(mesh.indexOffset, mesh.indexCapacity);
     }
 }
@@ -344,27 +350,34 @@ R3D_Mesh R3D_GenMeshCubicmap(Image cubicmap, Vector3 cubeSize)
 
 bool R3D_UpdateMesh(R3D_Mesh* mesh, R3D_MeshData data, const BoundingBox* aabb)
 {
-    if (!mesh) {
+    if (!mesh)
+    {
         R3D_TRACELOG(LOG_WARNING, "Cannot update mesh; Invalid mesh instance");
         return false;
     }
 
-    if (!data.vertices || data.vertexCount <= 0) {
+    if (!data.vertices || data.vertexCount <= 0)
+    {
         R3D_TRACELOG(LOG_WARNING, "Cannont update mesh; Invalid mesh data");
         return false;
     }
 
-    if (mesh->vertexCapacity < data.vertexCount) {
-        if (!r3d_render_realloc_vertices(&mesh->vertexOffset, &mesh->vertexCapacity, data.vertexCount, false)) {
+    if (mesh->vertexCapacity < data.vertexCount)
+    {
+        if (!r3d_render_realloc_vertices(&mesh->vertexOffset, &mesh->vertexCapacity, data.vertexCount, false))
+        {
             R3D_TRACELOG(LOG_WARNING, "Cannot update mesh; Vertex reallocation failed");
             return false;
         }
     }
     r3d_render_upload_vertices(mesh->vertexOffset, data.vertices, data.vertexCount);
 
-    if (data.indexCount > 0) {
-        if (mesh->indexCapacity < data.indexCount) {
-            if (!r3d_render_realloc_elements(&mesh->indexOffset, &mesh->indexCapacity, data.indexCount, false)) {
+    if (data.indexCount > 0)
+    {
+        if (mesh->indexCapacity < data.indexCount)
+        {
+            if (!r3d_render_realloc_elements(&mesh->indexOffset, &mesh->indexCapacity, data.indexCount, false))
+            {
                 R3D_TRACELOG(LOG_WARNING, "Cannot update mesh; Element reallocation failed");
                 return false;
             }

@@ -8,20 +8,35 @@
 
 #version 330 core
 
-/* === Extensions === */
+// ================================
+// Extensions
+// ================================
 
 #extension GL_ARB_texture_cube_map_array : enable
 
-/* === Includes === */
+// ================================
+// Includes
+// ================================
 
 #include <lib/math.glsl>
 #include <lib/pbr.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 noperspective in vec2 vTexCoord;
 
-/* === Uniforms === */
+// ================================
+// Out - Fragments
+// ================================
+
+layout(location = 0) out vec4 FragDiff;
+layout(location = 1) out vec4 FragSpec;
+
+// ================================
+// Uniforms
+// ================================
 
 uniform sampler2D uAlbedoTex;
 uniform sampler2D uNormalTex;
@@ -32,17 +47,16 @@ uniform sampler2DArrayShadow uShadowDirTex;
 uniform sampler2DArrayShadow uShadowSpotTex;
 uniform samplerCubeArrayShadow uShadowOmniTex;
 
-/* === Blocks === */
+// ================================
+// Helper Includes
+// ================================
 
 #include <wrap/light.glsl>
 #include <wrap/view.glsl>
 
-/* === Fragments === */
-
-layout(location = 0) out vec4 FragDiff;
-layout(location = 1) out vec4 FragSpec;
-
-/* === Main === */
+// ================================
+// Main Function
+// ================================
 
 void main()
 {
@@ -62,7 +76,8 @@ void main()
     vec3 L = (uLight.type == LIGHT_DIR) ? -uLight.direction : Ldelta / max(Ldist, 1e-4);
     float NoL = dot(N, L);
 
-    if (NoL <= 0.0) {
+    if (NoL <= 0.0)
+    {
         FragDiff = vec4(0.0);
         FragSpec = vec4(0.0);
         return;
@@ -104,20 +119,24 @@ void main()
 
     float shadow = 1.0;
 
-    if (uLight.type != LIGHT_DIR) {
+    if (uLight.type != LIGHT_DIR)
+    {
         float atten = pow(1.0 - clamp(Ldist / uLight.range, 0.0, 1.0), uLight.falloff);
         shadow *= atten;
     }
 
-    if (uLight.type == LIGHT_SPOT) {
+    if (uLight.type == LIGHT_SPOT)
+    {
         float theta = dot(L, -uLight.direction);
         float epsilon = (uLight.innerCutOff - uLight.outerCutOff);
         shadow *= smoothstep(0.0, 1.0, (theta - uLight.outerCutOff) / epsilon);
     }
 
-    if (uLight.shadowLayer >= 0 && uLight.shadowOpacity != 0.0 && shadow > 1e-4) {
+    if (uLight.shadowLayer >= 0 && uLight.shadowOpacity != 0.0 && shadow > 1e-4)
+    {
         mat2 diskRot = L_ShadowDebandingMatrix(gl_FragCoord.xy);
-        switch (uLight.type) {
+        switch (uLight.type)
+        {
         case LIGHT_DIR:  shadow *= L_SampleShadowDir(uLight, P, depth, NoL, diskRot); break;
         case LIGHT_SPOT: shadow *= L_SampleShadowSpot(uLight, P, NoL, diskRot); break;
         case LIGHT_OMNI: shadow *= L_SampleShadowOmni(uLight, P, NoL, diskRot); break;

@@ -8,12 +8,16 @@
 
 #version 330 core
 
-/* === Includes === */
+// ================================
+// Includes
+// ================================
 
 #include <ubo/frame.glsl>
 #include <lib/math.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 smooth in vec3 vPosition;       //< For custom shaders
 smooth in vec2 vTexCoord;
@@ -23,7 +27,20 @@ smooth in mat3 vTBN;
 
 smooth in float vLinearDepth;
 
-/* === Uniforms === */
+// ================================
+// Out - Fragments
+// ================================
+
+layout(location = 0) out vec3 FragAlbedo;
+layout(location = 1) out vec3 FragEmission;
+layout(location = 2) out vec2 FragNormal;
+layout(location = 3) out vec4 FragORM;
+layout(location = 4) out vec2 FragGeomNormal;
+layout(location = 5) out float FragDepth;
+
+// ================================
+// Samplers & Uniforms
+// ================================
 
 uniform sampler2D uAlbedoMap;
 uniform sampler2D uNormalMap;
@@ -37,20 +54,15 @@ uniform float uRoughness;
 uniform float uMetalness;
 uniform float uSpecular;
 
-/* === Fragments === */
-
-layout(location = 0) out vec3 FragAlbedo;
-layout(location = 1) out vec3 FragEmission;
-layout(location = 2) out vec2 FragNormal;
-layout(location = 3) out vec4 FragORM;
-layout(location = 4) out vec2 FragGeomNormal;
-layout(location = 5) out float FragDepth;
-
-/* === User override === */
+// ================================
+// User Override
+// ================================
 
 #include <user/scene.frag>
 
-/* === Main function === */
+// ================================
+// Main Function
+// ================================
 
 void main()
 {

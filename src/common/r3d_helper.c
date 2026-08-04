@@ -31,7 +31,8 @@ int r3d_get_cpu_count(void)
 {
     static int numCPUs = 0;
 
-    if (numCPUs > 0) {
+    if (numCPUs > 0)
+    {
         return numCPUs;
     }
 
@@ -43,7 +44,8 @@ int r3d_get_cpu_count(void)
         numCPUs = sysconf(_SC_NPROCESSORS_ONLN);
     #endif
 
-    if (numCPUs < 1) {
+    if (numCPUs < 1)
+    {
         R3D_TRACELOG(LOG_WARNING, "Failed to detect CPU count, defaulting to 1 thread");
         numCPUs = 1;
     }

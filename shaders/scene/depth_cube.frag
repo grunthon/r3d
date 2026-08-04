@@ -8,28 +8,38 @@
 
 #version 330 core
 
-/* === Includes === */
+// ================================
+// Includes
+// ================================
 
 #include <ubo/frame.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 smooth in vec3 vPosition;
 smooth in vec2 vTexCoord;
 smooth in vec4 vColor;
 
-/* === Uniforms === */
+// ================================
+// Samplers & Uniforms
+// ================================
 
 uniform sampler2D uAlbedoMap;
 uniform float uAlphaCutoff;
 uniform vec3 uViewPosition;
 uniform float uFar;
 
-/* === User override === */
+// ================================
+// User Override
+// ================================
 
 #include <user/scene.frag>
 
-/* === Main function === */
+// ================================
+// Main Function
+// ================================
 
 void main()
 {

@@ -8,25 +8,35 @@
 
 #version 330 core
 
-/* === Includes === */
+// ================================
+// Includes
+// ================================
 
 #include <lib/math.glsl>
 #include <ubo/view.glsl>
 #include <ubo/fx.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 noperspective in vec2 vTexCoord;
 
-/* === Uniforms === */
-
-uniform sampler2D uDepthTex;
-
-/* === Fragments === */
+// ================================
+// Out - Fragments
+// ================================
 
 out vec4 FragColor; // rgb = emission, a = transmittance (composed via blend mode)
 
-/* === Main Function === */
+// ================================
+// Samplers & Uniforms
+// ================================
+
+uniform sampler2D uDepthTex;
+
+// ================================
+// Main Function
+// ================================
 
 void main()
 {
@@ -42,7 +52,8 @@ void main()
     vec3 emission = uVFog.emissionColor.rgb * (uVFog.emissionEnergy * extinction);
 
     // Scale effect on sky pixels
-    if (depth >= uView.far) {
+    if (depth >= uView.far)
+    {
         transmittance = mix(1.0, transmittance, uVFog.skyAffect);  // 0 = no effect, 1 = full effect
         emission *= uVFog.skyAffect;                               // mix(vec3(0), emission, t) == emission * t
     }

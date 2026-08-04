@@ -8,37 +8,50 @@
 
 #version 330 core
 
-/* === Includes === */
+// ================================
+// Includes
+// ================================
 
 #include <ubo/fx.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 noperspective in vec2 vTexCoord;
 
-/* === Uniforms === */
+// ================================
+// Out - Fragments
+// ================================
+
+out vec3 FragColor;
+
+// ================================
+// Samplers & Uniforms
+// ================================
 
 uniform sampler2D uSceneTex;
 uniform sampler2D uBloomTex;
 
-/* === Fragments === */
-
-out vec3 FragColor;
-
-/* === Main program === */
+// ================================
+// Main Function
+// ================================
 
 void main()
 {
     vec3 color = texture(uSceneTex, vTexCoord).rgb;
     vec3 bloom = texture(uBloomTex, vTexCoord).rgb;
 
-    if (uBloom.mode == BLOOM_MIX) {
+    if (uBloom.mode == BLOOM_MIX)
+    {
         color = mix(color, bloom, uBloom.intensity);
     }
-    else if (uBloom.mode == BLOOM_ADDITIVE) {
+    else if (uBloom.mode == BLOOM_ADDITIVE)
+    {
         color += bloom * uBloom.intensity;
     }
-    else if (uBloom.mode == BLOOM_SCREEN) {
+    else if (uBloom.mode == BLOOM_SCREEN)
+    {
         bloom = clamp(bloom * uBloom.intensity, vec3(0.0), vec3(1.0));
         color = max((color + bloom) - (color * bloom), vec3(0.0));
     }

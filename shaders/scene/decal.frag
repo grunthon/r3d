@@ -9,13 +9,17 @@
 
 #version 330 core
 
-/* === Includes === */
+// ================================
+// Includes
+// ================================
 
 #include <ubo/frame.glsl>
 #include <wrap/view.glsl>
 #include <lib/math.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 smooth in vec3 vPosition;           //< For custom shaders
 smooth in mat4 vDecalProjection;
@@ -23,7 +27,18 @@ smooth in mat3 vDecalAxes;
 flat   in vec3 vEmission;
 smooth in vec4 vColor;
 
-/* === Uniforms === */
+// ================================
+// Out - Fragments
+// ================================
+
+layout(location = 0) out vec4 FragAlbedo;
+layout(location = 1) out vec4 FragEmission;
+layout(location = 2) out vec4 FragORM;
+layout(location = 3) out vec4 FragNormal;
+
+// ================================
+// Samplers & Uniforms
+// ================================
 
 uniform sampler2D uAlbedoMap;
 uniform sampler2D uNormalMap;
@@ -47,14 +62,9 @@ uniform float uNormalThreshold;
 uniform float uFadeWidth;
 uniform bool uApplyColor;
 
-/* === Fragments === */
-
-layout(location = 0) out vec4 FragAlbedo;
-layout(location = 1) out vec4 FragEmission;
-layout(location = 2) out vec4 FragORM;
-layout(location = 3) out vec4 FragNormal;
-
-/* === Helper functions === */
+// ================================
+// Helper Functions
+// ================================
 
 mat3 BuildDecalTBN(vec3 worldNormal)
 {
@@ -69,11 +79,15 @@ mat3 BuildDecalTBN(vec3 worldNormal)
     return mat3(T, B, worldNormal);
 }
 
-/* === User override === */
+// ================================
+// User Override
+// ================================
 
 #include <user/scene.frag>
 
-/* === Main function === */
+// ================================
+// Main Functions
+// ================================
 
 void main()
 {

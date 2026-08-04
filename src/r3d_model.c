@@ -25,22 +25,26 @@
 
 static bool load_model_components(R3D_Model* model, const R3D_Importer* importer)
 {
-    if (!r3d_importer_load_meshes(importer, model)) {
+    if (!r3d_importer_load_meshes(importer, model))
+    {
         return false;
     }
 
-    if (!r3d_importer_load_skeleton(importer, &model->skeleton)) {
+    if (!r3d_importer_load_skeleton(importer, &model->skeleton))
+    {
         return false;
     }
 
     r3d_importer_texture_cache_t* textureCache = r3d_importer_load_texture_cache(
         importer, R3D.colorSpace, R3D.textureFilter);
 
-    //if (textureCache == NULL) {
+    //if (textureCache == NULL)
+    //{
     //    R3D_TRACELOG(LOG_INFO, "The model's materials will not have textures");
     //}
 
-    if (!r3d_importer_load_materials(importer, &model->materials, &model->materialCount, textureCache)) {
+    if (!r3d_importer_load_materials(importer, &model->materials, &model->materialCount, textureCache))
+    {
         r3d_importer_unload_texture_cache(textureCache, true);
         return false;
     }
@@ -116,18 +120,21 @@ R3D_Model R3D_LoadModelFromImporter(const R3D_Importer* importer)
     R3D_Model model = {0};
 
 #ifdef R3D_SUPPORT_ASSIMP
-    if (importer == NULL) {
+    if (importer == NULL)
+    {
         R3D_TRACELOG(LOG_WARNING, "Cannot load model from importer: NULL importer");
         return model;
     }
 
-    if (load_model_components(&model, importer)) {
+    if (load_model_components(&model, importer))
+    {
         R3D_TRACELOG(LOG_INFO, "Model loaded successfully: '%s'", importer->name);
         R3D_TRACELOG(LOG_INFO, "    > Materials count: %i", model.materialCount);
         R3D_TRACELOG(LOG_INFO, "    > Meshes count: %i", model.meshCount);
         R3D_TRACELOG(LOG_INFO, "    > Bones count: %i", model.skeleton.boneCount);
     }
-    else {
+    else
+    {
         R3D_UnloadModel(model, false);
         memset(&model, 0, sizeof(model));
 
@@ -146,20 +153,26 @@ void R3D_UnloadModel(R3D_Model model, bool unloadMaterials)
 {
     R3D_UnloadSkeleton(model.skeleton);
 
-    if (model.meshes != NULL) {
-        for (int i = 0; i < model.meshCount; i++) {
+    if (model.meshes != NULL)
+    {
+        for (int i = 0; i < model.meshCount; i++)
+        {
             R3D_UnloadMesh(model.meshes[i]);
         }
     }
 
-    if (model.meshData != NULL) {
-        for (int i = 0; i < model.meshCount; i++) {
+    if (model.meshData != NULL)
+    {
+        for (int i = 0; i < model.meshCount; i++)
+        {
             R3D_UnloadMeshData(model.meshData[i]);
         }
     }
 
-    if (unloadMaterials && model.materials != NULL) {
-        for (int i = 0; i < model.materialCount; i++) {
+    if (unloadMaterials && model.materials != NULL)
+    {
+        for (int i = 0; i < model.materialCount; i++)
+        {
             R3D_UnloadMaterial(model.materials[i]);
         }
     }
@@ -173,11 +186,14 @@ void R3D_UnloadModel(R3D_Model model, bool unloadMaterials)
 int R3D_GetModelMeshIndex(R3D_Model model, const char* meshName)
 {
     if (model.meshNames == NULL) return -1;
-    for (int i = 0; i < model.meshCount; i++) {
+
+    for (int i = 0; i < model.meshCount; i++)
+    {
         if (strncmp(model.meshNames[i], meshName, sizeof(R3D_MeshName)) == 0) {
             return i;
         }
     }
+
     return -1;
 }
 

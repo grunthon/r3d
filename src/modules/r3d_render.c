@@ -77,7 +77,8 @@ struct r3d_mod_render R3D_MOD_RENDER;
  */
 static void vao_configure(bool rebindVbo, bool configInstances)
 {
-    if (rebindVbo) {
+    if (rebindVbo)
+    {
         glBindBuffer(GL_ARRAY_BUFFER, R3D_MOD_RENDER.globalVbo);
     }
 
@@ -102,7 +103,8 @@ static void vao_configure(bool rebindVbo, bool configInstances)
     glEnableVertexAttribArray(6);
     glVertexAttribPointer(6, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(R3D_Vertex), (void*)offsetof(R3D_Vertex, boneWeights));
 
-    if (configInstances) {
+    if (configInstances)
+    {
         glVertexAttribDivisor(10, 1);
         glVertexAttribDivisor(11, 1);
         glVertexAttribDivisor(12, 1);
@@ -237,10 +239,12 @@ static void ebo_relocate(int dstOffset, int srcOffset, int count)
 static void free_list_coalesce(r3d_render_range_t* list, int* count)
 {
     // Offset sorting (insertion sort, the list is almost sorted in practice)
-    for (int i = 1; i < *count; i++) {
+    for (int i = 1; i < *count; i++)
+    {
         r3d_render_range_t key = list[i];
         int j = i - 1;
-        while (j >= 0 && list[j].offset > key.offset) {
+        while (j >= 0 && list[j].offset > key.offset)
+        {
             list[j + 1] = list[j];
             j--;
         }
@@ -249,14 +253,17 @@ static void free_list_coalesce(r3d_render_range_t* list, int* count)
 
     // Merging of adjacent blocks
     int write = 0;
-    for (int i = 1; i < *count; i++) {
-        if (list[write].offset + list[write].count >= list[i].offset) {
+    for (int i = 1; i < *count; i++)
+    {
+        if (list[write].offset + list[write].count >= list[i].offset)
+        {
             // Contiguous or overlapping blocks: we extend
             int end = list[write].offset + list[write].count;
             int end_i = list[i].offset + list[i].count;
             if (end_i > end) list[write].count = end_i - list[write].offset;
         }
-        else {
+        else
+        {
             list[++write] = list[i];
         }
     }
@@ -270,7 +277,8 @@ static void free_list_coalesce(r3d_render_range_t* list, int* count)
 static bool free_list_push_range(r3d_render_range_t** list, int* count, int* capacity,
                                  int offset, int rangeCount)
 {
-    if (*count >= *capacity) {
+    if (*count >= *capacity)
+    {
         int newCapacity = (*capacity) * 2;
         r3d_render_range_t* p = MemRealloc(*list, newCapacity * sizeof(r3d_render_range_t));
         if (!p) return false;
@@ -294,15 +302,19 @@ static bool free_list_push_range(r3d_render_range_t** list, int* count, int* cap
  */
 static int free_list_pop_range(r3d_render_range_t* list, int* count, int needed)
 {
-    for (int i = 0; i < *count; i++) {
-        if (list[i].count >= needed) {
+    for (int i = 0; i < *count; i++)
+    {
+        if (list[i].count >= needed)
+        {
             int offset = list[i].offset;
-            if (list[i].count > needed) {
+            if (list[i].count > needed)
+            {
                 // Cut: we keep the rest in the list
                 list[i].offset += needed;
                 list[i].count  -= needed;
             }
-            else {
+            else
+            {
                 // Exact match: remove the entry
                 list[i] = list[--(*count)];
             }
@@ -320,19 +332,23 @@ static int free_list_pop_range(r3d_render_range_t* list, int* count, int needed)
 static bool free_list_try_extend_in_place(r3d_render_range_t* list, int* count,
                                           int afterOffset, int needed)
 {
-    for (int i = 0; i < *count; i++) {
+    for (int i = 0; i < *count; i++)
+    {
         if (list[i].offset != afterOffset) continue;
 
-        if (list[i].count < needed) {
+        if (list[i].count < needed)
+        {
             // Adjacent block but too small
             return false;
         }
 
-        if (list[i].count == needed) {
+        if (list[i].count == needed)
+        {
             // Exact match: remove the entry
             list[i] = list[--(*count)];
         }
-        else {
+        else
+        {
             // We consume 'needed' since the beginning of the block
             list[i].offset += needed;
             list[i].count  -= needed;
@@ -454,7 +470,8 @@ static void instances_enable(const GLuint buffers[R3D_INSTANCE_ATTRIBUTE_COUNT],
 
     if (offset == state->offset &&
         memcmp(buffers, state->buffers, R3D_INSTANCE_ATTRIBUTE_COUNT * sizeof(GLuint)) == 0 &&
-        memcmp(&layout, &state->layout, sizeof(R3D_InstanceLayout)) == 0) {
+        memcmp(&layout, &state->layout, sizeof(R3D_InstanceLayout)) == 0)
+    {
         return;
     }
 
@@ -462,18 +479,21 @@ static void instances_enable(const GLuint buffers[R3D_INSTANCE_ATTRIBUTE_COUNT],
     state->layout = layout;
     state->offset = offset;
 
-    for (int i = 0; i < R3D_INSTANCE_ATTRIBUTE_COUNT; i++) {
+    for (int i = 0; i < R3D_INSTANCE_ATTRIBUTE_COUNT; i++)
+    {
         GLuint attrib = 10 + i;
         R3D_InstanceFlags flag = 1u << i;
 
-        if (!R3D_BIT_ANY(layout.flags, flag)) {
+        if (!R3D_BIT_ANY(layout.flags, flag))
+        {
             glDisableVertexAttribArray(attrib);
             continue;
         }
 
         R3D_InstanceFormat format = layout.formats[i];
 
-        if (format < 0 || format >= R3D_INSTANCE_FORMAT_COUNT) {
+        if (format < 0 || format >= R3D_INSTANCE_FORMAT_COUNT)
+        {
             glDisableVertexAttribArray(attrib);
             R3D_TRACELOG(LOG_WARNING, "instances_enable -> invalid instance format (attribute=%d, format=%d)", i, format);
             continue;
@@ -499,23 +519,28 @@ static void instances_disable(R3D_InstanceFlags flags)
 {
     memset(&R3D_MOD_RENDER.instanceState, 0, sizeof(R3D_MOD_RENDER.instanceState));
 
-    if (R3D_BIT_ANY(flags, R3D_INSTANCE_POSITION)) {
+    if (R3D_BIT_ANY(flags, R3D_INSTANCE_POSITION))
+    {
         glDisableVertexAttribArray(10);
     }
 
-    if (R3D_BIT_ANY(flags, R3D_INSTANCE_ROTATION)) {
+    if (R3D_BIT_ANY(flags, R3D_INSTANCE_ROTATION))
+    {
         glDisableVertexAttribArray(11);
     }
 
-    if (R3D_BIT_ANY(flags, R3D_INSTANCE_SCALE)) {
+    if (R3D_BIT_ANY(flags, R3D_INSTANCE_SCALE))
+    {
         glDisableVertexAttribArray(12);
     }
 
-    if (R3D_BIT_ANY(flags, R3D_INSTANCE_COLOR)) {
+    if (R3D_BIT_ANY(flags, R3D_INSTANCE_COLOR))
+    {
         glDisableVertexAttribArray(13);
     }
 
-    if (R3D_BIT_ANY(flags, R3D_INSTANCE_CUSTOM)) {
+    if (R3D_BIT_ANY(flags, R3D_INSTANCE_CUSTOM))
+    {
         glDisableVertexAttribArray(14);
     }
 }
@@ -558,7 +583,8 @@ static bool array_grow(void)
     GROW_AND_ASSIGN(callIndices);
     GROW_AND_ASSIGN(groups);
 
-    for (int i = 0; i < R3D_RENDER_LIST_COUNT; ++i) {
+    for (int i = 0; i < R3D_RENDER_LIST_COUNT; ++i)
+    {
         GROW_AND_ASSIGN(list[i].calls);
     }
 
@@ -579,7 +605,8 @@ static bool array_grow(void)
 
 static inline GLenum get_opengl_primitive(R3D_PrimitiveType primitive)
 {
-    switch (primitive) {
+    switch (primitive)
+    {
     case R3D_PRIMITIVE_POINTS:          return GL_POINTS;
     case R3D_PRIMITIVE_LINES:           return GL_LINES;
     case R3D_PRIMITIVE_LINE_STRIP:      return GL_LINE_STRIP;
@@ -601,7 +628,8 @@ static void get_draw_call_info(const r3d_render_call_t* call, GLenum* primitive,
     *vertexRange = (r3d_render_range_t) {0};
     *indexRange = (r3d_render_range_t) {0};
 
-    switch (call->type) {
+    switch (call->type)
+    {
     case R3D_RENDER_CALL_MESH:
         {
             const R3D_Mesh* mesh = &call->mesh.instance;
@@ -616,7 +644,8 @@ static void get_draw_call_info(const r3d_render_call_t* call, GLenum* primitive,
     case R3D_RENDER_CALL_DECAL:
         {
             r3d_render_shape_t* shape = &R3D_MOD_RENDER.shapes[R3D_RENDER_SHAPE_CUBE];
-            if (shape->vertices.count == 0) {
+            if (shape->vertices.count == 0)
+            {
                 SHAPE_LOADERS[R3D_RENDER_SHAPE_CUBE](shape);
                 glBindVertexArray(R3D_MOD_RENDER.globalVao);
             }
@@ -640,7 +669,8 @@ static void get_draw_call_info(const r3d_render_call_t* call, GLenum* primitive,
 
 static inline bool is_aabb_visible(const R3D_Frustum* frustum, BoundingBox aabb)
 {
-    if (memcmp(&aabb, &(BoundingBox){0}, sizeof(BoundingBox)) == 0) {
+    if (memcmp(&aabb, &(BoundingBox){0}, sizeof(BoundingBox)) == 0)
+    {
         return true;
     }
 
@@ -649,7 +679,8 @@ static inline bool is_aabb_visible(const R3D_Frustum* frustum, BoundingBox aabb)
 
 static inline bool is_obb_visible(const R3D_Frustum* frustum, R3D_OrientedBox obb)
 {
-    if (memcmp(&obb, &(R3D_OrientedBox){0}, sizeof(R3D_OrientedBox)) == 0) {
+    if (memcmp(&obb, &(R3D_OrientedBox){0}, sizeof(R3D_OrientedBox)) == 0)
+    {
         return true;
     }
 
@@ -658,11 +689,13 @@ static inline bool is_obb_visible(const R3D_Frustum* frustum, R3D_OrientedBox ob
 
 static inline bool is_transformed_aabb_visible(const R3D_Frustum* frustum, BoundingBox aabb, Matrix transform)
 {
-    if (memcmp(&aabb, &(BoundingBox){0}, sizeof(BoundingBox)) == 0) {
+    if (memcmp(&aabb, &(BoundingBox){0}, sizeof(BoundingBox)) == 0)
+    {
         return true;
     }
 
-    if (r3d_matrix_is_identity(transform)) {
+    if (r3d_matrix_is_identity(transform))
+    {
         return R3D_FrustumIntersectsBoundingBox(frustum, aabb);
     }
 
@@ -709,7 +742,8 @@ static inline float calculate_max_distance_to_camera(const BoundingBox* aabb, co
 {
     float maxDistSq = 0.0f;
 
-    for (int i = 0; i < 8; ++i) {
+    for (int i = 0; i < 8; ++i)
+    {
         Vector3 corner = {
             (i & 1) ? aabb->max.x : aabb->min.x,
             (i & 2) ? aabb->max.y : aabb->min.y,
@@ -728,28 +762,29 @@ static inline void sort_fill_state_data(r3d_render_sort_state_t* state, const r3
 {
     memset(state, 0, sizeof(*state));
 
-    switch (call->type) {
+    switch (call->type)
+    {
     case R3D_RENDER_CALL_MESH:
-        state->priority = call->mesh.material.priority;
-        state->shader = (uintptr_t)call->mesh.material.shader;
-        state->shading = call->mesh.material.unlit;
-        state->albedo = call->mesh.material.albedo.texture.id;
-        state->normal = call->mesh.material.normal.texture.id;
-        state->orm = call->mesh.material.orm.texture.id;
-        state->emission = call->mesh.material.emission.texture.id;
-        state->stencil = r3d_hash_fnv1a_32(&call->mesh.material.stencil, sizeof(call->mesh.material.stencil));
-        state->depth = r3d_hash_fnv1a_32(&call->mesh.material.depth, sizeof(call->mesh.material.depth));
-        state->blend = call->mesh.material.blendMode;
-        state->cull = call->mesh.material.cullMode;
+        state->priority     = call->mesh.material.priority;
+        state->shader       = (uintptr_t)call->mesh.material.shader;
+        state->shading      = call->mesh.material.unlit;
+        state->albedo       = call->mesh.material.albedo.texture.id;
+        state->normal       = call->mesh.material.normal.texture.id;
+        state->orm          = call->mesh.material.orm.texture.id;
+        state->emission     = call->mesh.material.emission.texture.id;
+        state->stencil      = r3d_hash_fnv1a_32(&call->mesh.material.stencil, sizeof(call->mesh.material.stencil));
+        state->depth        = r3d_hash_fnv1a_32(&call->mesh.material.depth, sizeof(call->mesh.material.depth));
+        state->blend        = call->mesh.material.blendMode;
+        state->cull         = call->mesh.material.cullMode;
         state->transparency = call->mesh.material.transparencyMode;
-        state->billboard = call->mesh.material.billboardMode;
+        state->billboard    = call->mesh.material.billboardMode;
         break;
 
     case R3D_RENDER_CALL_DECAL:
-        state->shader = (uintptr_t)call->decal.instance.shader;
-        state->albedo = call->decal.instance.albedo.texture.id;
-        state->normal = call->decal.instance.normal.texture.id;
-        state->orm = call->decal.instance.orm.texture.id;
+        state->shader   = (uintptr_t)call->decal.instance.shader;
+        state->albedo   = call->decal.instance.albedo.texture.id;
+        state->normal   = call->decal.instance.normal.texture.id;
+        state->orm      = call->decal.instance.orm.texture.id;
         state->emission = call->decal.instance.emission.texture.id;
         break;
     }
@@ -797,7 +832,8 @@ static void sort_fill_cache_back_to_front(r3d_render_list_enum_t list)
 
         // For back-to-front sorting we just need the priority for the meshes
         memset(&sortData->state, 0, sizeof(sortData->state));
-        if (call->type == R3D_RENDER_CALL_MESH) {
+        if (call->type == R3D_RENDER_CALL_MESH)
+        {
             sortData->state.priority = call->mesh.material.priority;
         }
     }
@@ -831,7 +867,8 @@ static inline int compare_f32(float a, float b)
 static inline int compare_material(const r3d_render_sort_t* a, const r3d_render_sort_t* b)
 {
     // User priority first (signed)
-    if (a->state.priority != b->state.priority) {
+    if (a->state.priority != b->state.priority)
+    {
         return compare_i32(a->state.priority, b->state.priority);
     }
 
@@ -965,7 +1002,8 @@ void r3d_render_quit(void)
 
     /* --- Release CPU arrays --- */
 
-    for (int i = 0; i < R3D_RENDER_LIST_COUNT; i++) {
+    for (int i = 0; i < R3D_RENDER_LIST_COUNT; i++)
+    {
         MemFree(R3D_MOD_RENDER.list[i].calls);
     }
 
@@ -995,15 +1033,18 @@ bool r3d_render_alloc_vertices(int count, int* outOffset)
         count
     );
 
-    if (offset >= 0) {
+    if (offset >= 0)
+    {
         *outOffset = offset;
         return true;
     }
 
     // No free block, we extend from the end of the buffer
     int needed = R3D_MOD_RENDER.globalVertexCount + count;
-    if (needed > R3D_MOD_RENDER.globalVertexCapacity) {
-        if (!vbo_grow(needed)) {
+    if (needed > R3D_MOD_RENDER.globalVertexCapacity)
+    {
+        if (!vbo_grow(needed))
+        {
             R3D_TRACELOG(LOG_FATAL, "r3d_render_alloc_vertices: VBO resize failed");
             return false;
         }
@@ -1025,14 +1066,17 @@ bool r3d_render_alloc_elements(int count, int* outOffset)
         count
     );
 
-    if (offset >= 0) {
+    if (offset >= 0)
+    {
         *outOffset = offset;
         return true;
     }
 
     int needed = R3D_MOD_RENDER.globalElementCount + count;
-    if (needed > R3D_MOD_RENDER.globalElementCapacity) {
-        if (!ebo_grow(needed)) {
+    if (needed > R3D_MOD_RENDER.globalElementCapacity)
+    {
+        if (!ebo_grow(needed))
+        {
             R3D_TRACELOG(LOG_FATAL, "r3d_render_alloc_elements: EBO resize failed");
             return false;
         }
@@ -1048,14 +1092,16 @@ bool r3d_render_realloc_vertices(int* offset, int* count, int newCount, bool kee
     assert(offset != NULL && count != NULL);
     assert(*offset >= 0 && *count >= 0 && newCount > 0);
 
-    if (newCount == *count) {
+    if (newCount == *count)
+    {
         return true;
     }
 
     // Reduction
     // The queue is released: the (count - newCount) end slots
     // are returned to the free list. No GPU copy is necessary
-    if (newCount < *count) {
+    if (newCount < *count)
+    {
         r3d_render_free_vertices(*offset + newCount, *count - newCount);
         *count = newCount;
         return true;
@@ -1077,10 +1123,13 @@ bool r3d_render_realloc_vertices(int* offset, int* count, int newCount, bool kee
 
     // Case 2: Extension in place if we are at the end of
     // the buffer and there is still uncommitted capacity
-    if (*offset + *count == R3D_MOD_RENDER.globalVertexCount) {
+    if (*offset + *count == R3D_MOD_RENDER.globalVertexCount)
+    {
         int needed = R3D_MOD_RENDER.globalVertexCount + extra;
-        if (needed > R3D_MOD_RENDER.globalVertexCapacity) {
-            if (!vbo_grow(needed)) {
+        if (needed > R3D_MOD_RENDER.globalVertexCapacity)
+        {
+            if (!vbo_grow(needed))
+            {
                 R3D_TRACELOG(LOG_FATAL, "r3d_render_realloc_vertices: VBO resize failed");
                 return false;
             }
@@ -1093,11 +1142,13 @@ bool r3d_render_realloc_vertices(int* offset, int* count, int newCount, bool kee
     // Case 3: no contiguous space, we look for a new larger block,
     // copy the existing data into it, then free the old one
     int newOffset;
-    if (!r3d_render_alloc_vertices(newCount, &newOffset)) {
+    if (!r3d_render_alloc_vertices(newCount, &newOffset))
+    {
         return false;
     }
 
-    if (keepData) {
+    if (keepData)
+    {
         vbo_relocate(newOffset, *offset, *count);
     }
 
@@ -1113,14 +1164,16 @@ bool r3d_render_realloc_elements(int* offset, int* count, int newCount, bool kee
     assert(offset != NULL && count != NULL);
     assert(*offset >= 0 && *count >= 0 && newCount > 0);
 
-    if (newCount == *count) {
+    if (newCount == *count)
+    {
         return true;
     }
 
     // Reduction
     // The queue is released: the (count - newCount) end slots
     // are returned to the free list. No GPU copy is necessary
-    if (newCount < *count) {
+    if (newCount < *count)
+    {
         r3d_render_free_elements(*offset + newCount, *count - newCount);
         *count = newCount;
         return true;
@@ -1142,10 +1195,13 @@ bool r3d_render_realloc_elements(int* offset, int* count, int newCount, bool kee
 
     // Case 2: Extension in place if we are at the end of
     // the buffer and there is still uncommitted capacity
-    if (*offset + *count == R3D_MOD_RENDER.globalElementCount) {
+    if (*offset + *count == R3D_MOD_RENDER.globalElementCount)
+    {
         int needed = R3D_MOD_RENDER.globalElementCount + extra;
-        if (needed > R3D_MOD_RENDER.globalElementCapacity) {
-            if (!ebo_grow(needed)) {
+        if (needed > R3D_MOD_RENDER.globalElementCapacity)
+        {
+            if (!ebo_grow(needed))
+            {
                 R3D_TRACELOG(LOG_FATAL, "r3d_render_realloc_elements: EBO resize failed");
                 return false;
             }
@@ -1158,11 +1214,13 @@ bool r3d_render_realloc_elements(int* offset, int* count, int newCount, bool kee
     // Case 3: no contiguous space, we look for a new larger block,
     // copy the existing data into it, then free the old one
     int newOffset;
-    if (!r3d_render_alloc_elements(newCount, &newOffset)) {
+    if (!r3d_render_alloc_elements(newCount, &newOffset))
+    {
         return false;
     }
 
-    if (keepData) {
+    if (keepData)
+    {
         ebo_relocate(newOffset, *offset, *count);
     }
 
@@ -1238,7 +1296,8 @@ void r3d_render_upload_elements(int offset, const GLuint* indices, int count)
 
 void r3d_render_clear(void)
 {
-    for (int i = 0; i < R3D_RENDER_LIST_COUNT; i++) {
+    for (int i = 0; i < R3D_RENDER_LIST_COUNT; i++)
+    {
         R3D_MOD_RENDER.list[i].numCalls = 0;
     }
 
@@ -1254,12 +1313,15 @@ void r3d_render_clear(void)
 
 bool r3d_render_cluster_begin(BoundingBox aabb)
 {
-    if (R3D_MOD_RENDER.activeCluster >= 0) {
+    if (R3D_MOD_RENDER.activeCluster >= 0)
+    {
         return false;
     }
 
-    if (R3D_MOD_RENDER.numClusters >= R3D_MOD_RENDER.capacity) {
-        if (!array_grow()) {
+    if (R3D_MOD_RENDER.numClusters >= R3D_MOD_RENDER.capacity)
+    {
+        if (!array_grow())
+        {
             R3D_TRACELOG(LOG_FATAL, "Bad alloc on render cluster begin");
             return false;
         }
@@ -1283,8 +1345,10 @@ bool r3d_render_cluster_end(void)
 
 void r3d_render_group_push(const r3d_render_group_t* group)
 {
-    if (R3D_MOD_RENDER.numGroups >= R3D_MOD_RENDER.capacity) {
-        if (!array_grow()) {
+    if (R3D_MOD_RENDER.numGroups >= R3D_MOD_RENDER.capacity)
+    {
+        if (!array_grow())
+        {
             R3D_TRACELOG(LOG_FATAL, "Bad alloc on render group push");
             return;
         }
@@ -1303,8 +1367,10 @@ void r3d_render_group_push(const r3d_render_group_t* group)
 
 void r3d_render_call_push(const r3d_render_call_t* call)
 {
-    if (R3D_MOD_RENDER.numCalls >= R3D_MOD_RENDER.capacity) {
-        if (!array_grow()) {
+    if (R3D_MOD_RENDER.numCalls >= R3D_MOD_RENDER.capacity)
+    {
+        if (!array_grow())
+        {
             R3D_TRACELOG(LOG_FATAL, "Bad alloc on draw call push");
             return;
         }
@@ -1317,7 +1383,8 @@ void r3d_render_call_push(const r3d_render_call_t* call)
 
     // Get call index and set call group indices
     int callIndex = R3D_MOD_RENDER.numCalls++;
-    if (indices->numCall == 0) {
+    if (indices->numCall == 0)
+    {
         indices->firstCall = callIndex;
     }
     ++indices->numCall;
@@ -1354,11 +1421,14 @@ r3d_render_group_t* r3d_render_get_call_group(const r3d_render_call_t* call)
 void r3d_render_cull_groups(const R3D_Frustum* frustum)
 {
     // Reset visibility states if groups were already culled in a previous pass
-    if (R3D_MOD_RENDER.groupCulled) {
-        for (int i = 0; i < R3D_MOD_RENDER.numGroups; i++) {
+    if (R3D_MOD_RENDER.groupCulled)
+    {
+        for (int i = 0; i < R3D_MOD_RENDER.numGroups; i++)
+        {
             R3D_MOD_RENDER.groupVisibility[i].visible = R3D_RENDER_VISBILITY_UNKNOWN;
         }
-        for (int i = 0; i < R3D_MOD_RENDER.numClusters; i++) {
+        for (int i = 0; i < R3D_MOD_RENDER.numClusters; i++)
+        {
             R3D_MOD_RENDER.clusters[i].visible = R3D_RENDER_VISBILITY_UNKNOWN;
         }
     }
@@ -1371,27 +1441,32 @@ void r3d_render_cull_groups(const R3D_Frustum* frustum)
         const r3d_render_group_t* group = &R3D_MOD_RENDER.groups[i];
 
         // Branch 1: Group belongs to a cluster
-        if (visibility->clusterIndex >= 0) {
+        if (visibility->clusterIndex >= 0)
+        {
             r3d_render_cluster_t* cluster = &R3D_MOD_RENDER.clusters[visibility->clusterIndex];
 
             // Test cluster once (shared by multiple groups)
-            if (cluster->visible == R3D_RENDER_VISBILITY_UNKNOWN) {
+            if (cluster->visible == R3D_RENDER_VISBILITY_UNKNOWN)
+            {
                 cluster->visible = is_aabb_visible(frustum, cluster->aabb);
             }
 
             // If cluster is visible, test the group
-            if (cluster->visible == R3D_RENDER_VISBILITY_TRUE) {
+            if (cluster->visible == R3D_RENDER_VISBILITY_TRUE)
+            {
                 // For instanced: trust cluster visibility
                 // For others: test group AABB individually
                 if (r3d_render_has_instances(group)) visibility->visible = R3D_RENDER_VISBILITY_TRUE;
                 else visibility->visible = is_obb_visible(frustum, group->obb);
             }
-            else {
+            else
+            {
                 visibility->visible = R3D_RENDER_VISBILITY_FALSE;
             }
         }
         // Branch 2: Group without cluster
-        else {
+        else
+        {
             // For instanced: always visible
             // For others: test group AABB
             if (r3d_render_has_instances(group)) visibility->visible = R3D_RENDER_VISBILITY_TRUE;
@@ -1409,25 +1484,31 @@ bool r3d_render_call_is_visible(const r3d_render_call_t* call, const R3D_Frustum
     r3d_render_visibility_enum_t groupVisibility = R3D_MOD_RENDER.groupVisibility[groupIndex].visible;
 
     // If the group was already culled, reject immediately
-    if (groupVisibility == R3D_RENDER_VISBILITY_FALSE) {
+    if (groupVisibility == R3D_RENDER_VISBILITY_FALSE)
+    {
         return false;
     }
 
     // If the group passed culling, check if we can skip per-call testing
-    if (groupVisibility == R3D_RENDER_VISBILITY_TRUE) {
+    if (groupVisibility == R3D_RENDER_VISBILITY_TRUE)
+    {
         // Single-call groups were already tested at the group level
-        if (R3D_MOD_RENDER.callIndices[groupIndex].numCall == 1) {
+        if (R3D_MOD_RENDER.callIndices[groupIndex].numCall == 1)
+        {
             return true;
         }
         // Instanced/skinned groups: trust the group-level test
-        if (r3d_render_has_instances(group) || group->skinTexture > 0) {
+        if (r3d_render_has_instances(group) || group->skinTexture > 0)
+        {
             return true;
         }
         // Multi-call group: fall through to individual call testing
     }
     // If the group hasn't been tested yet, check instanced/skinned groups now
-    else if (groupVisibility == R3D_RENDER_VISBILITY_UNKNOWN) {
-        if (r3d_render_has_instances(group) || group->skinTexture > 0) {
+    else if (groupVisibility == R3D_RENDER_VISBILITY_UNKNOWN)
+    {
+        if (r3d_render_has_instances(group) || group->skinTexture > 0)
+        {
             return is_obb_visible(frustum, group->obb);
         }
         // Regular multi-call group: fall through to individual call testing
@@ -1444,7 +1525,8 @@ void r3d_render_sort_list(r3d_render_list_enum_t list, Vector3 viewPosition, r3d
     int (*compareFunc)(const void *a, const void *b) = NULL;
     r3d_render_list_t* drawList = &R3D_MOD_RENDER.list[list];
 
-    switch (mode) {
+    switch (mode)
+    {
     case R3D_RENDER_SORT_FRONT_TO_BACK:
         compareFunc = compare_front_to_back;
         sort_fill_cache_front_to_back(list);
@@ -1480,10 +1562,12 @@ void r3d_render_draw(const r3d_render_call_t* call)
 
     get_draw_call_info(call, &primitive, &vertexRange, &indexRange);
 
-    if (indexRange.count == 0) {
+    if (indexRange.count == 0)
+    {
         glDrawArrays(primitive, vertexRange.offset, vertexRange.count);
     }
-    else {
+    else
+    {
         glDrawElementsBaseVertex(
             primitive,
             indexRange.count,
@@ -1506,10 +1590,12 @@ void r3d_render_draw_instanced(const r3d_render_call_t* call)
 
     instances_enable(group->instances.buffers, group->instances.layout, group->instanceOffset);
 
-    if (indexRange.count == 0) {
+    if (indexRange.count == 0)
+    {
         glDrawArraysInstanced(primitive, vertexRange.offset, vertexRange.count, group->instanceCount);
     }
-    else {
+    else
+    {
         glDrawElementsInstancedBaseVertex(
             primitive,
             indexRange.count,
@@ -1530,15 +1616,18 @@ void r3d_render_draw_instanced(const r3d_render_call_t* call)
 void r3d_render_draw_shape(r3d_render_shape_enum_t shape)
 {
     r3d_render_shape_t* s = &R3D_MOD_RENDER.shapes[shape];
-    if (s->vertices.count == 0) {
+    if (s->vertices.count == 0)
+    {
         SHAPE_LOADERS[shape](s);
         glBindVertexArray(R3D_MOD_RENDER.globalVao);
     }
 
-    if (s->elements.count == 0) {
+    if (s->elements.count == 0)
+    {
         glDrawArrays(GL_TRIANGLES, s->vertices.offset, s->vertices.count);
     }
-    else {
+    else
+    {
         glDrawElementsBaseVertex(
             GL_TRIANGLES,
             s->elements.count,

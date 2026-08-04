@@ -8,26 +8,36 @@
 
 #version 330 core
 
-/* === Includes === */
+// ================================
+// Includes
+// ================================
 
 #include <ubo/frame.glsl>
 #include <wrap/view.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 noperspective in vec2 vTexCoord;
 
-/* === Uniforms === */
+// ================================
+// Out - Fragments
+// ================================
+
+out vec4 FragColor;
+
+// ================================
+// Samplers & Uniforms
+// ================================
 
 uniform sampler2D uSceneTex;
 uniform sampler2D uNormalTex;
 uniform sampler2D uDepthTex;
 
-/* === Fragments === */
-
-out vec4 FragColor;
-
-/* === Built-In Constants === */
+// ================================
+// Built-In: Constants
+// ================================
 
 #define CAMERA_POSITION         uView.position
 #define MATRIX_VIEW             uView.view
@@ -42,18 +52,24 @@ out vec4 FragColor;
 #define TEXEL_SIZE              uFrame.texelSize
 #define ASPECT                  uFrame.aspect
 
-/* === Built-In Input Variables === */
+// ================================
+// Built-In: Input Variables
+// ================================
 
 vec2 TEXCOORD = vec2(0.0);
 ivec2 PIXCOORD = ivec2(0);
 int FRAME_INDEX = 0;
 float TIME = 0.0;
 
-/* === Built-In Output Variables === */
+// ================================
+// Built-In: Output Variables
+// ================================
 
 vec3 COLOR = vec3(0.0);
 
-/* === User Callable === */
+// ================================
+// User Callables
+// ================================
 
 vec3 FetchColor(ivec2 pixCoord)
 {
@@ -107,7 +123,9 @@ vec3 SampleNormal(vec2 texCoord)
     return V_GetViewNormal(uNormalTex, texCoord);
 }
 
-/* === Main function === */
+// ================================
+// Main Function
+// ================================
 
 #define fragment()
 

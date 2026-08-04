@@ -41,37 +41,44 @@ static inline void process_vertex_position(Vector3* position, const struct aiVec
 
 static inline void process_vertex_texcoord(uint16_t* texcoord, const struct aiMesh* aiMesh, int index)
 {
-    if (aiMesh->mTextureCoords[0] && aiMesh->mNumUVComponents[0] >= 2) {
+    if (aiMesh->mTextureCoords[0] && aiMesh->mNumUVComponents[0] >= 2)
+    {
         R3D_PackTexCoord(texcoord, r3d_importer_cast_to_vector2(aiMesh->mTextureCoords[0][index]));
     }
     // NOTE: Vertices are zero-initialized
-    //else {
+    //else
+    //{
     //    *texcoord = (Vector2) {0.0f, 0.0f};
     //}
 }
 
 static inline void process_vertex_normal(int8_t* normal, const struct aiMesh* aiMesh, int index, const Matrix* normalMatrix, bool hasBones)
 {
-    if (aiMesh->mNormals) {
+    if (aiMesh->mNormals)
+    {
         Vector3 vec = r3d_importer_cast(aiMesh->mNormals[index]);
-        if (!hasBones) {
+        if (!hasBones)
+        {
             vec = r3d_vector3_transform_linear(vec, normalMatrix);
         }
         R3D_PackNormal(normal, Vector3Normalize(vec));
     }
-    else {
+    else
+    {
         R3D_PackNormal(normal, (Vector3){0.0f, 0.0f, 1.0f});
     }
 }
 
 static inline void process_vertex_tangent(R3D_Vertex* vertex, const struct aiMesh* aiMesh, int index, const Matrix* normalMatrix, bool hasBones)
 {
-    if (aiMesh->mNormals && aiMesh->mTangents && aiMesh->mBitangents) {
+    if (aiMesh->mNormals && aiMesh->mTangents && aiMesh->mBitangents)
+    {
         Vector3 normal = r3d_importer_cast(aiMesh->mNormals[index]);
         Vector3 tangent = r3d_importer_cast(aiMesh->mTangents[index]);
         Vector3 bitangent = r3d_importer_cast(aiMesh->mBitangents[index]);
 
-        if (!hasBones) {
+        if (!hasBones)
+        {
             normal = r3d_vector3_transform_linear(normal, normalMatrix);
             tangent = r3d_vector3_transform_linear(tangent, normalMatrix);
             bitangent = r3d_vector3_transform_linear(bitangent, normalMatrix);
@@ -84,22 +91,25 @@ static inline void process_vertex_tangent(R3D_Vertex* vertex, const struct aiMes
         Vector3 reconstructedBitangent = Vector3CrossProduct(normal, tangent);
         float handedness = Vector3DotProduct(reconstructedBitangent, bitangent);
 
-        R3D_PackTangent(vertex->tangent, (Vector4){
+        R3D_PackTangent(vertex->tangent, (Vector4) {
             tangent.x, tangent.y, tangent.z,
             copysignf(1.0f, handedness)
         });
     }
-    else {
+    else
+    {
         R3D_PackTangent(vertex->tangent, (Vector4){1.0f, 0.0f, 0.0f, 1.0f});
     }
 }
 
 static inline void process_vertex_color(Color* color, const struct aiMesh* aiMesh, int index)
 {
-    if (aiMesh->mColors[0]) {
+    if (aiMesh->mColors[0])
+    {
         *color = r3d_importer_cast(aiMesh->mColors[0][index]);
     }
-    else {
+    else
+    {
         *color = WHITE;
     }
 }
@@ -111,7 +121,8 @@ static inline void process_vertex_color(Color* color, const struct aiMesh* aiMes
 static void process_indices(const struct aiMesh* aiMesh, R3D_MeshData* data)
 {
     uint32_t* indexPtr = data->indices;
-    for (unsigned int i = 0; i < aiMesh->mNumFaces; i++) {
+    for (unsigned int i = 0; i < aiMesh->mNumFaces; i++)
+    {
         const struct aiFace* face = &aiMesh->mFaces[i];
         *indexPtr++ = face->mIndices[0];
         *indexPtr++ = face->mIndices[1];
@@ -129,26 +140,31 @@ static inline bool assign_bone_weight(R3D_Vertex* vertex, uint32_t boneIndex, ui
     uint8_t minWeight = vertex->boneWeights[0];
 
     // Pass to find both empty slot and minimum weight
-    for (int slot = 1; slot < MAX_BONE_WEIGHTS; slot++) {
+    for (int slot = 1; slot < MAX_BONE_WEIGHTS; slot++)
+    {
         uint8_t w = vertex->boneWeights[slot];
-        if (w == 0 && emptySlot == -1) {
+        if (w == 0 && emptySlot == -1)
+        {
             emptySlot = slot;
         }
-        if (w < minWeight) {
+        if (w < minWeight)
+        {
             minWeight = w;
             minWeightSlot = slot;
         }
     }
 
     // Use empty slot if available
-    if (emptySlot != -1) {
+    if (emptySlot != -1)
+    {
         vertex->boneIndices[emptySlot] = boneIndex;
         vertex->boneWeights[emptySlot] = weightValue;
         return true;
     }
 
     // All slots occupied - replace if new weight is larger
-    if (weightValue > minWeight) {
+    if (weightValue > minWeight)
+    {
         vertex->boneIndices[minWeightSlot] = boneIndex;
         vertex->boneWeights[minWeightSlot] = weightValue;
         return true;
@@ -164,30 +180,35 @@ static void normalize_bone_weights(R3D_Vertex* vertex)
 
     if (sum == 255) return;
 
-    if (sum > 0) {
+    if (sum > 0)
+    {
         uint32_t half = sum >> 1; // nearest rounding
         vertex->boneWeights[0] = (uint8_t)((vertex->boneWeights[0] * 255 + half) / sum);
         vertex->boneWeights[1] = (uint8_t)((vertex->boneWeights[1] * 255 + half) / sum);
         vertex->boneWeights[2] = (uint8_t)((vertex->boneWeights[2] * 255 + half) / sum);
         vertex->boneWeights[3] = (uint8_t)((vertex->boneWeights[3] * 255 + half) / sum);
     }
-    else {
+    else
+    {
         vertex->boneWeights[0] = 255;
     }
 }
 
 static bool process_bones(const struct aiMesh* aiMesh, R3D_MeshData* data, int vertexCount)
 {
-    if (aiMesh->mNumBones == 0) {
+    if (aiMesh->mNumBones == 0)
+    {
         // No bones - initialize default weights
-        for (int i = 0; i < vertexCount; i++) {
+        for (int i = 0; i < vertexCount; i++)
+        {
             data->vertices[i].boneWeights[0] = 255;
         }
         return true;
     }
 
     // Check if the mesh has too many bones
-    if (aiMesh->mNumBones > R3D_MAXOF(*data->vertices->boneIndices) + 1) {
+    if (aiMesh->mNumBones > R3D_MAXOF(*data->vertices->boneIndices) + 1)
+    {
         R3D_TRACELOG(LOG_WARNING, "Mesh has %u bones, max %d supported",
             aiMesh->mNumBones, R3D_MAXOF(*data->vertices->boneIndices) + 1);
         return false;
@@ -205,7 +226,8 @@ static bool process_bones(const struct aiMesh* aiMesh, R3D_MeshData* data, int v
 
             // Validate vertex ID
             uint32_t vertexId = weight->mVertexId;
-            if (vertexId >= (uint32_t)vertexCount) {
+            if (vertexId >= (uint32_t)vertexCount)
+            {
                 R3D_TRACELOG(LOG_ERROR, "Invalid vertex ID %u in bone weights (max: %d)", vertexId, vertexCount);
                 continue;
             }
@@ -218,7 +240,8 @@ static bool process_bones(const struct aiMesh* aiMesh, R3D_MeshData* data, int v
     }
 
     // Normalize all vertex weights
-    for (int i = 0; i < vertexCount; i++) {
+    for (int i = 0; i < vertexCount; i++)
+    {
         normalize_bone_weights(&data->vertices[i]);
     }
 
@@ -235,24 +258,29 @@ static R3D_PrimitiveType get_primitive_type(unsigned int aiPrimitiveTypes)
     // but we use `aiProcess_SortByPType` during import, which resolves this issue,
     // so we can assume there is only one primitive type per mesh.
 
-    if (R3D_BIT_ANY(aiPrimitiveTypes, aiPrimitiveType_POINT)) {
+    if (R3D_BIT_ANY(aiPrimitiveTypes, aiPrimitiveType_POINT))
+    {
         return R3D_PRIMITIVE_POINTS;
     }
 
-    if (R3D_BIT_ANY(aiPrimitiveTypes, aiPrimitiveType_LINE)) {
+    if (R3D_BIT_ANY(aiPrimitiveTypes, aiPrimitiveType_LINE))
+    {
         return R3D_PRIMITIVE_LINES;
     }
 
-    if (R3D_BIT_ANY(aiPrimitiveTypes, aiPrimitiveType_TRIANGLE)) {
+    if (R3D_BIT_ANY(aiPrimitiveTypes, aiPrimitiveType_TRIANGLE))
+    {
         return R3D_PRIMITIVE_TRIANGLES;
     }
 
     // NOTE: This should never happen if the mesh has been triangulated.
-    //if (R3D_BIT_ANY(aiPrimitiveTypes, aiPrimitiveType_POLYGON)) {
+    //if (R3D_BIT_ANY(aiPrimitiveTypes, aiPrimitiveType_POLYGON))
+    //{
     //    return 0;
     //}
 
-    if (R3D_BIT_ANY(aiPrimitiveTypes, aiPrimitiveType_NGONEncodingFlag)) {
+    if (R3D_BIT_ANY(aiPrimitiveTypes, aiPrimitiveType_NGONEncodingFlag))
+    {
         R3D_TRACELOG(LOG_WARNING, "NGON primitive encoding not supported");
         return R3D_PRIMITIVE_TRIANGLE_FAN;
     }
@@ -269,12 +297,14 @@ static bool load_mesh_internal(
     bool hasBones)
 {
     // Validate input
-    if (!aiMesh) {
+    if (!aiMesh)
+    {
         R3D_TRACELOG(LOG_ERROR, "Invalid parameters during assimp mesh processing");
         return false;
     }
 
-    if (aiMesh->mNumVertices == 0 || aiMesh->mNumFaces == 0) {
+    if (aiMesh->mNumVertices == 0 || aiMesh->mNumFaces == 0)
+    {
         R3D_TRACELOG(LOG_ERROR, "Empty mesh detected during assimp mesh processing");
         return false;
     }
@@ -283,7 +313,8 @@ static bool load_mesh_internal(
     int vertexCount = aiMesh->mNumVertices;
     int indexCount = 3 * aiMesh->mNumFaces;
     R3D_MeshData data = R3D_LoadMeshData(vertexCount, indexCount);
-    if (!data.vertices || !data.indices) {
+    if (!data.vertices || !data.indices)
+    {
         R3D_TRACELOG(LOG_ERROR, "Failed to load mesh; Unable to allocate mesh data");
         return false;
     }
@@ -297,12 +328,14 @@ static bool load_mesh_internal(
 
     // Pre-compute normal matrix for non-bone meshes
     Matrix normalMatrix = {0};
-    if (!hasBones) {
+    if (!hasBones)
+    {
         normalMatrix = r3d_matrix_normal(&transform);
     }
 
     // Process all vertex attributes
-    for (int i = 0; i < vertexCount; i++) {
+    for (int i = 0; i < vertexCount; i++)
+    {
         R3D_Vertex* vertex = &data.vertices[i];
         process_vertex_position(&vertex->position, &aiMesh->mVertices[i], &transform, hasBones, &aabb);
         process_vertex_texcoord(vertex->texcoord, aiMesh, i);
@@ -315,7 +348,8 @@ static bool load_mesh_internal(
     process_indices(aiMesh, &data);
 
     // Process bone data
-    if (!process_bones(aiMesh, &data, vertexCount)) {
+    if (!process_bones(aiMesh, &data, vertexCount))
+    {
         R3D_UnloadMeshData(data);
         return false;
     }
@@ -327,7 +361,8 @@ static bool load_mesh_internal(
     if (outMeshData != NULL) *outMeshData = data;
     else R3D_UnloadMeshData(data);
 
-    if (outMeshName != NULL && aiMesh->mName.length > 0) {
+    if (outMeshName != NULL && aiMesh->mName.length > 0)
+    {
         strncpy(*outMeshName, aiMesh->mName.data, sizeof(R3D_MeshName) - 1);
         *outMeshName[sizeof(R3D_MeshName) - 1] = '\0';
     }
@@ -345,14 +380,16 @@ static bool load_recursive(const R3D_Importer* importer, R3D_Model* model, const
     Matrix globalTransform = MatrixMultiply(localTransform, *parentTransform);
 
     // Process all meshes in this node
-    for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+    for (unsigned int i = 0; i < node->mNumMeshes; i++)
+    {
         uint32_t meshIndex = node->mMeshes[i];
         const struct aiMesh* mesh = r3d_importer_get_mesh(importer, meshIndex);
 
         R3D_MeshData* meshData = model->meshData ? &model->meshData[meshIndex] : NULL;
         R3D_MeshName* meshName = model->meshNames ? &model->meshNames[meshIndex] : NULL;
 
-        if (!load_mesh_internal(&model->meshes[meshIndex], meshData, meshName, mesh, globalTransform, mesh->mNumBones > 0)) {
+        if (!load_mesh_internal(&model->meshes[meshIndex], meshData, meshName, mesh, globalTransform, mesh->mNumBones > 0))
+        {
             R3D_TRACELOG(LOG_ERROR, "Unable to load mesh [%u]; The model will be invalid", meshIndex);
             return false;
         }
@@ -361,8 +398,10 @@ static bool load_recursive(const R3D_Importer* importer, R3D_Model* model, const
     }
 
     // Process all children recursively
-    for (unsigned int i = 0; i < node->mNumChildren; i++) {
-        if (!load_recursive(importer, model, node->mChildren[i], &globalTransform)) {
+    for (unsigned int i = 0; i < node->mNumChildren; i++)
+    {
+        if (!load_recursive(importer, model, node->mChildren[i], &globalTransform))
+        {
             return false;
         }
     }
@@ -376,7 +415,8 @@ static bool load_recursive(const R3D_Importer* importer, R3D_Model* model, const
 
 bool r3d_importer_load_meshes(const R3D_Importer* importer, R3D_Model* model)
 {
-    if (!model || !importer || !r3d_importer_is_valid(importer)) {
+    if (!model || !importer || !r3d_importer_is_valid(importer))
+    {
         R3D_TRACELOG(LOG_ERROR, "Invalid parameters for mesh loading");
         return false;
     }
@@ -392,26 +432,31 @@ bool r3d_importer_load_meshes(const R3D_Importer* importer, R3D_Model* model)
     model->meshMaterials = MemAlloc(model->meshCount * sizeof(*model->meshMaterials));
     if (keepMeshData) model->meshData = MemAlloc(model->meshCount * sizeof(*model->meshData));
     if (keepMeshNames) model->meshNames = MemAlloc(model->meshCount * sizeof(*model->meshNames));
-    if (!model->meshes || !model->meshMaterials || (keepMeshData && !model->meshData) || (keepMeshNames && !model->meshNames)) {
+
+    if (!model->meshes || !model->meshMaterials || (keepMeshData && !model->meshData) || (keepMeshNames && !model->meshNames))
+    {
         R3D_TRACELOG(LOG_ERROR, "Unable to allocate memory for meshes");
         goto cleanup_and_fail;
     }
 
     // Load all meshes recursively
-    if (!load_recursive(importer, model, r3d_importer_get_root(importer), &R3D_MATRIX_IDENTITY)) {
+    if (!load_recursive(importer, model, r3d_importer_get_root(importer), &R3D_MATRIX_IDENTITY))
+    {
         goto cleanup_and_fail;
     }
 
     // Calculate model bounding box
     model->aabb.min = (Vector3) {+FLT_MAX, +FLT_MAX, +FLT_MAX};
     model->aabb.max = (Vector3) {-FLT_MAX, -FLT_MAX, -FLT_MAX};
-    for (int i = 0; i < model->meshCount; i++) {
+    for (int i = 0; i < model->meshCount; i++)
+    {
         model->aabb.min = Vector3Min(model->aabb.min, model->meshes[i].aabb.min);
         model->aabb.max = Vector3Max(model->aabb.max, model->meshes[i].aabb.max);
     }
 
     // Slightly expands the bounding box of skinned models
-    if (scene->mNumSkeletons > 0) {
+    if (scene->mNumSkeletons > 0)
+    {
         Vector3 center = Vector3Scale(Vector3Add(model->aabb.min, model->aabb.max), 0.5f);
         Vector3 halfSz = Vector3Scale(Vector3Subtract(model->aabb.max, model->aabb.min), 0.5f);
         halfSz = Vector3Multiply(halfSz, (Vector3) {1.4f, 1.2f, 1.4f});
@@ -422,14 +467,18 @@ bool r3d_importer_load_meshes(const R3D_Importer* importer, R3D_Model* model)
     return true;
 
 cleanup_and_fail:
-    if (model->meshes) {
-        for (int i = 0; i < model->meshCount; i++) {
+    if (model->meshes)
+    {
+        for (int i = 0; i < model->meshCount; i++)
+        {
             R3D_UnloadMesh(model->meshes[i]);
         }
     }
 
-    if (model->meshData) {
-        for (int i = 0; i < model->meshCount; i++) {
+    if (model->meshData)
+    {
+        for (int i = 0; i < model->meshCount; i++)
+        {
             R3D_UnloadMeshData(model->meshData[i]);
         }
     }

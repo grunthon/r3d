@@ -51,10 +51,12 @@ R3D_Skeleton R3D_LoadSkeletonFromMemory(const void* data, unsigned int size, con
     R3D_UnloadImporter(importer);
 
 #else
-    if (hint && hint[0] != '\0') {
+    if (hint && hint[0] != '\0')
+    {
         R3D_TRACELOG(LOG_WARNING, "Cannot load '%s' from memory: built without Assimp support", hint);
     }
-    else {
+    else
+    {
         R3D_TRACELOG(LOG_WARNING, "Cannot load asset from memory: built without Assimp support");
     }
 
@@ -68,15 +70,18 @@ R3D_Skeleton R3D_LoadSkeletonFromImporter(const R3D_Importer* importer)
     R3D_Skeleton skeleton = {0};
 
 #ifdef R3D_SUPPORT_ASSIMP
-    if (importer == NULL) {
+    if (importer == NULL)
+    {
         R3D_TRACELOG(LOG_WARNING, "Cannot load skeleton from importer: NULL importer");
         return skeleton;
     }
 
-    if (r3d_importer_load_skeleton(importer, &skeleton)) {
+    if (r3d_importer_load_skeleton(importer, &skeleton))
+    {
         R3D_TRACELOG(LOG_INFO, "Skeleton loaded successfully (%u bones): '%s'", importer->name, skeleton.boneCount);
     }
-    else {
+    else
+    {
         R3D_TRACELOG(LOG_WARNING, "Failed to load skeleton: '%s'", importer->name, skeleton.boneCount);
     }
 
@@ -90,7 +95,8 @@ R3D_Skeleton R3D_LoadSkeletonFromImporter(const R3D_Importer* importer)
 
 void R3D_UnloadSkeleton(R3D_Skeleton skeleton)
 {
-    if (skeleton.skinTexture > 0) {
+    if (skeleton.skinTexture > 0)
+    {
         glDeleteTextures(1, &skeleton.skinTexture);
     }
 
@@ -107,8 +113,10 @@ bool R3D_IsSkeletonValid(R3D_Skeleton skeleton)
 
 int R3D_GetSkeletonBoneIndex(R3D_Skeleton skeleton, const char* boneName)
 {
-    for (int i = 0; i < skeleton.boneCount; i++) {
-        if (strcmp(skeleton.bones[i].name, boneName) == 0) {
+    for (int i = 0; i < skeleton.boneCount; i++)
+    {
+        if (strcmp(skeleton.bones[i].name, boneName) == 0)
+        {
             return i;
         }
     }
@@ -117,8 +125,10 @@ int R3D_GetSkeletonBoneIndex(R3D_Skeleton skeleton, const char* boneName)
 
 R3D_BoneInfo* R3D_GetSkeletonBone(R3D_Skeleton skeleton, const char* boneName)
 {
-    for (int i = 0; i < skeleton.boneCount; i++) {
-        if (strcmp(skeleton.bones[i].name, boneName) == 0) {
+    for (int i = 0; i < skeleton.boneCount; i++)
+    {
+        if (strcmp(skeleton.bones[i].name, boneName) == 0)
+        {
             return &skeleton.bones[i];
         }
     }

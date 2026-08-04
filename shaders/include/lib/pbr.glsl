@@ -8,8 +8,6 @@
 
 #include "./math.glsl"
 
-/* === Functions === */
-
 float PBR_D_GGX(float NoH, float roughness)
 {
 	float a2 = roughness * roughness;

@@ -31,11 +31,14 @@ void main()
 
     bool useMax = ((int(gl_FragCoord.x) + int(gl_FragCoord.y)) & 1) == 0;
 
-    if (useMax) {
+    if (useMax)
+    {
         if (d1 > FragDepth) { FragDepth = d1; FragSelect = 1u; }
         if (d2 > FragDepth) { FragDepth = d2; FragSelect = 2u; }
         if (d3 > FragDepth) { FragDepth = d3; FragSelect = 3u; }
-    } else {
+    }
+    else
+    {
         if (d1 < FragDepth) { FragDepth = d1; FragSelect = 1u; }
         if (d2 < FragDepth) { FragDepth = d2; FragSelect = 2u; }
         if (d3 < FragDepth) { FragDepth = d3; FragSelect = 3u; }

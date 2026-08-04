@@ -55,7 +55,8 @@ float L_SampleShadowDir(Light light, vec3 Pws, float Zvs, float NoL, mat2 diskRo
     float compareDepth = projCoords.z - bias;
 
     float shadow = 0.0;
-    for (int i = 0; i < SHADOW_SAMPLES; ++i) {
+    for (int i = 0; i < SHADOW_SAMPLES; ++i)
+    {
         vec2 offset = diskRot * VOGEL_DISK[i] * light.shadowSoftness;
         shadow += texture(uShadowDirTex, vec4(projCoords.xy + offset, light.shadowLayer, compareDepth));
     }
@@ -76,7 +77,8 @@ float L_SampleShadowSpot(Light light, vec3 Pws, float NoL, mat2 diskRot)
     float compareDepth = projCoords.z - bias;
 
     float shadow = 0.0;
-    for (int i = 0; i < SHADOW_SAMPLES; ++i) {
+    for (int i = 0; i < SHADOW_SAMPLES; ++i)
+    {
         vec2 offset = diskRot * VOGEL_DISK[i] * light.shadowSoftness;
         shadow += texture(uShadowSpotTex, vec4(projCoords.xy + offset, light.shadowLayer, compareDepth));
     }
@@ -96,7 +98,8 @@ float L_SampleShadowOmni(Light light, vec3 Pws, float NoL, mat2 diskRot)
     mat3 OBN = M_OrthonormalBasis(lightToFrag / currentDepth);
 
     float shadow = 0.0;
-    for (int i = 0; i < SHADOW_SAMPLES; ++i) {
+    for (int i = 0; i < SHADOW_SAMPLES; ++i)
+    {
         vec2 diskOffset = diskRot * VOGEL_DISK[i] * light.shadowSoftness;
         shadow += texture(uShadowOmniTex, vec4(OBN * vec3(diskOffset.xy, 1.0), light.shadowLayer), compareDepth);
     }

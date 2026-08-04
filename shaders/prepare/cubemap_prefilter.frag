@@ -8,31 +8,43 @@
 
 #version 330 core
 
-/* === Includes === */
-
-#include <lib/math.glsl>
-
-/* === Constants === */
+// ================================
+// Constants
+// ================================
 
 #define EPSILON      1e-6
 #define SAMPLE_COUNT 64u
 
-/* === Varyings === */
+// ================================
+// Includes
+// ================================
+
+#include <lib/math.glsl>
+
+// ================================
+// In - Varyings
+// ================================
 
 in vec3 vPosition;
 
-/* === Uniforms === */
+// ================================
+// Out - Fragments
+// ================================
+
+out vec4 FragColor;
+
+// ================================
+// Samplers & Uniforms
+// ================================
 
 uniform samplerCube uSourceTex;     //< Source cubemap
 uniform float uSourceNumLevels;     //< Level count of the source cubemap
 uniform float uSourceFaceSize;      //< Resolution of the source cubemap
 uniform float uRoughness;           //< Roughness (relative to mip level)
 
-/* === Fragments === */
-
-out vec4 FragColor;
-
-/* === Helper Functions === */
+// ================================
+// Helper Functions
+// ================================
 
 float DistributionGGX(vec3 N, vec3 H, float a2)
 {
@@ -86,30 +98,33 @@ float ComputeMipLevel(float pdf, float cubeResolution)
     return max(0.0, 0.5 * log2(saSample / saTexel));
 }
 
-/* === Program === */
+// ================================
+// Main Function
+// ================================
 
 void main()
 {
-    /* --- Get the world space direction for this texel --- */
+    /* Get the world space direction for this texel */
 
     vec3 N = normalize(vPosition);
     vec3 V = N;
 
-    /* --- Handle the case where roughness = 0 (perfect mirror) --- */
+    /* Handle the case where roughness = 0 (perfect mirror) */
 
-    if (uRoughness <= EPSILON) {
+    if (uRoughness <= EPSILON)
+    {
         FragColor = textureLod(uSourceTex, N, 0.0);
         return;
     }
 
-    /* --- Pre calculate invariants --- */
+    /* Pre calculate invariants */
 
     float a = uRoughness * uRoughness;
     float a2 = a * a;
 
     mat3 OBN = M_OrthonormalBasis(N);
 
-    /* --- Convolve environment map --- */
+    /* Convolve environment map */
 
     vec3 prefilteredColor = vec3(0.0);
     float totalWeight = 0.0;
@@ -138,7 +153,7 @@ void main()
         }
     }
 
-    /* --- Normalize and store --- */
+    /* Normalize and store */
 
     prefilteredColor = prefilteredColor / max(totalWeight, EPSILON);
     FragColor = vec4(prefilteredColor, 1.0);

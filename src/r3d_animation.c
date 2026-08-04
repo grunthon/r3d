@@ -68,15 +68,18 @@ R3D_AnimationLib R3D_LoadAnimationLibFromImporter(const R3D_Importer* importer)
     R3D_AnimationLib animLib = {0};
 
 #ifdef R3D_SUPPORT_ASSIMP
-    if (!importer) {
+    if (!importer)
+    {
         R3D_TRACELOG(LOG_WARNING, "Cannot load animation library from importer: NULL importer");
         return animLib;
     }
 
-    if (r3d_importer_load_animations(importer, &animLib)) {
+    if (r3d_importer_load_animations(importer, &animLib))
+    {
         R3D_TRACELOG(LOG_INFO, "Animation library loaded successfully (%d animations): '%s'", animLib.count, importer->name);
     }
-    else {
+    else
+    {
         R3D_TRACELOG(LOG_WARNING, "Failed to load animation library: '%s'", importer->name);
     }
 
@@ -92,10 +95,12 @@ void R3D_UnloadAnimationLib(R3D_AnimationLib animLib)
 {
     if (!animLib.animations) return;
 
-    for (int i = 0; i < animLib.count; ++i) {
+    for (int i = 0; i < animLib.count; ++i)
+    {
         R3D_Animation* anim = &animLib.animations[i];
 
-        for (int j = 0; j < anim->channelCount; ++j) {
+        for (int j = 0; j < anim->channelCount; ++j)
+        {
             R3D_AnimationChannel* channel = &anim->channels[j];
 
             MemFree((void*)channel->translation.times);
@@ -116,8 +121,10 @@ void R3D_UnloadAnimationLib(R3D_AnimationLib animLib)
 
 int R3D_GetAnimationIndex(R3D_AnimationLib animLib, const char* name)
 {
-    for (int i = 0; i < animLib.count; i++) {
-        if (strcmp(animLib.animations[i].name, name) == 0) {
+    for (int i = 0; i < animLib.count; i++)
+    {
+        if (strcmp(animLib.animations[i].name, name) == 0)
+        {
             return i;
         }
     }

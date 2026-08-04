@@ -63,7 +63,8 @@ void R3D_ToggleProbe(R3D_Probe id)
     GET_PROBE_OR_RETURN(probe, id);
     probe->enabled = !probe->enabled;
 
-    if (probe->enabled) {
+    if (probe->enabled)
+    {
         probe->state.sceneShouldBeUpdated = true;
     }
 }
@@ -106,7 +107,8 @@ void R3D_SetProbeInterior(R3D_Probe id, bool active)
 {
     GET_PROBE_OR_RETURN(probe, id);
 
-    if (probe->interior != active) {
+    if (probe->interior != active)
+    {
         probe->state.sceneShouldBeUpdated = true;
         probe->interior = active;
     }
@@ -122,7 +124,8 @@ void R3D_SetProbeShadows(R3D_Probe id, bool active)
 {
     GET_PROBE_OR_RETURN(probe, id);
 
-    if (probe->shadows != active) {
+    if (probe->shadows != active)
+    {
         probe->state.sceneShouldBeUpdated = true;
         probe->shadows = active;
     }
@@ -138,7 +141,8 @@ void R3D_SetProbePosition(R3D_Probe id, Vector3 position)
 {
     GET_PROBE_OR_RETURN(probe, id);
 
-    if (!Vector3Equals(probe->position, position)) {
+    if (!Vector3Equals(probe->position, position))
+    {
         probe->state.matrixShouldBeUpdated = true;
         probe->state.sceneShouldBeUpdated = true;
         probe->position = position;
@@ -155,7 +159,8 @@ void R3D_SetProbeRange(R3D_Probe id, float range)
 {
     GET_PROBE_OR_RETURN(probe, id);
 
-    if (probe->range != range) {
+    if (probe->range != range)
+    {
         probe->state.matrixShouldBeUpdated = true;
         probe->state.sceneShouldBeUpdated = true;
         probe->range = range;

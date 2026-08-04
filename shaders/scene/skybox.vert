@@ -8,7 +8,9 @@
 
 #version 330 core
 
-/* === Constants === */
+// ================================
+// Constants
+// ================================
 
 const vec2 positions[3] = vec2[]
 (
@@ -17,16 +19,22 @@ const vec2 positions[3] = vec2[]
     vec2(-1.0,  3.0)
 );
 
-/* === Uniforms === */
+// ================================
+// Out - Varyings
+// ================================
+
+out vec3 vViewRay;
+
+// ================================
+// Samplers & Uniforms
+// ================================
 
 uniform mat4 uMatInvProj;
 uniform mat4 uMatInvView;
 
-/* === Varyings === */
-
-out vec3 vViewRay;
-
-/* === Program === */
+// ================================
+// Main Fuction
+// ================================
 
 void main()
 {

@@ -6,7 +6,9 @@
  * For conditions of distribution and use, see accompanying LICENSE file.
  */
 
-/* === Built-In Constants === */
+// ================================
+// Built-In: Constants
+// ================================
 
 #define MATRIX_MODEL    uMatModel
 #define MATRIX_NORMAL   mat3(uMatNormal)
@@ -19,7 +21,9 @@
 #   define MATRIX_VIEW_PROJECTION   uView.viewProj
 #endif
 
-/* === Built-In Output Variables === */
+// ================================
+// Built-In: In/Out Variables
+// ================================
 
 vec3 POSITION = vec3(0.0);
 vec2 TEXCOORD = vec2(0.0);
@@ -34,12 +38,16 @@ vec3 INSTANCE_SCALE    = vec3(0.0);
 vec4 INSTANCE_COLOR    = vec4(0.0);
 vec4 INSTANCE_CUSTOM   = vec4(0.0);
 
-/* === Built-In Globals === */
+// ================================
+// Built-In: Globals
+// ================================
 
 int FRAME_INDEX = 0;
 float TIME = 0.0;
 
-/* === Internal Vertex Stage === */
+// ================================
+// Internal Stage
+// ================================
 
 #define vertex()
 

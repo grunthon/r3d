@@ -61,12 +61,14 @@ void R3D_SetHint(R3D_Hint hint, int value)
     static bool maxTexSizeFetched = false;
     static GLint maxTexSize = 1024;
 
-    if (!maxTexSizeFetched) {
+    if (!maxTexSizeFetched)
+    {
         glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexSize);
         maxTexSizeFetched = true;
     }
 
-    switch (hint) {
+    switch (hint)
+    {
     case R3D_HINT_MESH_VERTEX_BUFFER_CAPACITY:
         value = R3D_MAX(value, MIN_BUFFER_SZ);
         break;
@@ -117,7 +119,8 @@ int R3D_GetHint(R3D_Hint hint)
     if (hint < 0 || hint > R3D_HINT_COUNT) return 0;
     r3d_hint_t h = R3D.hints[hint];
 
-    if (!R3D.initialized && !h.override) {
+    if (!R3D.initialized && !h.override)
+    {
         return R3D_HINT_DEFAULTS[hint];
     }
     return h.value;
@@ -133,46 +136,83 @@ bool R3D_Init(int resWidth, int resHeight)
     R3D.matCubeViews[5] = MatrixLookAt((Vector3) {0}, (Vector3) { 0.0f,  0.0f, -1.0f}, (Vector3) {0.0f, -1.0f,  0.0f});
 
     R3D.environment = R3D_ENVIRONMENT_BASE;
-    R3D.material = R3D_MATERIAL_BASE;
+    R3D.material    = R3D_MATERIAL_BASE;
 
-    R3D.viewState.camera = R3D_CAMERA_BASE;
-    R3D.viewState.view = R3D_MATRIX_IDENTITY;
-    R3D.viewState.invView = R3D_MATRIX_IDENTITY;
-    R3D.viewState.proj = R3D_MATRIX_IDENTITY;
-    R3D.viewState.invProj = R3D_MATRIX_IDENTITY;
+    R3D.viewState.camera   = R3D_CAMERA_BASE;
+    R3D.viewState.view     = R3D_MATRIX_IDENTITY;
+    R3D.viewState.invView  = R3D_MATRIX_IDENTITY;
+    R3D.viewState.proj     = R3D_MATRIX_IDENTITY;
+    R3D.viewState.invProj  = R3D_MATRIX_IDENTITY;
     R3D.viewState.viewProj = R3D_MATRIX_IDENTITY;
-    R3D.viewState.aspect = 1.0;
+    R3D.viewState.aspect   = 1.0;
 
-    R3D.aaMode = R3D_ANTI_ALIASING_MODE_NONE;
-    R3D.aaPreset = R3D_ANTI_ALIASING_PRESET_MEDIUM;
-    R3D.aspectMode = R3D_ASPECT_EXPAND;
-    R3D.upscaleMode = R3D_UPSCALE_NEAREST;
+    R3D.aaMode        = R3D_ANTI_ALIASING_MODE_NONE;
+    R3D.aaPreset      = R3D_ANTI_ALIASING_PRESET_MEDIUM;
+    R3D.aspectMode    = R3D_ASPECT_EXPAND;
+    R3D.upscaleMode   = R3D_UPSCALE_NEAREST;
     R3D.downscaleMode = R3D_DOWNSCALE_NEAREST;
-    R3D.outputMode = R3D_OUTPUT_SCENE;
+    R3D.outputMode    = R3D_OUTPUT_SCENE;
 
     R3D.textureFilter = TEXTURE_FILTER_TRILINEAR;
-    R3D.textureWrap = TEXTURE_WRAP_CLAMP;
-    R3D.colorSpace = R3D_COLORSPACE_SRGB;
+    R3D.textureWrap   = TEXTURE_WRAP_CLAMP;
+    R3D.colorSpace    = R3D_COLORSPACE_SRGB;
 
-    for (int i = 0; i < R3D_HINT_COUNT; i++) {
-        if (!R3D.hints[i].override) {
+    for (int i = 0; i < R3D_HINT_COUNT; i++)
+    {
+        if (!R3D.hints[i].override)
+        {
             R3D.hints[i].value = R3D_HINT_DEFAULTS[i];
         }
     }
 
     R3D.stack = r3d_stack_create(1024 * 1024);
-    if (R3D.stack == NULL) {
+    if (R3D.stack == NULL)
+    {
         R3D_TRACELOG(LOG_ERROR, "Failed to create internal stack allocator");
         return false;
     }
 
-    if (!r3d_texture_init()) { R3D_TRACELOG(LOG_ERROR, "Failed to init texture module"); return false; }
-    if (!r3d_target_init(resWidth, resHeight)) { R3D_TRACELOG(LOG_ERROR, "Failed to init target module"); return false; }
-    if (!r3d_shader_init()) { R3D_TRACELOG(LOG_ERROR, "Failed to init shader module"); return false; }
-    if (!r3d_driver_init()) { R3D_TRACELOG(LOG_ERROR, "Failed to init driver module"); return false; }
-    if (!r3d_render_init()) { R3D_TRACELOG(LOG_ERROR, "Failed to init render module"); return false; }
-    if (!r3d_light_init()) { R3D_TRACELOG(LOG_ERROR, "Failed to init light module"); return false; }
-    if (!r3d_env_init()) { R3D_TRACELOG(LOG_ERROR, "Failed to init env module"); return false; }
+    if (!r3d_texture_init())
+    {
+        R3D_TRACELOG(LOG_ERROR, "Failed to init texture module");
+        return false;
+    }
+
+    if (!r3d_target_init(resWidth, resHeight))
+    {
+        R3D_TRACELOG(LOG_ERROR, "Failed to init target module");
+        return false;
+    }
+
+    if (!r3d_shader_init())
+    {
+        R3D_TRACELOG(LOG_ERROR, "Failed to init shader module");
+        return false;
+    }
+
+    if (!r3d_driver_init())
+    {
+        R3D_TRACELOG(LOG_ERROR, "Failed to init driver module");
+        return false;
+    }
+
+    if (!r3d_render_init())
+    {
+        R3D_TRACELOG(LOG_ERROR, "Failed to init render module");
+        return false;
+    }
+
+    if (!r3d_light_init())
+    {
+        R3D_TRACELOG(LOG_ERROR, "Failed to init light module");
+        return false;
+    }
+
+    if (!r3d_env_init())
+    {
+        R3D_TRACELOG(LOG_ERROR, "Failed to init env module");
+        return false;
+    }
 
     R3D.initialized = true;
 
@@ -203,7 +243,8 @@ void R3D_GetResolution(int* width, int* height)
 
 void R3D_SetResolution(int width, int height)
 {
-    if (width <= 0 || height <= 0) {
+    if (width <= 0 || height <= 0)
+    {
         R3D_TRACELOG(LOG_ERROR, "Invalid resolution given to 'R3D_SetResolution'");
         return;
     }

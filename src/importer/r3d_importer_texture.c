@@ -106,7 +106,8 @@ static inline bool is_srgb(r3d_importer_texture_map_t map, R3D_ColorSpace space)
 
 static inline TextureWrap get_wrap_mode(enum aiTextureMapMode wrap)
 {
-    switch (wrap) {
+    switch (wrap)
+    {
     case aiTextureMapMode_Wrap: return TEXTURE_WRAP_REPEAT;
     case aiTextureMapMode_Mirror: return TEXTURE_WRAP_MIRROR_REPEAT;
     case aiTextureMapMode_Clamp:
@@ -119,13 +120,16 @@ static texture_key_t make_key_texture_job(const texture_job_t* job)
 {
     uint64_t hash = R3D_HASH_FNV_OFFSET_BASIS_64;
 
-    for (int i = 0; i < R3D_ARRAY_SIZE(job->paths); i++) {
-        if (job->paths[i][0] != '\0') {
+    for (int i = 0; i < R3D_ARRAY_SIZE(job->paths); i++)
+    {
+        if (job->paths[i][0] != '\0')
+        {
             hash ^= r3d_hash_fnv1a_64_str(job->paths[i]);
             hash *= R3D_HASH_FNV_PRIME_64;
             hash ^= (uint64_t)i;
         }
-        else {
+        else
+        {
             hash ^= (0xB16B00B500000000ULL | i); // :3
             hash *= R3D_HASH_FNV_PRIME_64;
         }
@@ -148,7 +152,8 @@ static bool texture_job_extract_data(
     unsigned int index)
 {
     struct aiString path = {0};
-    if (aiGetMaterialTexture(material, type, index, &path, NULL, NULL, NULL, NULL, outWrap, NULL) != AI_SUCCESS) {
+    if (aiGetMaterialTexture(material, type, index, &path, NULL, NULL, NULL, NULL, outWrap, NULL) != AI_SUCCESS)
+    {
         outPath[0] = '\0';
         return false;
     }
@@ -159,7 +164,8 @@ static bool texture_job_extract_data(
 
 static bool texture_job_extract_albedo(texture_job_t* job, const struct aiMaterial* material)
 {
-    if (texture_job_extract_data(job->paths[0], job->wrap, material, aiTextureType_BASE_COLOR, 0)) {
+    if (texture_job_extract_data(job->paths[0], job->wrap, material, aiTextureType_BASE_COLOR, 0))
+    {
         return true;
     }
     return texture_job_extract_data(job->paths[0], job->wrap, material, aiTextureType_DIFFUSE, 0);
@@ -176,21 +182,24 @@ static bool texture_job_extract_orm(texture_job_t* job, const struct aiMaterial*
 
     // Try to extract occlusion
     bool hasOcclusion = texture_job_extract_data(job->paths[0], job->wrap, material, aiTextureType_AMBIENT_OCCLUSION, 0);
-    if (!hasOcclusion) {
+    if (!hasOcclusion)
+    {
         hasOcclusion = texture_job_extract_data(job->paths[0], job->wrap, material, aiTextureType_LIGHTMAP, 0);
     }
 
     // Try to extract PBR Metallic Roughness (glTF)
     // If we have it, we can finish the extraction sooner
     bool hasRoughness = texture_job_extract_data(job->paths[1], job->wrap, material, AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE);
-    if (hasRoughness) {
+    if (hasRoughness)
+    {
         job->hasRoughMetalORM = true;
         return true;
     }
 
     // Try to extract roughness or shininess
     hasRoughness = texture_job_extract_data(job->paths[1], job->wrap, material, aiTextureType_DIFFUSE_ROUGHNESS, 0);
-    if (!hasRoughness) {
+    if (!hasRoughness)
+    {
         hasRoughness = texture_job_extract_data(job->paths[1], job->wrap, material, aiTextureType_SHININESS, 0);
         if (hasRoughness) job->isShininessORM = true;
     }
@@ -209,7 +218,8 @@ static bool texture_job_extract_normal(texture_job_t* job, const struct aiMateri
 
 static bool texture_job_init(texture_job_t* job, const struct aiMaterial* material, r3d_importer_texture_map_t mapIdx)
 {
-    switch (mapIdx) {
+    switch (mapIdx)
+    {
     case R3D_MAP_ALBEDO:   return texture_job_extract_albedo(job, material);
     case R3D_MAP_EMISSION: return texture_job_extract_emission(job, material);
     case R3D_MAP_ORM:      return texture_job_extract_orm(job, material);
@@ -225,11 +235,13 @@ static bool texture_job_init(texture_job_t* job, const struct aiMaterial* materi
 
 static bool load_image_base(Image* outImage, bool* outOwned, const R3D_Importer* importer, const char* path)
 {
-    if (path[0] == '*') {
+    if (path[0] == '*')
+    {
         int textureIndex = atoi(&path[1]);
         const struct aiTexture* aiTex = r3d_importer_get_texture(importer, textureIndex);
 
-        if (aiTex->mHeight == 0) {
+        if (aiTex->mHeight == 0)
+        {
             char formatHint[sizeof(aiTex->achFormatHint) + 2] = {0};
             r3d_string_format(formatHint, sizeof(formatHint), ".%.*s", (int)sizeof(aiTex->achFormatHint), aiTex->achFormatHint);
 
@@ -240,7 +252,8 @@ static bool load_image_base(Image* outImage, bool* outOwned, const R3D_Importer*
             );
             *outOwned = (outImage->data != NULL);
         }
-        else {
+        else
+        {
             outImage->width = aiTex->mWidth;
             outImage->height = aiTex->mHeight;
             outImage->format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
@@ -249,18 +262,21 @@ static bool load_image_base(Image* outImage, bool* outOwned, const R3D_Importer*
             *outOwned = false;
         }
     }
-    else {
+    else
+    {
         char fullPath[MAX_PATH_LENGTH];
 
         // Standardize the separators (MTL can have Windows backslashes)
         strncpy(fullPath, path, sizeof(fullPath) - 1);
         fullPath[sizeof(fullPath) - 1] = '\0';
-        for (char* p = fullPath; *p; p++) {
+        for (char* p = fullPath; *p; p++)
+        {
             if (*p == '\\') *p = '/';
         }
 
         // Prepend base directory if path is relative
-        if (!r3d_is_absolute_path(fullPath)) {
+        if (!r3d_is_absolute_path(fullPath))
+        {
             const char* baseDir = GetDirectoryPath(importer->name);
             // Shift the relative path to the right to make room for baseDir
             size_t baseDirLen = strlen(baseDir);
@@ -281,7 +297,8 @@ static bool load_image_simple(texture_slot_t* slot, const R3D_Importer* importer
 {
     slot->wrapMode = get_wrap_mode(job->wrap[0]);
     bool success = load_image_base(&slot->image, &slot->ownsImageData, importer, job->paths[0]);
-    if (!success) {
+    if (!success)
+    {
         R3D_TRACELOG(LOG_WARNING, "Failed to load texture: %s", job->paths[0]);
     }
     return success;
@@ -295,12 +312,16 @@ static bool load_image_orm(texture_slot_t* slot, const R3D_Importer* importer, c
     bool owned[3] = {0};
 
     // Load individual components
-    for (int i = 0; i < 3; i++) {
-        if (job->paths[i][0] != '\0') {
-            if (!load_image_base(&sources[i], &owned[i], importer, job->paths[i])) {
+    for (int i = 0; i < 3; i++)
+    {
+        if (job->paths[i][0] != '\0')
+        {
+            if (!load_image_base(&sources[i], &owned[i], importer, job->paths[i]))
+            {
                 R3D_TRACELOG(LOG_WARNING, "Failed to load ORM component %d: %s", i, job->paths[i]);
             }
-            if (i == ROUGHNESS_IDX && job->isShininessORM && sources[i].data) {
+            if (i == ROUGHNESS_IDX && job->isShininessORM && sources[i].data)
+            {
                 ImageColorInvert(&sources[i]);
             }
         }
@@ -320,14 +341,17 @@ static bool load_image_orm(texture_slot_t* slot, const R3D_Importer* importer, c
     slot->ownsImageData = true;
 
     // Free sources
-    for (int i = 0; i < 3; i++) {
-        if (owned[i] && sources[i].data) {
+    for (int i = 0; i < 3; i++)
+    {
+        if (owned[i] && sources[i].data)
+        {
             UnloadImage(sources[i]);
         }
     }
 
     bool success = (slot->image.data != NULL);
-    if (!success) {
+    if (!success)
+    {
         R3D_TRACELOG(LOG_WARNING, "Failed to compose ORM texture");
     }
 
@@ -371,7 +395,8 @@ r3d_importer_texture_cache_t* r3d_importer_load_texture_cache(
     R3D_ColorSpace colorSpace, 
     TextureFilter filter)
 {
-    if (!importer || !r3d_importer_is_valid(importer)) {
+    if (!importer || !r3d_importer_is_valid(importer))
+    {
         R3D_TRACELOG(LOG_WARNING, "Invalid importer for texture loading");
         return NULL;
     }
@@ -379,11 +404,14 @@ r3d_importer_texture_cache_t* r3d_importer_load_texture_cache(
     // Skip allocating anything if no material has textures
     int materialCount = r3d_importer_get_material_count(importer);
     bool hasAnyTexture = false;
-    for (int matIdx = 0; matIdx < materialCount && !hasAnyTexture; matIdx++) {
+    for (int matIdx = 0; matIdx < materialCount && !hasAnyTexture; matIdx++)
+    {
         const struct aiMaterial* mat = r3d_importer_get_material(importer, matIdx);
-        for (int mapIdx = 0; mapIdx < R3D_MAP_COUNT && !hasAnyTexture; mapIdx++) {
+        for (int mapIdx = 0; mapIdx < R3D_MAP_COUNT && !hasAnyTexture; mapIdx++)
+        {
             texture_job_t job = {0};
-            if (texture_job_init(&job, mat, mapIdx)) {
+            if (texture_job_init(&job, mat, mapIdx))
+            {
                 hasAnyTexture = true;
             }
         }
@@ -393,7 +421,8 @@ r3d_importer_texture_cache_t* r3d_importer_load_texture_cache(
     // Persistent output buffer (outlives the scratch scope below)
     int maxSlots = materialCount * R3D_MAP_COUNT;
     Texture2D* finalTextures = MemAlloc(maxSlots * sizeof(Texture2D));
-    if (!finalTextures) {
+    if (!finalTextures)
+    {
         R3D_TRACELOG(LOG_WARNING, "Failed to allocate texture cache: out of memory");
         return NULL;
     }
@@ -437,7 +466,8 @@ r3d_importer_texture_cache_t* r3d_importer_load_texture_cache(
                 texture_key_t key = make_key_texture_job(&job);
                 HASH_FIND(hh, hashTable, &key, sizeof(key), entry);
 
-                if (entry) {
+                if (entry)
+                {
                     // Reuse existing slot
                     materialToSlot[matIdx * R3D_MAP_COUNT + mapIdx] = entry->slotIndex;
                     continue;
@@ -475,7 +505,8 @@ r3d_importer_texture_cache_t* r3d_importer_load_texture_cache(
         atomic_init(&ctx.writePos, 0);
         atomic_init(&ctx.readPos, 0);
 
-        for (int i = 0; i < numThreads; i++) {
+        for (int i = 0; i < numThreads; i++)
+        {
             thrd_create(&threads[i], worker_thread, &ctx);
         }
 
@@ -485,7 +516,8 @@ r3d_importer_texture_cache_t* r3d_importer_load_texture_cache(
             int readPos = atomic_load_explicit(&ctx.readPos, memory_order_acquire);
             int writePos = atomic_load_explicit(&ctx.writePos, memory_order_acquire);
 
-            if (writePos == readPos) {
+            if (writePos == readPos)
+            {
                 struct timespec ts = {.tv_sec = 0, .tv_nsec = 1000000}; // 1ms
                 thrd_sleep(&ts, NULL);
                 continue;
@@ -493,12 +525,15 @@ r3d_importer_texture_cache_t* r3d_importer_load_texture_cache(
 
             atomic_thread_fence(memory_order_acquire);
 
-            for (int i = readPos; i < writePos; i++) {
+            for (int i = readPos; i < writePos; i++)
+            {
                 int slotIdx = ctx.readySlots[i];
                 texture_slot_t* slot = &slots[slotIdx];
-                if (slot->image.data) {
+                if (slot->image.data)
+                {
                     slot->texture = r3d_image_upload(&slot->image, slot->wrapMode, filter, is_srgb(slot->map, colorSpace));
-                    if (slot->ownsImageData) {
+                    if (slot->ownsImageData)
+                    {
                         UnloadImage(slot->image);
                         slot->image.data = NULL;
                     }
@@ -510,22 +545,26 @@ r3d_importer_texture_cache_t* r3d_importer_load_texture_cache(
             atomic_store_explicit(&ctx.readPos, writePos, memory_order_release);
         }
 
-        for (int i = 0; i < numThreads; i++) {
+        for (int i = 0; i < numThreads; i++)
+        {
             thrd_join(threads[i], NULL);
         }
 
         // Once done, build final cache
-        for (int i = 0; i < maxSlots; i++) {
+        for (int i = 0; i < maxSlots; i++)
+        {
             int slotIdx = materialToSlot[i];
             if (slotIdx >= 0) finalTextures[i] = slots[slotIdx].texture;
         }
     }
 
-    if (!ok) {
+    if (!ok)
+    {
         // Loading was aborted mid-way: any textures already uploaded
         // to VRAM in this run are still referenced by finalTextures,
         // free them before bailing out to avoid leaking GPU handles
-        for (int i = 0; i < maxSlots; i++) {
+        for (int i = 0; i < maxSlots; i++)
+        {
             if (finalTextures[i].id != 0) UnloadTexture(finalTextures[i]);
         }
         MemFree(finalTextures);
@@ -534,8 +573,10 @@ r3d_importer_texture_cache_t* r3d_importer_load_texture_cache(
     }
 
     r3d_importer_texture_cache_t* cache = MemAlloc(sizeof(*cache));
-    if (!cache) {
-        for (int i = 0; i < maxSlots; i++) {
+    if (!cache)
+    {
+        for (int i = 0; i < maxSlots; i++)
+        {
             if (finalTextures[i].id != 0) UnloadTexture(finalTextures[i]);
         }
         MemFree(finalTextures);
@@ -546,12 +587,14 @@ r3d_importer_texture_cache_t* r3d_importer_load_texture_cache(
     cache->materialCount = materialCount;
     cache->textures = finalTextures;
 
-    if (uploadedCount == processedCount) {
+    if (uploadedCount == processedCount)
+    {
         R3D_TRACELOG(LOG_INFO, "Model textures cached: %d/%d textures loaded successfully", 
             uploadedCount, processedCount
         );
     }
-    else {
+    else
+    {
         R3D_TRACELOG(LOG_WARNING, "Model textures cached: %d/%d textures loaded (%d failed)", 
             uploadedCount, processedCount, processedCount - uploadedCount
         );
@@ -564,10 +607,13 @@ void r3d_importer_unload_texture_cache(r3d_importer_texture_cache_t* cache, bool
 {
     if (!cache) return;
 
-    if (unloadTextures) {
+    if (unloadTextures)
+    {
         int textureCount = cache->materialCount * R3D_MAP_COUNT;
-        for (int i = 0; i < textureCount; i++) {
-            if (cache->textures[i].id != 0) {
+        for (int i = 0; i < textureCount; i++)
+        {
+            if (cache->textures[i].id != 0)
+            {
                 UnloadTexture(cache->textures[i]);
             }
         }

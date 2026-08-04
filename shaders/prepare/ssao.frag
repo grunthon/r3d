@@ -11,22 +11,9 @@
 
 #version 330 core
 
-/* === Includes === */
-
-#include <wrap/view.glsl>
-#include <lib/math.glsl>
-#include <ubo/fx.glsl>
-
-/* === Varyings === */
-
-noperspective in vec2 vTexCoord;
-
-/* === Uniforms === */
-
-uniform sampler2D uNormalTex;
-uniform sampler2D uDepthTex;
-
-/* === Constants === */
+// ================================
+// Constants
+// ================================
 
 // Number of spiral turns for each sample count, ensuring coprime relationship.
 // Each entry ROTATIONS[i] is chosen such that GCD(i+1, ROTATIONS[i]) = 1,
@@ -45,11 +32,36 @@ const int ROTATIONS[98] = int[98](
     19, 27, 21, 25, 39, 29, 17, 21, 27
 );
 
-/* === Fragments === */
+// ================================
+// Includes
+// ================================
+
+#include <wrap/view.glsl>
+#include <lib/math.glsl>
+#include <ubo/fx.glsl>
+
+// ================================
+// In - Varyings
+// ================================
+
+noperspective in vec2 vTexCoord;
+
+// ================================
+// Out - Fragments
+// ================================
 
 out float FragOcclusion;
 
-/* === Helper functions === */
+// ================================
+// Samplers & Uniforms
+// ================================
+
+uniform sampler2D uNormalTex;
+uniform sampler2D uDepthTex;
+
+// ================================
+// Helper Functions
+// ================================
 
 vec2 TapLocation(int i, float numSpiralTurns, float spin, out float rNorm)
 {
@@ -60,7 +72,9 @@ vec2 TapLocation(int i, float numSpiralTurns, float spin, out float rNorm)
     return vec2(cos(angle), sin(angle));
 }
 
-/* === Main program === */
+// ================================
+// Main Function
+// ================================
 
 void main()
 {

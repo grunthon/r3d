@@ -17,25 +17,35 @@
 
 #version 330 core
 
-/* === Includes === */
+// ================================
+// Includes
+// ================================
 
 #include <ubo/fx.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 noperspective in vec2 vTexCoord;
 
-/* === Uniforms === */
+// ================================
+// Out - Fragments
+// ================================
+
+layout (location = 0) out vec3 FragColor;
+
+// ================================
+// Samplers & Uniforms
+// ================================
 
 uniform sampler2D uTexture;
 uniform vec2 uTexelSize;    //< Reciprocal of the resolution of the source being sampled
 uniform int uDstLevel;      //< Which mip we are writing to, used for Karis average
 
-/* === Fragments === */
-
-layout (location = 0) out vec3 FragColor;
-
-/* === Helper Functions === */
+// ================================
+// Helper Functions
+// ================================
 
 vec3 LinearToSRGB(vec3 color)
 {
@@ -70,7 +80,9 @@ vec3 Prefilter (vec3 col)
 	return col * contribution;
 }
 
-/* === Main Function === */
+// ================================
+// Main Function
+// ================================
 
 void main()
 {

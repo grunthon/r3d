@@ -36,9 +36,10 @@ struct r3d_env R3D_MOD_ENV;
 static bool layer_pool_init(r3d_env_layer_pool_t* pool, int initialCapacity)
 {
     pool->freeCapacity = initialCapacity * 2;
-    pool->freeLayers = MemAlloc(pool->freeCapacity * sizeof(int));
-    pool->freeCount = 0;
-    pool->totalLayers = 0;
+    pool->freeLayers   = MemAlloc(pool->freeCapacity * sizeof(int));
+    pool->freeCount    = 0;
+    pool->totalLayers  = 0;
+
     return (pool->freeLayers != NULL);
 }
 
@@ -50,7 +51,8 @@ static void layer_pool_quit(r3d_env_layer_pool_t* pool)
 
 static int layer_pool_reserve(r3d_env_layer_pool_t* pool)
 {
-    if (pool->freeCount > 0) {
+    if (pool->freeCount > 0)
+    {
         return pool->freeLayers[--pool->freeCount];
     }
     return -1;  // Needs expansion
@@ -59,7 +61,9 @@ static int layer_pool_reserve(r3d_env_layer_pool_t* pool)
 static void layer_pool_release(r3d_env_layer_pool_t* pool, int layer)
 {
     if (layer < 0 || layer >= pool->totalLayers) return;
-    if (pool->freeCount < pool->freeCapacity) {
+
+    if (pool->freeCount < pool->freeCapacity)
+    {
         pool->freeLayers[pool->freeCount++] = layer;
     }
 }
@@ -70,7 +74,8 @@ static bool layer_pool_expand(r3d_env_layer_pool_t* pool, int addCount)
     int newTotal = oldTotal + addCount;
     
     // Reallocate free layers array if needed
-    if (pool->freeCount + addCount > pool->freeCapacity) {
+    if (pool->freeCount + addCount > pool->freeCapacity)
+    {
         pool->freeCapacity = newTotal;
         int* newFree = MemRealloc(pool->freeLayers, pool->freeCapacity * sizeof(int));
         if (!newFree) return false;
@@ -78,7 +83,8 @@ static bool layer_pool_expand(r3d_env_layer_pool_t* pool, int addCount)
     }
     
     // Add new layers to free list
-    for (int i = oldTotal; i < newTotal; i++) {
+    for (int i = oldTotal; i < newTotal; i++)
+    {
         pool->freeLayers[pool->freeCount++] = i;
     }
     
@@ -112,10 +118,10 @@ typedef struct {
 static inline cubemap_array_spec_t cubemap_array_spec(int size, int layers, bool mipmapped)
 {
     return (cubemap_array_spec_t) {
-        .size = size,
-        .layers = layers,
+        .size      = size,
+        .layers    = layers,
         .mipLevels = mipmapped ? r3d_get_mip_levels_1d(size) : 1,
-        .target = (layers > 0) ? GL_TEXTURE_CUBE_MAP_ARRAY : GL_TEXTURE_CUBE_MAP
+        .target    = (layers > 0) ? GL_TEXTURE_CUBE_MAP_ARRAY : GL_TEXTURE_CUBE_MAP
     };
 }
 
@@ -123,19 +129,23 @@ static bool cubemap_array_allocate(GLuint texture, cubemap_array_spec_t spec)
 {
     glBindTexture(spec.target, texture);
 
-    for (int level = 0; level < spec.mipLevels; level++) {
+    for (int level = 0; level < spec.mipLevels; level++)
+    {
         int mipSize = spec.size >> level;
         if (mipSize < 1) mipSize = 1;
 
-        if (spec.target == GL_TEXTURE_CUBE_MAP_ARRAY) {
+        if (spec.target == GL_TEXTURE_CUBE_MAP_ARRAY)
+        {
             glTexImage3D(
                 spec.target, level, GL_RGB16F,
                 mipSize, mipSize, spec.layers * 6,
                 0, GL_RGB, GL_FLOAT, NULL
             );
         }
-        else {
-            for (int face = 0; face < 6; face++) {
+        else
+        {
+            for (int face = 0; face < 6; face++)
+            {
                 glTexImage2D(
                     GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, level, GL_RGB16F,
                     mipSize, mipSize, 0, GL_RGB, GL_FLOAT, NULL
@@ -162,18 +172,23 @@ static bool cubemap_array_resize(GLuint* texture, cubemap_array_spec_t oldSpec, 
     GLuint newTexture;
     glGenTextures(1, &newTexture);
 
-    if (!cubemap_array_allocate(newTexture, newSpec)) {
+    if (!cubemap_array_allocate(newTexture, newSpec))
+    {
         glDeleteTextures(1, &newTexture);
         return false;
     }
 
-    if (oldSpec.layers > 0 && *texture != 0) {
+    if (oldSpec.layers > 0 && *texture != 0)
+    {
         glBindFramebuffer(GL_FRAMEBUFFER, R3D_MOD_ENV.workFramebuffer);
-        for (int level = 0; level < oldSpec.mipLevels; level++) {
+        for (int level = 0; level < oldSpec.mipLevels; level++)
+        {
             int mipSize = oldSpec.size >> level;
             if (mipSize < 1) mipSize = 1;
-            for (int layer = 0; layer < oldSpec.layers; layer++) {
-                for (int face = 0; face < 6; face++) {
+            for (int layer = 0; layer < oldSpec.layers; layer++)
+            {
+                for (int face = 0; face < 6; face++)
+                {
                     glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, *texture, level, layer * 6 + face);
                     glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, newTexture);
                     glCopyTexSubImage3D(
@@ -189,7 +204,8 @@ static bool cubemap_array_resize(GLuint* texture, cubemap_array_spec_t oldSpec, 
         glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, 0);
     }
 
-    if (*texture != 0) {
+    if (*texture != 0)
+    {
         glDeleteTextures(1, texture);
     }
     *texture = newTexture;
@@ -202,7 +218,8 @@ static bool cubemap_array_expand_capacity(GLuint* texture, r3d_env_layer_pool_t*
     cubemap_array_spec_t oldSpec = cubemap_array_spec(size, pool->totalLayers, mipmapped);
     cubemap_array_spec_t newSpec = cubemap_array_spec(size, pool->totalLayers + LAYER_GROWTH, mipmapped);
 
-    if (!cubemap_array_resize(texture, oldSpec, newSpec)) {
+    if (!cubemap_array_resize(texture, oldSpec, newSpec))
+    {
         return false;
     }
 
@@ -217,17 +234,21 @@ static bool probe_init(r3d_env_probe_t* probe, R3D_ProbeFlags flags)
 {
     probe->flags = flags;
     probe->irradiance = -1;
-    probe->prefilter = -1;
+    probe->prefilter  = -1;
 
-    if (R3D_BIT_ANY(flags, R3D_PROBE_ILLUMINATION)) {
+    if (R3D_BIT_ANY(flags, R3D_PROBE_ILLUMINATION))
+    {
         probe->irradiance = r3d_env_irradiance_reserve_layer();
         if (probe->irradiance == -1) return false;
     }
 
-    if (R3D_BIT_ANY(flags, R3D_PROBE_REFLECTION)) {
+    if (R3D_BIT_ANY(flags, R3D_PROBE_REFLECTION))
+    {
         probe->prefilter = r3d_env_prefilter_reserve_layer();
-        if (probe->prefilter == -1) {
-            if (probe->irradiance >= 0) {
+        if (probe->prefilter == -1)
+        {
+            if (probe->irradiance >= 0)
+            {
                 r3d_env_irradiance_release_layer(probe->irradiance);
             }
             return false;
@@ -252,10 +273,13 @@ static bool probe_init(r3d_env_probe_t* probe, R3D_ProbeFlags flags)
 
 static void probe_deinit(r3d_env_probe_t* probe)
 {
-    if (probe->irradiance >= 0) {
+    if (probe->irradiance >= 0)
+    {
         r3d_env_irradiance_release_layer(probe->irradiance);
     }
-    if (probe->prefilter >= 0) {
+
+    if (probe->prefilter >= 0)
+    {
         r3d_env_prefilter_release_layer(probe->prefilter);
     }
 }
@@ -277,7 +301,8 @@ static void probe_update_matrix_frustum(r3d_env_probe_t* probe)
     Matrix proj = MatrixPerspective(90 * DEG2RAD, 1.0, 0.05f, probe->range);
     probe->invProj = MatrixInvert(proj);
 
-    for (int face = 0; face < 6; face++) {
+    for (int face = 0; face < 6; face++)
+    {
         Vector3 target = Vector3Add(probe->position, dirs[face]);
         probe->view[face] = MatrixLookAt(probe->position, target, ups[face]);
         probe->viewProj[face] = MatrixMultiply(probe->view[face], proj);
@@ -304,13 +329,15 @@ bool r3d_env_init(void)
     glGenTextures(1, &R3D_MOD_ENV.captureCube);
 
     // Initialize layer pools
-    if (!layer_pool_init(&R3D_MOD_ENV.irradiancePool, LAYER_GROWTH)) {
+    if (!layer_pool_init(&R3D_MOD_ENV.irradiancePool, LAYER_GROWTH))
+    {
         R3D_TRACELOG(LOG_FATAL, "Failed to init irradiance layer pool");
         r3d_env_quit();
         return false;
     }
 
-    if (!layer_pool_init(&R3D_MOD_ENV.prefilterPool, LAYER_GROWTH)) {
+    if (!layer_pool_init(&R3D_MOD_ENV.prefilterPool, LAYER_GROWTH))
+    {
         R3D_TRACELOG(LOG_FATAL, "Failed to init prefilter layer pool");
         r3d_env_quit();
         return false;
@@ -318,7 +345,8 @@ bool r3d_env_init(void)
 
     // Allocate probe arrays
     R3D_MOD_ENV.pool = r3d_pool_create(sizeof(r3d_env_probe_t), 16);
-    if (!R3D_MOD_ENV.pool) {
+    if (!R3D_MOD_ENV.pool)
+    {
         R3D_TRACELOG(LOG_FATAL, "Failed to create probe pool");
         r3d_env_quit();
         return false;
@@ -327,7 +355,8 @@ bool r3d_env_init(void)
     R3D_MOD_ENV.visible = MemAlloc(16 * sizeof(R3D_Probe));
     R3D_MOD_ENV.visibleCapacity = 16;
     R3D_MOD_ENV.visibleCount = 0;
-    if (!R3D_MOD_ENV.visible) {
+    if (!R3D_MOD_ENV.visible)
+    {
         R3D_TRACELOG(LOG_FATAL, "Failed to allocate visible probe array");
         r3d_env_quit();
         return false;
@@ -356,19 +385,22 @@ void r3d_env_quit(void)
 
 R3D_Probe r3d_env_probe_new(R3D_ProbeFlags flags)
 {
-    if (!R3D_BIT_ANY(flags, R3D_PROBE_ILLUMINATION | R3D_PROBE_REFLECTION)) {
+    if (!R3D_BIT_ANY(flags, R3D_PROBE_ILLUMINATION | R3D_PROBE_REFLECTION))
+    {
         R3D_TRACELOG(LOG_FATAL, "Failed to create probe; Invalid flags");
         return R3D_POOL_ID_NULL;
     }
 
     R3D_Probe id = r3d_pool_insert(&R3D_MOD_ENV.pool);
-    if (id == R3D_POOL_ID_NULL) {
+    if (id == R3D_POOL_ID_NULL)
+    {
         R3D_TRACELOG(LOG_ERROR, "Failed to insert probe into pool");
         return R3D_POOL_ID_NULL;
     }
 
     r3d_env_probe_t* probe = r3d_pool_get(R3D_MOD_ENV.pool, id);
-    if (!probe_init(probe, flags)) {
+    if (!probe_init(probe, flags))
+    {
         r3d_pool_remove(R3D_MOD_ENV.pool, id);
         R3D_TRACELOG(LOG_ERROR, "Failed to initialize probe");
         return R3D_POOL_ID_NULL;
@@ -404,10 +436,12 @@ void r3d_env_probe_update_and_cull(const R3D_Frustum* viewFrustum, bool* hasVisi
 {
     R3D_MOD_ENV.visibleCount = 0;
 
-    R3D_POOL_FOR_EACH(R3D_MOD_ENV.pool, r3d_env_probe_t, probe, idx) {
+    R3D_POOL_FOR_EACH(R3D_MOD_ENV.pool, r3d_env_probe_t, probe, idx)
+    {
         if (!probe->enabled) continue;
 
-        if (probe->state.matrixShouldBeUpdated) {
+        if (probe->state.matrixShouldBeUpdated)
+        {
             probe->state.matrixShouldBeUpdated = false;
             probe_update_matrix_frustum(probe);
         }
@@ -428,7 +462,8 @@ void r3d_env_probe_update_and_cull(const R3D_Frustum* viewFrustum, bool* hasVisi
         if (!R3D_FrustumIntersectsBoundingBox(viewFrustum, aabb)) continue;
 
         // Grow visible array if needed
-        if (R3D_MOD_ENV.visibleCount >= R3D_MOD_ENV.visibleCapacity) {
+        if (R3D_MOD_ENV.visibleCount >= R3D_MOD_ENV.visibleCapacity)
+        {
             uint32_t newCap = R3D_MOD_ENV.visibleCapacity * 2;
             R3D_Probe* newPtr = MemRealloc(R3D_MOD_ENV.visible, newCap * sizeof(R3D_Probe));
             if (!newPtr) continue; // Skip rather than crash
@@ -446,7 +481,8 @@ bool r3d_env_probe_should_be_updated(r3d_env_probe_t* probe, bool willBeUpdated)
 {
     bool shouldUpdate = probe->state.sceneShouldBeUpdated;
 
-    if (willBeUpdated && probe->state.updateMode == R3D_PROBE_UPDATE_ONCE) {
+    if (willBeUpdated && probe->state.updateMode == R3D_PROBE_UPDATE_ONCE)
+    {
         probe->state.sceneShouldBeUpdated = false;
     }
 
@@ -457,8 +493,10 @@ int r3d_env_irradiance_reserve_layer(void)
 {
     int layer = layer_pool_reserve(&R3D_MOD_ENV.irradiancePool);
 
-    if (layer < 0) {
-        if (!cubemap_array_expand_capacity(&R3D_MOD_ENV.irradianceArray, &R3D_MOD_ENV.irradiancePool, R3D_HINT(R3D_HINT_IBL_IRRADIANCE_SIZE), false)) {
+    if (layer < 0)
+    {
+        if (!cubemap_array_expand_capacity(&R3D_MOD_ENV.irradianceArray, &R3D_MOD_ENV.irradiancePool, R3D_HINT(R3D_HINT_IBL_IRRADIANCE_SIZE), false))
+        {
             return -1;
         }
         layer = layer_pool_reserve(&R3D_MOD_ENV.irradiancePool);
@@ -492,8 +530,10 @@ int r3d_env_prefilter_reserve_layer(void)
 {
     int layer = layer_pool_reserve(&R3D_MOD_ENV.prefilterPool);
 
-    if (layer < 0) {
-        if (!cubemap_array_expand_capacity(&R3D_MOD_ENV.prefilterArray, &R3D_MOD_ENV.prefilterPool, R3D_HINT(R3D_HINT_IBL_PREFILTER_SIZE), true)) {
+    if (layer < 0)
+    {
+        if (!cubemap_array_expand_capacity(&R3D_MOD_ENV.prefilterArray, &R3D_MOD_ENV.prefilterPool, R3D_HINT(R3D_HINT_IBL_PREFILTER_SIZE), true))
+        {
             return -1;
         }
         layer = layer_pool_reserve(&R3D_MOD_ENV.prefilterPool);
@@ -532,7 +572,8 @@ void r3d_env_capture_bind_fbo(int face, int mipLevel)
 
     glBindFramebuffer(GL_FRAMEBUFFER, R3D_MOD_ENV.captureFramebuffer);
 
-    if (!R3D_MOD_ENV.captureCubeAllocated) {
+    if (!R3D_MOD_ENV.captureCubeAllocated)
+    {
         alloc_depth_stencil_renderbuffer(R3D_MOD_ENV.captureDepth, R3D_HINT(R3D_HINT_PROBE_CAPTURE_SIZE));
         cubemap_array_spec_t spec = cubemap_array_spec(R3D_HINT(R3D_HINT_PROBE_CAPTURE_SIZE), 0, true);
         cubemap_array_allocate(R3D_MOD_ENV.captureCube, spec);

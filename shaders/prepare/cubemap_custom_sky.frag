@@ -8,21 +8,29 @@
 
 #version 330 core
 
-/* === Includes === */
+// ================================
+// Includes
+// ================================
 
 #include <ubo/frame.glsl>
 #include <wrap/view.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 in vec3 vPosition;
 in vec2 vTexCoord;
 
-/* === Fragments === */
+// ================================
+// Out - Fragments
+// ================================
 
 out vec4 FragColor;
 
-/* === Built-In Input Variables === */
+// ================================
+// Built-In: Input Variables
+// ================================
 
 vec3 POSITION = vec3(0.0);
 vec2 TEXCOORD = vec2(0.0);
@@ -30,11 +38,15 @@ vec3 EYEDIR = vec3(0.0);
 int FRAME_INDEX = 0;
 float TIME = 0.0;
 
-/* === Built-In Output Variables === */
+// ================================
+// Built-In: Output Variables
+// ================================
 
 vec3 COLOR = vec3(0.0);
 
-/* === Main function === */
+// ================================
+// Helper Functions
+// ================================
 
 vec2 GetSphericalCoord(vec3 v)
 {
@@ -44,7 +56,9 @@ vec2 GetSphericalCoord(vec3 v)
     return uv;
 }
 
-/* === Main function === */
+// ================================
+// Main Function
+// ================================
 
 #define fragment()
 

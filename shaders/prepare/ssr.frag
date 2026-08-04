@@ -8,28 +8,38 @@
 
 #version 330 core
 
-/* === Includes === */
+// ================================
+// Includes
+// ================================
 
 #include <wrap/view.glsl>
 #include <lib/math.glsl>
 #include <ubo/fx.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 noperspective in vec2 vTexCoord;
 
-/* === Uniforms === */
+// ================================
+// Out - Fragments
+// ================================
+
+out vec4 FragColor;
+
+// ================================
+// Samplers & Uniforms
+// ================================
 
 uniform sampler2D uDiffuseTex;
 uniform sampler2D uSpecularTex;
 uniform sampler2D uNormalTex;
 uniform sampler2D uDepthTex;
 
-/* === Output === */
-
-out vec4 FragColor;
-
-/* === Raymarching === */
+// ================================
+// Raymarching Function
+// ================================
 
 vec4 TraceRay(vec3 startViewPos, vec3 reflectionDir)
 {
@@ -53,7 +63,8 @@ vec4 TraceRay(vec3 startViewPos, vec3 reflectionDir)
         float sampleZ = -textureLod(uDepthTex, uv, 0).r;
         float depthDiff = sampleZ - currentPos.z;
 
-        if (depthDiff > 0.0 && depthDiff < uSsr.thickness) {
+        if (depthDiff > 0.0 && depthDiff < uSsr.thickness)
+        {
             hitUV = uv;
             hit = true;
             break;
@@ -78,11 +89,13 @@ vec4 TraceRay(vec3 startViewPos, vec3 reflectionDir)
         float sampleZ = -textureLod(uDepthTex, uv, 0).r;
         float depthDiff = sampleZ - mid.z;
 
-        if (depthDiff > 0.0 && depthDiff < uSsr.thickness) {
+        if (depthDiff > 0.0 && depthDiff < uSsr.thickness)
+        {
             hitUV = uv;
             end = mid;
         }
-        else {
+        else
+        {
             start = mid;
         }
     }
@@ -101,13 +114,16 @@ vec4 TraceRay(vec3 startViewPos, vec3 reflectionDir)
     return vec4(hitDiff + hitSpec, edgeFade * distFade);
 }
 
-/* === Main Program === */
+// ================================
+// Main Function
+// ================================
 
 void main()
 {
     // Early depth rejection
     float linearDepth = texelFetch(uDepthTex, ivec2(gl_FragCoord.xy), 0).r;
-    if (linearDepth >= uView.far) {
+    if (linearDepth >= uView.far)
+    {
         FragColor = vec4(0.0);
         return;
     }

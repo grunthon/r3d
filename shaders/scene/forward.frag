@@ -8,16 +8,23 @@
 
 #version 330 core
 
-/* === Extensions === */
+// ================================
+// Extensions
+// ================================
 
 #extension GL_ARB_texture_cube_map_array : enable
 
-/* === Includes === */
+// ================================
+// Includes
+// ================================
 
+#include <ubo/frame.glsl>
 #include <lib/math.glsl>
 #include <lib/pbr.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 smooth in vec3 vPosition;
 smooth in vec2 vTexCoord;
@@ -27,7 +34,15 @@ smooth in mat3 vTBN;
 
 smooth in float vLinearDepth;
 
-/* === Uniforms === */
+// ================================
+// Out - Fragments
+// ================================
+
+layout(location = 0) out vec4 FragColor;
+
+// ================================
+// Samplers & Uniforms
+// ================================
 
 uniform sampler2D uAlbedoMap;
 uniform sampler2D uEmissionMap;
@@ -54,22 +69,23 @@ uniform vec3 uViewPosition;
 uniform bool uProbeInterior;
 #endif // PROBE
 
-/* === Blocks === */
+// ================================
+// Herlper Includes
+// ================================
 
-#include <ubo/frame.glsl>
 #include <wrap/light.glsl>
 #include <wrap/env.glsl>
 #include <wrap/fog.glsl>
 
-/* === Fragments === */
-
-layout(location = 0) out vec4 FragColor;
-
-/* === User override === */
+// ================================
+// User Override
+// ================================
 
 #include <user/scene.frag>
 
-/* === Main function === */
+// ================================
+// Main Function
+// ================================
 
 void main()
 {
@@ -142,19 +158,23 @@ void main()
 
         float shadow = 1.0;
 
-        if (light.type != LIGHT_DIR) {
+        if (light.type != LIGHT_DIR)
+        {
             float atten = pow(1.0 - clamp(Ldist / light.range, 0.0, 1.0), light.falloff);
             shadow *= atten;
         }
 
-        if (light.type == LIGHT_SPOT) {
+        if (light.type == LIGHT_SPOT)
+        {
             float theta = dot(L, -light.direction);
             float epsilon = (light.innerCutOff - light.outerCutOff);
             shadow *= smoothstep(0.0, 1.0, (theta - light.outerCutOff) / epsilon);
         }
 
-        if (light.shadowLayer >= 0 && light.shadowOpacity != 0.0 && shadow > 1e-4) {
-            switch (light.type) {
+        if (light.shadowLayer >= 0 && light.shadowOpacity != 0.0 && shadow > 1e-4)
+        {
+            switch (light.type)
+            {
             case LIGHT_DIR:  shadow *= L_SampleShadowDir(light, vPosition, vLinearDepth, NoL, diskRot); break;
             case LIGHT_SPOT: shadow *= L_SampleShadowSpot(light, vPosition, NoL, diskRot); break;
             case LIGHT_OMNI: shadow *= L_SampleShadowOmni(light, vPosition, NoL, diskRot); break;

@@ -8,20 +8,28 @@
 
 #version 330 core
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 noperspective in vec2 vTexCoord;
 
-/* === Uniforms === */
+// ================================
+// Out - Fragments
+// ================================
+
+out vec4 FragRadiance;
+
+// ================================
+// Samplers & Uniforms
+// ================================
 
 uniform sampler2D uRadianceTex;
 uniform sampler2D uDepthTex;
 
-/* === Fragments === */
-
-out vec4 FragRadiance;
-
-/* === Helper Functions === */
+// ================================
+// Helper Functions
+// ================================
 
 vec4 Upsample(sampler2D source, vec2 texCoord, ivec2 size, float refDepth, float depthSharpness)
 {
@@ -79,7 +87,9 @@ vec4 SampleRotated(sampler2D source, vec2 texCoord)
     return (c0 + c1 + c2 + c3) * 0.25;
 }
 
-/* === Main Function === */
+// ================================
+// Main Function
+// ================================
 
 void main()
 {

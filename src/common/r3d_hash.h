@@ -27,7 +27,8 @@ static inline uint32_t r3d_hash_fnv1a_32(const void *data, size_t len)
 {
     uint32_t hash = R3D_HASH_FNV_OFFSET_BASIS_32;
     const uint8_t *ptr = (const uint8_t *)data;
-    for (size_t i = 0; i < len; i++) {
+    for (size_t i = 0; i < len; i++)
+    {
         hash ^= ptr[i];
         hash *= R3D_HASH_FNV_PRIME_32;
     }
@@ -38,7 +39,8 @@ static inline uint64_t r3d_hash_fnv1a_64(const void *data, size_t len)
 {
     uint64_t hash = R3D_HASH_FNV_OFFSET_BASIS_64;
     const uint8_t *ptr = (const uint8_t *)data;
-    for (size_t i = 0; i < len; i++) {
+    for (size_t i = 0; i < len; i++)
+    {
         hash ^= ptr[i];
         hash *= R3D_HASH_FNV_PRIME_64;
     }
@@ -48,7 +50,8 @@ static inline uint64_t r3d_hash_fnv1a_64(const void *data, size_t len)
 static inline uint32_t r3d_hash_fnv1a_32_str(const char *str)
 {
     uint32_t hash = R3D_HASH_FNV_OFFSET_BASIS_32;
-    while (*str) {
+    while (*str)
+    {
         hash ^= (uint8_t)(*str++);
         hash *= R3D_HASH_FNV_PRIME_32;
     }
@@ -58,7 +61,8 @@ static inline uint32_t r3d_hash_fnv1a_32_str(const char *str)
 static inline uint64_t r3d_hash_fnv1a_64_str(const char *str)
 {
     uint64_t hash = R3D_HASH_FNV_OFFSET_BASIS_64;
-    while (*str) {
+    while (*str)
+    {
         hash ^= (uint8_t)(*str++);
         hash *= R3D_HASH_FNV_PRIME_64;
     }

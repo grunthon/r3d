@@ -8,16 +8,28 @@
 
 #version 330 core
 
-/* === Includes === */
+// ================================
+// Includes
+// ================================
 
 #include <wrap/view.glsl>
 #include <lib/math.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 noperspective in vec2 vTexCoord;
 
-/* === Uniforms === */
+// ================================
+// Out - Fragments
+// ================================
+
+out vec4 FragColor;
+
+// ================================
+// Samplers & Uniforms
+// ================================
 
 uniform sampler2D uSourceTex;
 uniform sampler2D uNormalTex;
@@ -28,11 +40,9 @@ uniform float uDepthSharpness;
 uniform float uInvBlurRadius2;  // 1.0 / (uBlurRadius*uBlurRadius)
 uniform float uBlurRadius;
 
-/* === Fragments === */
-
-out vec4 FragColor;
-
-/* === Kernel === */
+// ================================
+// Sampling Kernel
+// ================================
 
 const int KERNEL_SIZE = 8;
 
@@ -47,11 +57,15 @@ const vec2 DISK[8] = vec2[8](
     vec2( 0.3951, -0.2541)
 );
 
-/* === Helpers === */
+// ================================
+// Helper Macros
+// ================================
 
 #define OFFSCREEN(sc, res) (any(lessThan(sc, ivec2(0))) || any(greaterThanEqual(sc, res)))
 
-/* === Main === */
+// ================================
+// Main Function
+// ================================
 
 void main()
 {

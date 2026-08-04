@@ -8,12 +8,16 @@
 
 #version 330 core
 
-/* === Includes === */
+// ================================
+// Includes
+// ================================
 
 #include <ubo/frame.glsl>
 #include <wrap/fog.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 smooth in vec3 vPosition;       //< For custom shaders
 smooth in vec2 vTexCoord;
@@ -21,20 +25,28 @@ smooth in vec4 vColor;
 
 smooth in float vLinearDepth;
 
-/* === Uniforms === */
+// ================================
+// Out - Fragments
+// ================================
+
+layout(location = 0) out vec4 FragColor;
+
+// ================================
+// Samplers & Uniforms
+// ================================
 
 uniform sampler2D uAlbedoMap;
 uniform float uAlphaCutoff;
 
-/* === Fragments === */
-
-layout(location = 0) out vec4 FragColor;
-
-/* === User override === */
+// ================================
+// User Override
+// ================================
 
 #include <user/scene.frag>
 
-/* === Main function === */
+// ================================
+// Main Function
+// ================================
 
 void main()
 {

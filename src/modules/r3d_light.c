@@ -69,7 +69,8 @@ static void shadow_pool_quit(r3d_light_shadow_pool_t* pool)
 
 static int shadow_pool_reserve(r3d_light_shadow_pool_t* pool)
 {
-    if (pool->freeCount > 0) {
+    if (pool->freeCount > 0)
+    {
         return pool->freeLayers[--pool->freeCount];
     }
     return -1;  // Needs expansion
@@ -78,7 +79,9 @@ static int shadow_pool_reserve(r3d_light_shadow_pool_t* pool)
 static void shadow_pool_release(r3d_light_shadow_pool_t* pool, int layer)
 {
     if (layer < 0 || layer >= pool->totalLayers) return;
-    if (pool->freeCount < pool->freeCapacity) {
+
+    if (pool->freeCount < pool->freeCapacity)
+    {
         pool->freeLayers[pool->freeCount++] = layer;
     }
 }
@@ -89,7 +92,8 @@ static bool shadow_pool_expand(r3d_light_shadow_pool_t* pool, int addCount)
     int newTotal = oldTotal + addCount;
     
     // Reallocate free layers array if needed
-    if (pool->freeCount + addCount > pool->freeCapacity) {
+    if (pool->freeCount + addCount > pool->freeCapacity)
+    {
         pool->freeCapacity = newTotal;
         int* newFree = MemRealloc(pool->freeLayers, pool->freeCapacity * sizeof(int));
         if (!newFree) return false;
@@ -97,7 +101,8 @@ static bool shadow_pool_expand(r3d_light_shadow_pool_t* pool, int addCount)
     }
     
     // Add new layers to free list
-    for (int i = oldTotal; i < newTotal; i++) {
+    for (int i = oldTotal; i < newTotal; i++)
+    {
         pool->freeLayers[pool->freeCount++] = i;
     }
     
@@ -124,7 +129,8 @@ static bool shadow_array_allocate(GLuint texture, GLenum target, int size, int l
     glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    if (target == GL_TEXTURE_CUBE_MAP_ARRAY) {
+    if (target == GL_TEXTURE_CUBE_MAP_ARRAY)
+    {
         glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     }
 
@@ -140,17 +146,21 @@ static bool shadow_array_resize(GLuint* texture, GLenum target, int size, int ol
     GLuint newTexture;
     glGenTextures(1, &newTexture);
 
-    if (!shadow_array_allocate(newTexture, target, size, newLayers)) {
+    if (!shadow_array_allocate(newTexture, target, size, newLayers))
+    {
         glDeleteTextures(1, &newTexture);
         return false;
     }
 
     // Copy existing data
-    if (oldLayers > 0) {
+    if (oldLayers > 0)
+    {
         glBindFramebuffer(GL_FRAMEBUFFER, R3D_MOD_LIGHT.workFramebuffer);
         int facesPerLayer = (target == GL_TEXTURE_CUBE_MAP_ARRAY) ? 6 : 1;
-        for (int layer = 0; layer < oldLayers; layer++) {
-            for (int face = 0; face < facesPerLayer; face++) {
+        for (int layer = 0; layer < oldLayers; layer++)
+        {
+            for (int face = 0; face < facesPerLayer; face++)
+            {
                 int layerIndex = layer * facesPerLayer + face;
                 glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, *texture, 0, layerIndex);
                 glBindTexture(target, newTexture);
@@ -173,7 +183,8 @@ static bool shadow_array_expand_capacity(R3D_LightType type)
     int shadowSize = r3d_light_shadow_get_size(type);
     int growth = SHADOW_LAYER_GROWTH[type];
 
-    if (!shadow_array_resize(shadowArray, shadowTarget, shadowSize, pool->totalLayers, pool->totalLayers + growth)) {
+    if (!shadow_array_resize(shadowArray, shadowTarget, shadowSize, pool->totalLayers, pool->totalLayers + growth))
+    {
         return false;
     }
 
@@ -186,7 +197,8 @@ static bool shadow_array_expand_capacity(R3D_LightType type)
 
 static bool light_init(r3d_light_t* light, R3D_LightType type)
 {
-    if (type < 0 || type >= R3D_LIGHT_TYPE_COUNT) {
+    if (type < 0 || type >= R3D_LIGHT_TYPE_COUNT)
+    {
         return false;
     }
 
@@ -196,8 +208,8 @@ static bool light_init(r3d_light_t* light, R3D_LightType type)
         .shadowUpdate = R3D_SHADOW_UPDATE_INTERVAL,
         .shadowShouldBeUpdated = true,
         .matrixShouldBeUpdated = true,
-        .shadowUpdateInterval = 0.016f,
-        .shadowUpdateTimer = 0.0f
+        .shadowUpdateInterval  = 0.016f,
+        .shadowUpdateTimer     = 0.0f
     };
 
     light->shadowLayer = -1;
@@ -205,23 +217,24 @@ static bool light_init(r3d_light_t* light, R3D_LightType type)
     light->aabb.min = (Vector3) {-FLT_MAX, -FLT_MAX, -FLT_MAX};
     light->aabb.max = (Vector3) {+FLT_MAX, +FLT_MAX, +FLT_MAX};
 
-    light->color = (Vector3) {1, 1, 1};
-    light->position = (Vector3) {0};
+    light->color     = (Vector3) {1, 1, 1};
+    light->position  = (Vector3) {0};
     light->direction = (Vector3) {0, 0, -1};
 
-    light->energy = 1.0f;
-    light->specular = 1.0f;
-    light->range = 50.0f;
-    light->falloff = 1.0f;
+    light->energy      = 1.0f;
+    light->specular    = 1.0f;
+    light->range       = 50.0f;
+    light->falloff     = 1.0f;
     light->innerCutOff = cosf(22.5f * DEG2RAD);
     light->outerCutOff = cosf(45.0f * DEG2RAD);
-    light->fogEnergy = 1.0f;
+    light->fogEnergy   = 1.0f;
 
     int shadowMapSize = r3d_light_shadow_get_size(type);
 
     light->shadowSoftness = 4.0f / shadowMapSize;
-    light->shadowOpacity = 1.0f;
-    switch (type) {
+    light->shadowOpacity  = 1.0f;
+    switch (type)
+    {
     case R3D_LIGHT_DIR:
         light->shadowDepthBias = 0.001f;
         light->shadowSlopeBias = 0.0015f;
@@ -239,7 +252,7 @@ static bool light_init(r3d_light_t* light, R3D_LightType type)
     }
     light->casterMask = R3D_LAYER_ALL;
 
-    light->type = type;
+    light->type    = type;
     light->enabled = false;
 
     return true;
@@ -247,13 +260,16 @@ static bool light_init(r3d_light_t* light, R3D_LightType type)
 
 static void light_update_shadow_state(r3d_light_t* light)
 {
-    switch (light->state.shadowUpdate) {
+    switch (light->state.shadowUpdate)
+    {
     case R3D_SHADOW_UPDATE_MANUAL:
         break;
     case R3D_SHADOW_UPDATE_INTERVAL:
-        if (!light->state.shadowShouldBeUpdated) {
+        if (!light->state.shadowShouldBeUpdated)
+        {
             light->state.shadowUpdateTimer += GetFrameTime();
-            if (light->state.shadowUpdateTimer >= light->state.shadowUpdateInterval) {
+            if (light->state.shadowUpdateTimer >= light->state.shadowUpdateInterval)
+            {
                 light->state.shadowUpdateTimer -= light->state.shadowUpdateInterval;
                 light->state.shadowShouldBeUpdated = true;
             }
@@ -346,7 +362,8 @@ static void light_update_omni_matrix(r3d_light_t* light)
 
     Matrix proj = MatrixPerspective(90 * DEG2RAD, 1.0, light->near, light->far);
 
-    for (int face = 0; face < 6; face++) {
+    for (int face = 0; face < 6; face++)
+    {
         Vector3 target = Vector3Add(light->position, dirs[face]);
         Matrix view = MatrixLookAt(light->position, target, ups[face]);
         light->viewProj[face] = MatrixMultiply(view, proj);
@@ -373,14 +390,17 @@ static void light_update_matrix(r3d_light_t* light, R3D_Camera camera, double as
 static void light_update_frustum(r3d_light_t* light)
 {
     int faceCount = (light->type == R3D_LIGHT_OMNI) ? 6 : 1;
-    for (int i = 0; i < faceCount; i++) {
+
+    for (int i = 0; i < faceCount; i++)
+    {
         light->frustum[i] = R3D_ComputeFrustum(light->viewProj[i]);
     }
 }
 
 static void light_update_bounding_box(r3d_light_t* light)
 {
-    switch (light->type) {
+    switch (light->type)
+    {
     case R3D_LIGHT_OMNI:
         light->aabb.min = Vector3AddValue(light->position, -light->range);
         light->aabb.max = Vector3AddValue(light->position, +light->range);
@@ -399,7 +419,8 @@ static void light_update_bounding_box(r3d_light_t* light)
 
 static const char* light_get_type_name(R3D_LightType type)
 {
-    switch (type) {
+    switch (type)
+    {
     case R3D_LIGHT_DIR:  return "Directional";
     case R3D_LIGHT_SPOT: return "Spot";
     case R3D_LIGHT_OMNI: return "Omni";
@@ -426,8 +447,10 @@ bool r3d_light_init(void)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // Initialize shadow pools
-    for (int i = 0; i < R3D_LIGHT_TYPE_COUNT; i++) {
-        if (!shadow_pool_init(&R3D_MOD_LIGHT.shadowPools[i], SHADOW_LAYER_GROWTH[i])) {
+    for (int i = 0; i < R3D_LIGHT_TYPE_COUNT; i++)
+    {
+        if (!shadow_pool_init(&R3D_MOD_LIGHT.shadowPools[i], SHADOW_LAYER_GROWTH[i]))
+        {
             R3D_TRACELOG(LOG_FATAL, "Failed to init shadow pool number %i", i);
             r3d_light_quit();
             return false;
@@ -436,7 +459,8 @@ bool r3d_light_init(void)
 
     // Allocate light arrays
     R3D_MOD_LIGHT.pool = r3d_pool_create(sizeof(r3d_light_t), 32);
-    if (!R3D_MOD_LIGHT.pool) {
+    if (!R3D_MOD_LIGHT.pool)
+    {
         R3D_TRACELOG(LOG_FATAL, "Failed to allocate light array");
         r3d_light_quit();
         return false;
@@ -469,13 +493,15 @@ void r3d_light_quit(void)
 R3D_Light r3d_light_new(R3D_LightType type)
 {
     R3D_Light id = r3d_pool_insert(&R3D_MOD_LIGHT.pool);
-    if (id == R3D_POOL_ID_NULL) {
+    if (id == R3D_POOL_ID_NULL)
+    {
         R3D_TRACELOG(LOG_ERROR, "Failed to insert light into pool");
         return R3D_POOL_ID_NULL;
     }
 
     r3d_light_t* light = r3d_pool_get(R3D_MOD_LIGHT.pool, id);
-    if (!light_init(light, type)) {
+    if (!light_init(light, type))
+    {
         R3D_TRACELOG(LOG_ERROR, "Failed to initialize light");
         r3d_pool_remove(R3D_MOD_LIGHT.pool, id);
         return R3D_POOL_ID_NULL;
@@ -491,7 +517,8 @@ void r3d_light_delete(R3D_Light id)
     r3d_light_t* light = r3d_pool_get(R3D_MOD_LIGHT.pool, id);
     if (!light) return;
 
-    if (light->shadowLayer >= 0) {
+    if (light->shadowLayer >= 0)
+    {
         shadow_pool_release(&R3D_MOD_LIGHT.shadowPools[light->type], light->shadowLayer);
     }
     r3d_pool_remove(R3D_MOD_LIGHT.pool, id);
@@ -521,14 +548,16 @@ r3d_rect_t r3d_light_get_screen_rect(const r3d_light_t* light, const Matrix* vie
         (camPos.y >= min.y && camPos.y <= max.y) &&
         (camPos.z >= min.z && camPos.z <= max.z);
 
-    if (cameraInside) {
+    if (cameraInside)
+    {
         return (r3d_rect_t){0, 0, w, h};
     }
 
     Vector2 minNDC = {+FLT_MAX, +FLT_MAX};
     Vector2 maxNDC = {-FLT_MAX, -FLT_MAX};
 
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 8; i++)
+    {
         Vector4 corner = {
             (i & 1) ? max.x : min.x,
             (i & 2) ? max.y : min.y,
@@ -538,7 +567,8 @@ r3d_rect_t r3d_light_get_screen_rect(const r3d_light_t* light, const Matrix* vie
         Vector4 clip = r3d_vector4_transform(corner, viewProj);
 
         float w = clip.w;
-        if (fabsf(w) < 1e-4f) {
+        if (fabsf(w) < 1e-4f)
+        {
             w = (w < 0.0f) ? -1e-4f : 1e-4f;
         }
 
@@ -554,7 +584,8 @@ r3d_rect_t r3d_light_get_screen_rect(const r3d_light_t* light, const Matrix* vie
     int rectH = (int)fminf((maxNDC.y * 0.5f + 0.5f) * h, (float)h) - y;
 
     // Security: Invalid dimensions = skip
-    if (rectW <= 0 || rectH <= 0) {
+    if (rectW <= 0 || rectH <= 0)
+    {
         return (r3d_rect_t){0, 0, 0, 0};
     }
 
@@ -566,8 +597,10 @@ bool r3d_light_enable_shadows(r3d_light_t* light)
     if (light->shadowLayer >= 0) return true;
 
     int layer = shadow_pool_reserve(&R3D_MOD_LIGHT.shadowPools[light->type]);
-    if (layer < 0) {
-        if (!shadow_array_expand_capacity(light->type)) {
+    if (layer < 0)
+    {
+        if (!shadow_array_expand_capacity(light->type))
+        {
             return false;
         }
         layer = shadow_pool_reserve(&R3D_MOD_LIGHT.shadowPools[light->type]);
@@ -581,7 +614,8 @@ bool r3d_light_enable_shadows(r3d_light_t* light)
 
 void r3d_light_disable_shadows(r3d_light_t* light)
 {
-    if (light->shadowLayer >= 0) {
+    if (light->shadowLayer >= 0)
+    {
         shadow_pool_release(&R3D_MOD_LIGHT.shadowPools[light->type], light->shadowLayer);
         light->shadowLayer = -1;
     }
@@ -592,10 +626,12 @@ void r3d_light_update_and_cull(const R3D_Frustum* viewFrustum, R3D_Camera camera
 {
     R3D_MOD_LIGHT.visibleCount = 0;
 
-    R3D_POOL_FOR_EACH(R3D_MOD_LIGHT.pool, r3d_light_t, light, idx) {
+    R3D_POOL_FOR_EACH(R3D_MOD_LIGHT.pool, r3d_light_t, light, idx)
+    {
         if (!light->enabled) continue;
 
-        if (light->shadowLayer >= 0) {
+        if (light->shadowLayer >= 0)
+        {
             light_update_shadow_state(light);
         }
 
@@ -604,7 +640,8 @@ void r3d_light_update_and_cull(const R3D_Frustum* viewFrustum, R3D_Camera camera
             ? light->state.shadowShouldBeUpdated
             : light->state.matrixShouldBeUpdated;
 
-        if (shouldUpdateMatrix) {
+        if (shouldUpdateMatrix)
+        {
             light_update_matrix(light, camera, aspect);
             light_update_frustum(light);
             if (!isDirectional) light_update_bounding_box(light);
@@ -615,7 +652,8 @@ void r3d_light_update_and_cull(const R3D_Frustum* viewFrustum, R3D_Camera camera
         if (hasVisibleShadows) *hasVisibleShadows |= (light->shadowLayer >= 0);
 
         // Grow visible array if needed
-        if (R3D_MOD_LIGHT.visibleCount >= R3D_MOD_LIGHT.visibleCapacity) {
+        if (R3D_MOD_LIGHT.visibleCount >= R3D_MOD_LIGHT.visibleCapacity)
+        {
             uint32_t newCap = R3D_MOD_LIGHT.visibleCapacity * 2;
             R3D_Light* newPtr = MemRealloc(R3D_MOD_LIGHT.visible, newCap * sizeof(R3D_Light));
             if (!newPtr) continue; // Skip rather than crash
@@ -637,8 +675,10 @@ bool r3d_light_shadow_should_be_updated(r3d_light_t* light, bool willBeUpdated)
 
     bool shouldUpdate = light->state.shadowShouldBeUpdated;
 
-    if (willBeUpdated) {
-        switch (light->state.shadowUpdate) {
+    if (willBeUpdated)
+    {
+        switch (light->state.shadowUpdate)
+        {
         case R3D_SHADOW_UPDATE_MANUAL:
         case R3D_SHADOW_UPDATE_INTERVAL:
             light->state.shadowShouldBeUpdated = false;
@@ -667,7 +707,8 @@ void r3d_light_shadow_bind_fbo(R3D_LightType type, int layer, int face)
 int r3d_light_shadow_get_size(R3D_LightType type)
 {
     int size = 0;
-    switch (type) {
+    switch (type)
+    {
     case R3D_LIGHT_DIR:
         size = R3D_HINT(R3D_HINT_SHADOW_DIR_SIZE);
         break;
