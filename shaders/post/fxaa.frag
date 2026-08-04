@@ -8,7 +8,9 @@
 
 #version 330 core
 
-/* === FXAA Setup === */
+// ================================
+// FXAA Setup
+// ================================
 
 #define FXAA_PC 1
 #define FXAA_GLSL_130 1
@@ -47,23 +49,33 @@
 
 #include "../external/Fxaa3_11.h"
 
-/* === Includes === */
+// ================================
+// Includes
+// ================================
 
 #include <ubo/frame.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 noperspective in vec2 vTexCoord;
 
-/* === Uniforms === */
-
-uniform sampler2D uSceneTex;
-
-/* === Fragments === */
+// ================================
+// Out - Fragments
+// ================================
 
 out vec4 FragColor;
 
-/* === Main Function === */
+// ================================
+// Samplers & Uniforms
+// ================================
+
+uniform sampler2D uSceneTex;
+
+// ================================
+// Main Function
+// ================================
 
 void main()
 {

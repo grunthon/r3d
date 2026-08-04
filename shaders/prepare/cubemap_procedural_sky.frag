@@ -8,15 +8,27 @@
 
 #version 330 core
 
-/* === Includes === */
+// ================================
+// Constants
+// ================================
 
 #include <lib/math.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 in vec3 vPosition;
 
-/* === Uniforms === */
+// ================================
+// Out - Fragments
+// ================================
+
+out vec4 FragColor;
+
+// ================================
+// Samplers & Uniforms
+// ================================
 
 uniform vec3 uSkyTopColor;
 uniform vec3 uSkyHorizonColor;
@@ -34,24 +46,22 @@ uniform float uSunSize;
 uniform float uSunCurve;
 uniform float uSunEnergy;
 
-/* === Fragments === */
-
-out vec4 FragColor;
-
-/* === Program === */
+// ================================
+// Main Function
+// ================================
 
 void main()
 {
-    /* --- Normalization of ray direction --- */
+    /* Normalization of ray direction */
 
     vec3 eyeDir = normalize(vPosition);
     vec3 sunDir = normalize(uSunDirection);
 
-    /* --- Vertical angle calculation --- */
+    /* Vertical angle calculation */
 
     float verticalAngle = acos(clamp(eyeDir.y, -1.0, 1.0));
 
-    /* --- Sky gradient (above the horizon) --- */
+    /* Sky gradient (above the horizon) */
 
     vec3 color;
 
@@ -68,7 +78,7 @@ void main()
         color = mix(uGroundHorizonColor, uGroundBottomColor, groundGradient) * uGroundEnergy;
     }
 
-    /* --- Sun contribution --- */
+    /* Sun contribution */
 
     float sunAngle = acos(dot(sunDir, eyeDir));
 
@@ -83,7 +93,7 @@ void main()
         color = mix(uSunColor * uSunEnergy, color, sunFade);
     }
 
-    /* --- Output --- */
+    /* Output */
 
     FragColor = vec4(color, 1.0);
 }

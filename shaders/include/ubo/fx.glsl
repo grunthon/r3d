@@ -6,20 +6,26 @@
  * For conditions of distribution and use, see accompanying LICENSE file.
  */
 
-/* === Fog Modes === */
+// ================================
+// Constants: Fog Modes
+// ================================
 
 #define FOG_DISABLED        0
 #define FOG_LINEAR          1
 #define FOG_EXP2            2
 #define FOG_EXP             3
 
-/* === Bloom Modes === */
+// ================================
+// Constants: Bloom Modes
+// ================================
 
 #define BLOOM_MIX           1
 #define BLOOM_ADDITIVE      2
 #define BLOOM_SCREEN        3
 
-/* === Tonemap Modes === */
+// ================================
+// Constants: Tonemap Modes
+// ================================
 
 #define TONEMAP_LINEAR      0
 #define TONEMAP_REINHARD    1
@@ -27,7 +33,9 @@
 #define TONEMAP_ACES        3
 #define TONEMAP_AGX         4
 
-/* === Structures === */
+// ================================
+// Structures
+// ================================
 
 struct FX_Ssao {
     int sampleCount;
@@ -117,7 +125,9 @@ struct FX_Bcs {
     float saturation;
 };
 
-/* === Uniform Block === */
+// ================================
+// Uniform Block
+// ================================
 
 layout(std140) uniform FxBlock {
     FX_Ssao uSsao;

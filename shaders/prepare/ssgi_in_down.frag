@@ -8,17 +8,33 @@
 
 #version 330 core
 
+// ================================
+// Out - Fragments
+// ================================
+
+layout(location = 0) out vec3 FragDiffuse;
+layout(location = 1) out vec2 FragNormal;
+
+// ================================
+// Samplers & Uniforms
+// ================================
+
 uniform usampler2D uSelectorTex;
 uniform sampler2D uDiffuseTex;
 uniform sampler2D uNormalTex;
 
-layout(location = 0) out vec3 FragDiffuse;
-layout(location = 1) out vec2 FragNormal;
+// ================================
+// Sampling Offsets
+// ================================
 
 const ivec2 OFFSETS[4] = ivec2[4](
     ivec2(0, 0), ivec2(1, 0),
     ivec2(0, 1), ivec2(1, 1)
 );
+
+// ================================
+// Main Function
+// ================================
 
 void main()
 {

@@ -8,25 +8,35 @@
 
 #version 330 core
 
-/* === Includes === */
+// ================================
+// Includes
+// ================================
 
 #include <lib/math.glsl>
 #include <ubo/view.glsl>
 #include <ubo/fx.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 noperspective in vec2 vTexCoord;
 
-/* === Uniforms === */
-
-uniform sampler2D uDepthTex;
-
-/* === Fragments === */
+// ================================
+// Out - Fragments
+// ================================
 
 out vec4 FragColor; // rgb = emission, a = transmittance (composed via blend mode)
 
-/* === Main Function === */
+// ================================
+// Samplers & Uniforms
+// ================================
+
+uniform sampler2D uDepthTex;
+
+// ================================
+// Main Function
+// ================================
 
 void main()
 {

@@ -6,18 +6,24 @@
  * For conditions of distribution and use, see accompanying LICENSE file.
  */
 
-/* === Built-In Constants === */
+// ================================
+// Built-In: Constants
+// ================================
 
 #define POSITION vPosition
 
-/* === Built-In Input Variables === */
+// ================================
+// Built-In: Input Variables
+// ================================
 
 vec2 TEXCOORD  = vec2(0.0);
 vec3 TANGENT   = vec3(0.0);
 vec3 BITANGENT = vec3(0.0);
 vec3 NORMAL    = vec3(0.0);
 
-/* === Built-In Output Variables === */
+// ================================
+// Built-In: Output Variables
+// ================================
 
 vec3 ALBEDO     = vec3(0.0);
 float ALPHA     = 0.0;
@@ -28,12 +34,16 @@ float ROUGHNESS = 0.0;
 float METALNESS = 0.0;
 float SPECULAR  = 0.0;
 
-/* === Built-In Globals === */
+// ================================
+// Built-In: Globals
+// ================================
 
 int FRAME_INDEX = 0;
 float TIME = 0.0;
 
-/* === User Callable === */
+// ================================
+// Built-In: User Callables
+// ================================
 
 vec4 SampleAlbedo(vec2 texCoord)
 {
@@ -88,7 +98,9 @@ void FetchMaterial(vec2 texCoord)
 #endif
 }
 
-/* === Internal Fragment Stage === */
+// ================================
+// Internal Stage
+// ================================
 
 #define fragment()
 

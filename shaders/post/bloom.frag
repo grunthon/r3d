@@ -8,24 +8,34 @@
 
 #version 330 core
 
-/* === Includes === */
+// ================================
+// Includes
+// ================================
 
 #include <ubo/fx.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 noperspective in vec2 vTexCoord;
 
-/* === Uniforms === */
+// ================================
+// Out - Fragments
+// ================================
+
+out vec3 FragColor;
+
+// ================================
+// Samplers & Uniforms
+// ================================
 
 uniform sampler2D uSceneTex;
 uniform sampler2D uBloomTex;
 
-/* === Fragments === */
-
-out vec3 FragColor;
-
-/* === Main program === */
+// ================================
+// Main Function
+// ================================
 
 void main()
 {

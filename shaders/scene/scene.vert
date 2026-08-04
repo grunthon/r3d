@@ -8,19 +8,25 @@
 
 #version 330 core
 
-/* === Constants === */
+// ================================
+// Constants
+// ================================
 
 #define BILLBOARD_NONE   0
 #define BILLBOARD_FRONT  1
 #define BILLBOARD_Y_AXIS 2
 
-/* === Includes === */
+// ================================
+// Includes
+// ================================
 
 #include <ubo/frame.glsl>
 #include <ubo/view.glsl>
 #include <lib/math.glsl>
 
-/* === Attributes === */
+// ================================
+// In - Attributes
+// ================================
 
 layout(location = 0) in vec3 aPosition;
 layout(location = 1) in vec2 aTexCoord;
@@ -36,7 +42,28 @@ layout(location = 12) in vec3 iScale;
 layout(location = 13) in vec4 iColor;
 layout(location = 14) in vec4 iCustom;
 
-/* === Uniforms === */
+// ================================
+// Out - Varyings
+// ================================
+
+smooth out vec3 vPosition;
+smooth out vec2 vTexCoord;
+flat   out vec3 vEmission;
+smooth out vec4 vColor;
+smooth out mat3 vTBN;
+
+#if defined(GEOMETRY) || defined(FORWARD) || defined(UNLIT) || defined(PROBE)
+smooth out float vLinearDepth;
+#endif // GEOMETRY || FORWARD || UNLIT || PROBE
+
+#if defined(DECAL)
+smooth out mat4 vDecalProjection;
+smooth out mat3 vDecalAxes;
+#endif // DECAL
+
+// ================================
+// Samplers & Uniforms
+// ================================
 
 uniform sampler1D uBoneMatricesTex;
 
@@ -65,24 +92,9 @@ uniform mat4 uMatInvView;   // inv view only for billboard modes
 uniform mat4 uMatViewProj;
 #endif // DEPTH || DEPTH_CUBE || PROBE
 
-/* === Varyings === */
-
-smooth out vec3 vPosition;
-smooth out vec2 vTexCoord;
-flat   out vec3 vEmission;
-smooth out vec4 vColor;
-smooth out mat3 vTBN;
-
-#if defined(GEOMETRY) || defined(FORWARD) || defined(UNLIT) || defined(PROBE)
-smooth out float vLinearDepth;
-#endif // GEOMETRY || FORWARD || UNLIT || PROBE
-
-#if defined(DECAL)
-smooth out mat4 vDecalProjection;
-smooth out mat3 vDecalAxes;
-#endif // DECAL
-
-/* === Helper Functions === */
+// ================================
+// Helper Functions
+// ================================
 
 mat4 BoneMatrix(int boneID)
 {
@@ -159,11 +171,15 @@ void BillboardYAxis(inout vec3 position, inout vec3 normal, inout vec3 tangent, 
     tangent = localTangent.x*right + localTangent.y*upVector + localTangent.z*front;
 }
 
-/* === User override === */
+// ================================
+// User Override
+// ================================
 
 #include <user/scene.vert>
 
-/* === Main program === */
+// ================================
+// Main Function
+// ================================
 
 void main()
 {

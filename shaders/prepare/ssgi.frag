@@ -11,25 +11,37 @@
 // Adapted from SSVGI by Alexander Sannikov, available in his LegitEngine repository:
 // SEE: https://github.com/Raikiri/LegitEngine/tree/master/bin/data/Shaders/glsl/SSVGI
 
-/* === Includes === */
+// ================================
+// Includes
+// ================================
 
 #include <wrap/view.glsl>
 #include <lib/math.glsl>
 #include <ubo/fx.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 noperspective in vec2 vTexCoord;
 
-/* === Uniforms === */
+// ================================
+// Out - Fragments
+// ================================
+
+out vec4 FragColor;
+
+// ================================
+// Samplers & uniforms
+// ================================
 
 uniform sampler2D uDiffuseTex;
 uniform sampler2D uNormalTex;
 uniform sampler2D uDepthTex;
 
-out vec4 FragColor;
-
-/* === Helper Functions === */
+// ================================
+// Helper Functions
+// ================================
 
 // Analytically integrates dot(N,w)*sin(th) over the horizon
 // arc [h0, h1] in the slice plane defined by eyeDir and tangent
@@ -39,7 +51,9 @@ float HorizonContribution(float NdotE, float NdotT, float h0, float h1)
          + 0.25 * NdotT * (2.0 * (h1 - h0) - sin(2.0 * h1) + sin(2.0 * h0));
 }
 
-/* === Main Function === */
+// ================================
+// Main Function
+// ================================
 
 void main()
 {

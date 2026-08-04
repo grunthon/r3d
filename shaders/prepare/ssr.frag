@@ -8,28 +8,38 @@
 
 #version 330 core
 
-/* === Includes === */
+// ================================
+// Includes
+// ================================
 
 #include <wrap/view.glsl>
 #include <lib/math.glsl>
 #include <ubo/fx.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 noperspective in vec2 vTexCoord;
 
-/* === Uniforms === */
+// ================================
+// Out - Fragments
+// ================================
+
+out vec4 FragColor;
+
+// ================================
+// Samplers & Uniforms
+// ================================
 
 uniform sampler2D uDiffuseTex;
 uniform sampler2D uSpecularTex;
 uniform sampler2D uNormalTex;
 uniform sampler2D uDepthTex;
 
-/* === Output === */
-
-out vec4 FragColor;
-
-/* === Raymarching === */
+// ================================
+// Raymarching Function
+// ================================
 
 vec4 TraceRay(vec3 startViewPos, vec3 reflectionDir)
 {
@@ -104,7 +114,9 @@ vec4 TraceRay(vec3 startViewPos, vec3 reflectionDir)
     return vec4(hitDiff + hitSpec, edgeFade * distFade);
 }
 
-/* === Main Program === */
+// ================================
+// Main Function
+// ================================
 
 void main()
 {

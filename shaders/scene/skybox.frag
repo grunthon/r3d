@@ -8,26 +8,36 @@
 
 #version 330 core
 
-/* === Includes === */
+// ================================
+// Includes
+// ================================
 
 #include <lib/math.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 in vec3 vViewRay;
 
-/* === Uniforms === */
+// ================================
+// Out - Varyings
+// ================================
+
+layout(location = 0) out vec3 FragColor;
+
+// ================================
+// Samplers & uniforms
+// ================================
 
 uniform samplerCube uSkyMap;
 uniform vec4 uRotation;
 uniform float uEnergy;
 uniform float uLod;
 
-/* === Fragments === */
-
-layout(location = 0) out vec3 FragColor;
-
-/* === Program === */
+// ================================
+// Main Function
+// ================================
 
 void main()
 {

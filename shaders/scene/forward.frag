@@ -8,16 +8,23 @@
 
 #version 330 core
 
-/* === Extensions === */
+// ================================
+// Extensions
+// ================================
 
 #extension GL_ARB_texture_cube_map_array : enable
 
-/* === Includes === */
+// ================================
+// Includes
+// ================================
 
+#include <ubo/frame.glsl>
 #include <lib/math.glsl>
 #include <lib/pbr.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 smooth in vec3 vPosition;
 smooth in vec2 vTexCoord;
@@ -27,7 +34,15 @@ smooth in mat3 vTBN;
 
 smooth in float vLinearDepth;
 
-/* === Uniforms === */
+// ================================
+// Out - Fragments
+// ================================
+
+layout(location = 0) out vec4 FragColor;
+
+// ================================
+// Samplers & Uniforms
+// ================================
 
 uniform sampler2D uAlbedoMap;
 uniform sampler2D uEmissionMap;
@@ -54,22 +69,23 @@ uniform vec3 uViewPosition;
 uniform bool uProbeInterior;
 #endif // PROBE
 
-/* === Blocks === */
+// ================================
+// Herlper Includes
+// ================================
 
-#include <ubo/frame.glsl>
 #include <wrap/light.glsl>
 #include <wrap/env.glsl>
 #include <wrap/fog.glsl>
 
-/* === Fragments === */
-
-layout(location = 0) out vec4 FragColor;
-
-/* === User override === */
+// ================================
+// User Override
+// ================================
 
 #include <user/scene.frag>
 
-/* === Main function === */
+// ================================
+// Main Function
+// ================================
 
 void main()
 {

@@ -8,23 +8,33 @@
 
 #version 330 core
 
-/* === Inlcudes === */
+// ================================
+// Includes
+// ================================
 
 #include <lib/math.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 in vec3 vPosition;
 
-/* === Uniforms === */
-
-uniform samplerCube uSourceTex;
-
-/* === Fragments === */
+// ================================
+// Out - Fragments
+// ================================
 
 out vec4 FragColor;
 
-/* === Program === */
+// ================================
+// Samplers & Uniforms
+// ================================
+
+uniform samplerCube uSourceTex;
+
+// ================================
+// Main Function
+// ================================
 
 void main()
 {

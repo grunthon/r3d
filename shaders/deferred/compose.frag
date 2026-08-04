@@ -11,15 +11,27 @@
 
 #version 330 core
 
-/* === Includes === */
+// ================================
+// Includes
+// ================================
 
 #include <lib/pbr.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 noperspective in vec2 vTexCoord;
 
-/* === Uniforms === */
+// ================================
+// Out - Fragments
+// ================================
+
+layout(location = 0) out vec3 FragColor;
+
+// ================================
+// Samplers & Uniforms
+// ================================
 
 uniform sampler2D uAlbedoTex;
 uniform sampler2D uDiffuseTex;
@@ -29,11 +41,9 @@ uniform sampler2D uSsrTex;
 
 uniform float uSsrNumLevels;
 
-/* === Fragments === */
-
-layout(location = 0) out vec3 FragColor;
-
-/* === Main function === */
+// ================================
+// Main Function
+// ================================
 
 void main()
 {

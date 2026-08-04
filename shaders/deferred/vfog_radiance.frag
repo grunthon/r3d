@@ -8,20 +8,34 @@
 
 #version 330 core
 
-/* === Extensions === */
+// ================================
+// Extensions
+// ================================
 
 #extension GL_ARB_texture_cube_map_array : enable
 
-/* === Includes === */
+// ================================
+// Includes
+// ================================
 
 #include <lib/math.glsl>
 #include <ubo/fx.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 noperspective in vec2 vTexCoord;
 
-/* === Uniforms === */
+// ================================
+// Out - Fragments
+// ================================
+
+out vec3 FragRadiance;
+
+// ================================
+// Samplers & Uniforms
+// ================================
 
 uniform sampler2D uDepthTex;
 
@@ -29,16 +43,16 @@ uniform sampler2DArrayShadow uShadowDirTex;
 uniform sampler2DArrayShadow uShadowSpotTex;
 uniform samplerCubeArrayShadow uShadowOmniTex;
 
-/* === Blocks === */
+// ================================
+// Helper Includes
+// ================================
 
 #include <wrap/light.glsl>
 #include <wrap/view.glsl>
 
-/* === Fragments === */
-
-out vec3 FragRadiance;
-
-/* === Helper Functions === */
+// ================================
+// Helper Functions
+// ================================
 
 float PhaseFunction_Schlick(vec3 w0, vec3 w1)
 {
@@ -79,7 +93,9 @@ void VFog_GetMarchRange(vec3 rayOrigin, vec3 rayDir, float maxDist, out float tE
     tExit = min(tCenter + halfChord, maxDist);
 }
 
-/* === Main Function === */
+// ================================
+// Main Function
+// ================================
 
 void main()
 {

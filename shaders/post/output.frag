@@ -11,24 +11,34 @@
 
 #version 330 core
 
-/* === Includes === */
+// ================================
+// Includes
+// ================================
 
 #include <lib/math.glsl>
 #include <ubo/fx.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 noperspective in vec2 vTexCoord;
 
-/* === Uniforms === */
-
-uniform sampler2D uSceneTex;
-
-/* === Fragments === */
+// ================================
+// Out - Fragments
+// ================================
 
 out vec4 FragColor;
 
-/* === Tonemap Functions === */
+// ================================
+// Samplers & Uniforms
+// ================================
+
+uniform sampler2D uSceneTex;
+
+// ================================
+// Tonemap Functions
+// ================================
 
 // Based on Reinhard's extended formula, see equation 4 in https://doi.org/cjbgrt
 vec3 TonemapReinhard(vec3 color, float pWhite)
@@ -149,7 +159,9 @@ vec3 TonemapAgX(vec3 color)
     return color;
 }
 
-/* === Stage Functions === */ 
+// ================================
+// Helper Functions
+// ================================
 
 vec3 Tonemapping(vec3 color, float exposure, float pWhite) // inputs are LINEAR
 {
@@ -205,7 +217,9 @@ vec3 LinearToSRGB(vec3 color)
 	return max(vec3(1.055) * pow(color, vec3(0.416666667)) - vec3(0.055), vec3(0.0));
 }
 
-/* === Main Function === */
+// ================================
+// Main Function
+// ================================
 
 void main()
 {

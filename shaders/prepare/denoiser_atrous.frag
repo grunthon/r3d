@@ -8,16 +8,28 @@
 
 #version 330 core
 
-/* === Includes === */
+// ================================
+// Includes
+// ================================
 
 #include <wrap/view.glsl>
 #include <lib/math.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 noperspective in vec2 vTexCoord;
 
-/* === Uniforms === */
+// ================================
+// Out - Fragments
+// ================================
+
+out vec4 FragColor;
+
+// ================================
+// Samplers & Uniforms
+// ================================
 
 uniform sampler2D uSourceTex;
 uniform sampler2D uNormalTex;
@@ -28,11 +40,9 @@ uniform float uDepthSharpness;
 uniform float uInvStepWidth2;   // 1.0 / (uStepWidth*uStepWidth)
 uniform int uStepWidth;         // Powers of 2: 1, 2, 4, 8... for each pass
 
-/* === Fragments === */
-
-out vec4 FragColor;
-
-/* === Kernel === */
+// ================================
+// Sampling Kernel
+// ================================
 
 const int KERNEL_SIZE = 8;
 
@@ -48,11 +58,15 @@ const float WEIGHTS[8] = float[8](
     0.0625, 0.125, 0.0625
 );
 
-/* === Helpers === */
+// ================================
+// Helper Macros
+// ================================
 
 #define OFFSCREEN(sc, res) (any(lessThan(sc, ivec2(0))) || any(greaterThanEqual(sc, res)))
 
-/* === Main === */
+// ================================
+// Main Function
+// ================================
 
 void main()
 {

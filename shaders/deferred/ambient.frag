@@ -8,21 +8,36 @@
 
 #version 330 core
 
-/* === Extensions === */
+// ================================
+// Extensions
+// ================================
 
 #extension GL_ARB_texture_cube_map_array : enable
 
-/* === Includes === */
+// ================================
+// Includes
+// ================================
 
 #include <lib/math.glsl>
 #include <lib/pbr.glsl>
 #include <ubo/fx.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 noperspective in vec2 vTexCoord;
 
-/* === Uniforms === */
+// ================================
+// Out - Fragments
+// ================================
+
+layout(location = 0) out vec4 FragDiffuse;
+layout(location = 1) out vec4 FragSpecular;
+
+// ================================
+// Samplers & Uniforms
+// ================================
 
 uniform sampler2D uAlbedoTex;
 uniform sampler2D uNormalTex;
@@ -36,17 +51,16 @@ uniform samplerCubeArray uIrradianceTex;
 uniform samplerCubeArray uPrefilterTex;
 uniform sampler2D uBrdfLutTex;
 
-/* === Blocks === */
+// ================================
+// Helper Includes
+// ================================
 
 #include <wrap/view.glsl>
 #include <wrap/env.glsl>
 
-/* === Fragments === */
-
-layout(location = 0) out vec4 FragDiffuse;
-layout(location = 1) out vec4 FragSpecular;
-
-/* === Upsampling functions === */
+// ================================
+// Helper Functions
+// ================================
 
 struct UpsampleWeights {
     ivec2 p00, p10, p01, p11;
@@ -109,7 +123,9 @@ vec4 Upsample(sampler2D source, UpsampleWeights uw)
     return (c00 * uw.w00 + c10 * uw.w10 + c01 * uw.w01 + c11 * uw.w11) * uw.invWSum;
 }
 
-/* === Main === */
+// ================================
+// Main Function
+// ================================
 
 void main()
 {

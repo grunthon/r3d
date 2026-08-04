@@ -15,19 +15,29 @@
 
 #version 330 core
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 noperspective in vec2 vTexCoord;
 
-/* === Uniforms === */
+// ================================
+// Out - Fragments
+// ================================
+
+layout (location = 0) out vec3 FragColor;
+
+// ================================
+// Samplers & Uniforms
+// ================================
 
 uniform sampler2D uTexture;
 uniform vec2 uFilterRadius;
 uniform float uSrcLevel;        //< Which mip we are sampling from
 
-layout (location = 0) out vec3 FragColor;
-
-/* === Main Function === */
+// ================================
+// Main Function
+// ================================
 
 void main()
 {

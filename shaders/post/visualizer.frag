@@ -8,11 +8,9 @@
 
 #version 330 core
 
-/* === Includes === */
-
-#include <lib/math.glsl>
-
-/* === Constants === */
+// ================================
+// Constants
+// ================================
 
 #define OUTPUT_ALBEDO       1
 #define OUTPUT_NORMAL       2
@@ -26,20 +24,34 @@
 #define OUTPUT_BLOOM        10
 #define OUTPUT_DOF          11
 
-/* === Varyings === */
+// ================================
+// Includes
+// ================================
+
+#include <lib/math.glsl>
+
+// ================================
+// In - Varyings
+// ================================
 
 noperspective in vec2 vTexCoord;
 
-/* === Uniforms === */
+// ================================
+// Out - Fragments
+// ================================
+
+out vec4 FragColor;
+
+// ================================
+// Samplers & Uniforms
+// ================================
 
 uniform sampler2D uSourceTex;
 uniform int uOutputMode;
 
-/* === Fragments === */
-
-out vec4 FragColor;
-
-/* === Main Program === */
+// ================================
+// Main Function
+// ================================
 
 void main()
 {

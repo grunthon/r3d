@@ -8,20 +8,35 @@
 
 #version 330 core
 
-/* === Extensions === */
+// ================================
+// Extensions
+// ================================
 
 #extension GL_ARB_texture_cube_map_array : enable
 
-/* === Includes === */
+// ================================
+// Includes
+// ================================
 
 #include <lib/math.glsl>
 #include <lib/pbr.glsl>
 
-/* === Varyings === */
+// ================================
+// In - Varyings
+// ================================
 
 noperspective in vec2 vTexCoord;
 
-/* === Uniforms === */
+// ================================
+// Out - Fragments
+// ================================
+
+layout(location = 0) out vec4 FragDiff;
+layout(location = 1) out vec4 FragSpec;
+
+// ================================
+// Uniforms
+// ================================
 
 uniform sampler2D uAlbedoTex;
 uniform sampler2D uNormalTex;
@@ -32,17 +47,16 @@ uniform sampler2DArrayShadow uShadowDirTex;
 uniform sampler2DArrayShadow uShadowSpotTex;
 uniform samplerCubeArrayShadow uShadowOmniTex;
 
-/* === Blocks === */
+// ================================
+// Helper Includes
+// ================================
 
 #include <wrap/light.glsl>
 #include <wrap/view.glsl>
 
-/* === Fragments === */
-
-layout(location = 0) out vec4 FragDiff;
-layout(location = 1) out vec4 FragSpec;
-
-/* === Main === */
+// ================================
+// Main Function
+// ================================
 
 void main()
 {
