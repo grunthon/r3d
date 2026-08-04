@@ -16,8 +16,7 @@
 // TREE NODE TYPES
 // ========================================
 
-enum r3d_animtree_type
-{
+enum r3d_animtree_type {
     R3D_ANIMTREE_ANIM = 1,
     R3D_ANIMTREE_BLEND2,
     R3D_ANIMTREE_ADD2,
@@ -35,8 +34,7 @@ typedef struct r3d_animtree_switch r3d_animtree_switch_t;
 typedef struct r3d_animtree_stm    r3d_animtree_stm_t;
 typedef struct r3d_animtree_stm_x  r3d_animtree_stm_x_t;
 
-union R3D_AnimationTreeNode
-{
+union R3D_AnimationTreeNode {
     r3d_animtree_base_t*   base;
     r3d_animtree_anim_t*   anim;
     r3d_animtree_blend2_t* bln2;
@@ -50,24 +48,21 @@ union R3D_AnimationTreeNode
 // STATE MACHINE STRUCTURES
 // ========================================
 
-typedef struct
-{
+typedef struct {
     R3D_AnimationStmIndex beginIdx;
     R3D_AnimationStmIndex endIdx;
     float endWeight;
     R3D_StmEdgeParams params;
 } r3d_stmedge_t;
 
-typedef struct
-{
+typedef struct {
     int outCount;
     int maxOut;
     r3d_stmedge_t** outList;
     r3d_stmedge_t* activeIn;
 } r3d_stmstate_t;
 
-typedef struct
-{
+typedef struct {
     bool yes;
     float when;
 } r3d_stmvisit_t;
@@ -76,13 +71,11 @@ typedef struct
 // TREE NODE STRUCTURES
 // ========================================
 
-struct r3d_animtree_base
-{
+struct r3d_animtree_base {
     r3d_animtree_type_t type;
 };
 
-struct r3d_animtree_anim
-{
+struct r3d_animtree_anim {
     r3d_animtree_type_t type;
     const R3D_Animation* animation;
     R3D_AnimationNodeParams params;
@@ -94,24 +87,21 @@ struct r3d_animtree_anim
     } root;
 };
 
-struct r3d_animtree_blend2
-{
+struct r3d_animtree_blend2 {
     r3d_animtree_type_t type;
     R3D_AnimationTreeNode inMain;
     R3D_AnimationTreeNode inBlend;
     R3D_Blend2NodeParams params;
 };
 
-struct r3d_animtree_add2
-{
+struct r3d_animtree_add2 {
     r3d_animtree_type_t type;
     R3D_AnimationTreeNode inMain;
     R3D_AnimationTreeNode inAdd;
     R3D_Add2NodeParams params;
 };
 
-struct r3d_animtree_switch
-{
+struct r3d_animtree_switch {
     r3d_animtree_type_t type;
     R3D_AnimationTreeNode* inList;
     float* inWeights;
@@ -121,8 +111,7 @@ struct r3d_animtree_switch
     R3D_SwitchNodeParams params;
 };
 
-struct r3d_animtree_stm
-{
+struct r3d_animtree_stm {
     r3d_animtree_type_t type;
     int statesCount;
     int edgesCount;
@@ -133,8 +122,7 @@ struct r3d_animtree_stm
     r3d_stmedge_t* edgeList;
     r3d_stmstate_t* stateList;
     r3d_stmvisit_t* visitList;
-    struct
-    {
+    struct {
         r3d_stmedge_t** edges;
         int idx;
         int len;
@@ -144,8 +132,7 @@ struct r3d_animtree_stm
     } path;
 };
 
-struct r3d_animtree_stm_x
-{
+struct r3d_animtree_stm_x {
     r3d_animtree_type_t type;
     R3D_AnimationTreeNode nested;
 };
@@ -154,15 +141,13 @@ struct r3d_animtree_stm_x
 // TREE UPDATE/EVAL SUPPORT INFO STRUCTURES
 // ========================================
 
-typedef struct
-{
+typedef struct {
     bool anodeDone;
     float xFade;
     float consumedTime;
 } upinfo_t;
 
-typedef struct
-{
+typedef struct {
     Transform motion;
     Transform distance;
 } rminfo_t;
