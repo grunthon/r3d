@@ -14,6 +14,33 @@ if (x > 0)
 }
 ```
 
+This rule applies only to scopes whose closing brace does **not** require a trailing semicolon
+(function bodies, `if` / `for` / `while` / `switch` blocks, etc.).
+
+Otherwise, when a semicolon follows the closing brace, like type declarations or initializers, the opening brace stays on the same line.
+
+```c
+// Allman: function body, closing brace needs no semicolon
+void DoSomething(void)
+{
+    DoStuff();
+}
+
+// Same-line brace: closing brace is followed by ';'
+typedef struct {
+    int x;
+    int y;
+} Vector2;
+
+// Same-line brace: initializer, closing brace is followed by ';'
+int values[] = {1, 2, 3, 4};
+
+Vector2 origin = {
+    .x = 0,
+    .y = 0
+};
+```
+
 ### Control Flow Blocks (`if` / `for` / `while`)
 
 - A single-statement body must stay on **one line**, with no braces.
@@ -33,6 +60,28 @@ if (someVeryLongConditionThatNeedsWrapping(x, y, z))
 // FORBIDDEN: body on its own line without braces
 if (x > 0)
     DoSomething();
+```
+
+### Switch Statements
+
+- `case` and `default` labels are **not indented** relative to the `switch`.
+- The statements inside each case are indented normally, one level from the label.
+
+```c
+switch (value)
+{
+case 1:
+    DoA();
+    break;
+
+case 2:
+    DoB();
+    break;
+
+default:
+    DoC();
+    break;
+}
 ```
 
 ### Indentation Width
