@@ -27,6 +27,7 @@ typedef struct {
 #define R3D_LIST_CREATE(type, capacity)         r3d_list_create(sizeof(type), (size_t)(capacity))
 #define R3D_LIST_DESTROY(list)                  r3d_list_destroy((list))
 #define R3D_LIST_RESERVE(list, capacity)        r3d_list_reserve(&(list), (size_t)(capacity))
+#define R3D_LIST_RESIZE(list, count)            r3d_list_resize(&(list), (size_t)(count))
 #define R3D_LIST_PUSH(list, elem)               r3d_list_push(&(list), &(elem))
 #define R3D_LIST_PUSH_ALL(list, elems, count)   r3d_list_push_all(&(list), (void*)(elems), (size_t)(count))
 #define R3D_LIST_POP(list, out)                 r3d_list_pop((list), (out))
@@ -47,6 +48,7 @@ typedef struct {
 r3d_list_t* r3d_list_create(size_t elemSize, size_t capacity);
 void r3d_list_destroy(r3d_list_t* list);
 void r3d_list_reserve(r3d_list_t** list, size_t capacity);
+void r3d_list_resize(r3d_list_t** list, size_t count);
 void r3d_list_push(r3d_list_t** list, void* elem);
 void r3d_list_push_all(r3d_list_t** list, void* elems, size_t count);
 void r3d_list_pop(r3d_list_t* list, void* out);

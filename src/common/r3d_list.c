@@ -42,9 +42,24 @@ void r3d_list_destroy(r3d_list_t* list)
     MemFree(list);
 }
 
-void r3d_list_reserve(r3d_list_t **list, size_t capacity)
+void r3d_list_reserve(r3d_list_t** list, size_t capacity)
 {
     reserve(list, capacity);
+}
+
+void r3d_list_resize(r3d_list_t** list, size_t count)
+{
+    if (count == (*list)->elemCount) return;
+
+    if (count > (*list)->elemCount)
+    {
+        reserve(list, count);
+
+        void* dst = &((char*)((*list)->elements))[(*list)->elemCount * (*list)->elemSize];
+        memset(dst, 0, (count - (*list)->elemCount) * (*list)->elemSize);
+    }
+
+    (*list)->elemCount = count;
 }
 
 void r3d_list_push(r3d_list_t** list, void* elem)
