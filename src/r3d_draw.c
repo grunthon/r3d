@@ -773,12 +773,11 @@ void upload_light_array_block_for_mesh(const r3d_render_call_t* call, bool shado
         data->innerCutOff     = light->innerCutOff;
         data->outerCutOff     = light->outerCutOff;
         data->fogEnergy       = light->fogEnergy;
-        data->near            = light->near;
-        data->far             = light->far;
         data->shadowSoftness  = light->shadowSoftness;
         data->shadowOpacity   = light->shadowOpacity;
         data->shadowDepthBias = light->shadowDepthBias;
         data->shadowSlopeBias = light->shadowSlopeBias;
+        data->shadowFar       = light->shadowFar;
         data->shadowLayer     = shadow ? light->shadowLayer : -1;
         data->type            = light->type;
 
@@ -1068,7 +1067,7 @@ void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, r3
 
     if (light != NULL)
     {
-        R3D_SHADER_SET_FLOAT_SELECT(scene.depthCube, shader, uFar, light->far);
+        R3D_SHADER_SET_FLOAT_SELECT(scene.depthCube, shader, uFar, light->shadowFar);
         R3D_SHADER_SET_VEC3_SELECT(scene.depthCube, shader, uViewPosition, light->position);
     }
 
@@ -2213,12 +2212,11 @@ void pass_deferred_lights(void)
             .innerCutOff     = light->innerCutOff,
             .outerCutOff     = light->outerCutOff,
             .fogEnergy       = light->fogEnergy,
-            .near            = light->near,
-            .far             = light->far,
             .shadowSoftness  = light->shadowSoftness,
             .shadowOpacity   = light->shadowOpacity,
             .shadowDepthBias = light->shadowDepthBias,
             .shadowSlopeBias = light->shadowSlopeBias,
+            .shadowFar       = light->shadowFar,
             .shadowLayer     = light->shadowLayer,
             .type            = light->type,
         };
@@ -2359,12 +2357,11 @@ void pass_deferred_volumetric_fog(r3d_target_t sceneTarget)
             .innerCutOff     = light->innerCutOff,
             .outerCutOff     = light->outerCutOff,
             .fogEnergy       = light->fogEnergy,
-            .near            = light->near,
-            .far             = light->far,
             .shadowSoftness  = light->shadowSoftness,
             .shadowOpacity   = light->shadowOpacity,
             .shadowDepthBias = light->shadowDepthBias,
             .shadowSlopeBias = light->shadowSlopeBias,
+            .shadowFar       = light->shadowFar,
             .shadowLayer     = light->shadowLayer,
             .type            = light->type,
         };

@@ -96,7 +96,7 @@ float L_SampleShadowOmni(Light light, vec3 Pws, float NoL, mat2 diskRot)
     float currentDepth = length(lightToFrag);
 
     float bias = light.shadowDepthBias + light.shadowSlopeBias * (1.0 - NoL);
-    float compareDepth = (currentDepth - bias) / light.far;
+    float compareDepth = (currentDepth - bias) / light.shadowFar;
 
     mat3 OBN = M_OrthonormalBasis(lightToFrag / currentDepth);
 

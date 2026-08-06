@@ -259,8 +259,6 @@ static void light_dir_push(const R3D_Light* light, const R3D_ShadowMap* map, R3D
         .innerCutOff = 0.0f,
         .outerCutOff = 0.0f,
         .fogEnergy   = light->fogEnergy,
-        .near        = 0.0f,
-        .far         = light->range,
         .type        = light->type,
     };
 
@@ -285,12 +283,11 @@ static void light_dir_push(const R3D_Light* light, const R3D_ShadowMap* map, R3D
         }
 
         data.viewProj        = cache->viewProj;
-        data.near            = cache->near;
-        data.far             = cache->far;
         data.shadowSoftness  = map->softness / (float)R3D_HINT(R3D_HINT_SHADOW_DIR_SIZE);
         data.shadowOpacity   = map->opacity;
         data.shadowDepthBias = map->depthBias;
         data.shadowSlopeBias = map->slopeBias;
+        data.shadowFar       = cache->far;
         data.shadowLayer     = map->layer;
     }
     else
@@ -334,8 +331,6 @@ static void light_spot_push(const R3D_Light* light, const R3D_ShadowMap* map, co
         .innerCutOff = cosf(light->innerCutOff * DEG2RAD),
         .outerCutOff = outerCutOff,
         .fogEnergy   = light->fogEnergy,
-        .near        = 0.0f,
-        .far         = range,
         .type        = light->type,
     };
 
@@ -360,12 +355,11 @@ static void light_spot_push(const R3D_Light* light, const R3D_ShadowMap* map, co
         }
 
         data.viewProj        = cache->viewProj;
-        data.near            = cache->near;
-        data.far             = cache->far;
         data.shadowSoftness  = map->softness / (float)R3D_HINT(R3D_HINT_SHADOW_SPOT_SIZE);
         data.shadowOpacity   = map->opacity;
         data.shadowDepthBias = map->depthBias;
         data.shadowSlopeBias = map->slopeBias;
+        data.shadowFar       = cache->far;
         data.shadowLayer     = map->layer;
     }
     else
@@ -400,8 +394,6 @@ static void light_omni_push(const R3D_Light* light, const R3D_ShadowMap* map, co
         .innerCutOff = 0.0f,
         .outerCutOff = 0.0f,
         .fogEnergy   = light->fogEnergy,
-        .near        = 0.0f,
-        .far         = light->range,
         .type        = light->type,
     };
 
@@ -430,12 +422,11 @@ static void light_omni_push(const R3D_Light* light, const R3D_ShadowMap* map, co
             }
         }
 
-        data.near            = cache->near;
-        data.far             = cache->far;
         data.shadowSoftness  = map->softness / (float)R3D_HINT(R3D_HINT_SHADOW_OMNI_SIZE);
         data.shadowOpacity   = map->opacity;
         data.shadowDepthBias = map->depthBias;
         data.shadowSlopeBias = map->slopeBias;
+        data.shadowFar       = cache->far;
         data.shadowLayer     = map->layer;
     }
     else

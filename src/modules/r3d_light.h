@@ -46,12 +46,11 @@ typedef struct {
     float innerCutOff;          // Spot light inner cutoff angle
     float outerCutOff;          // Spot light outer cutoff angle
     float fogEnergy;            // Volumetric fog energy multiplier
-    float near;                 // Near plane for shadow projection
-    float far;                  // Far plane for shadow projection
     float shadowSoftness;       // Softness factor for penumbra
     float shadowOpacity;        // Shadow opacity factor
     float shadowDepthBias;      // Constant depth bias
     float shadowSlopeBias;      // Slope-scaled depth bias
+    float shadowFar;            // Far plane for shadow projection
     int shadowLayer;            // Shadow map layer index, -1 if no shadow
     R3D_LightType type;
 } r3d_light_data_t;
