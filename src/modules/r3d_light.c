@@ -417,6 +417,18 @@ static void light_omni_push(const R3D_Light* light, const R3D_ShadowMap* map, co
     R3D_LIST_PUSH(R3D_MOD_LIGHT.listLightData, data);
 }
 
+static const char* light_type_name(R3D_LightType type)
+{
+    switch (type)
+    {
+    case R3D_LIGHT_DIR:  return "Directional";
+    case R3D_LIGHT_SPOT: return "Spot";
+    case R3D_LIGHT_OMNI: return "Omni";
+    default: break;
+    }
+    return NULL;
+}
+
 // ========================================
 // MODULE FUNCTIONS
 // ========================================
@@ -470,6 +482,15 @@ void r3d_light_quit(void)
 
 void r3d_light_push(const R3D_Light* light, const R3D_ShadowMap* map)
 {
+    if (map && map->type != light->type)
+    {
+        const char* mType = light_type_name(map->type);
+        const char* lType = light_type_name(light->type);
+        R3D_TRACELOG(LOG_WARNING, "Incompatible shadow map (type: %s) given with light (type: %s)", mType, lType);
+
+        map = NULL;
+    }
+
     switch (light->type)
     {
     case R3D_LIGHT_DIR:
