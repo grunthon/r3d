@@ -18,8 +18,11 @@ vec3 L_Diffuse(float roughness, float NoV, float NoL, float LoH)
 
 vec3 L_Specular(vec3 F0, float roughness, float NoV, float NoL, float NoH, float LoH)
 {
-	float D = PBR_D_GGX(NoH, roughness);
-	float V = PBR_V_SmithGGXCorrelated(NoV, NoL, roughness);
+    roughness = max(roughness, 0.045);
+    float alpha = roughness * roughness;
+
+	float D = PBR_D_GGX(NoH, alpha);
+	float V = PBR_V_SmithGGXCorrelated(NoV, NoL, alpha);
 	vec3  F = PBR_F_Schlick(F0, LoH);
 
 	return (D * V) * F * NoL;
