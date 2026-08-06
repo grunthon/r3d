@@ -125,21 +125,35 @@ R3DAPI void R3D_BeginCluster(BoundingBox aabb);
 R3DAPI void R3D_EndCluster(void);
 
 /**
- * @brief Queues a light to be rendered for the current frame.
+ * @brief Queues a light to be rendered for the current frame, without shadows.
  *
  * The light is submitted for rendering during R3D_End(), and must be pushed
  * again on every frame between R3D_Begin() and R3D_End() to remain visible.
  *
  * @param light The light data to submit (see R3D_Light).
- * @param map Optional shadow map to associate with this light for this frame,
- *            or NULL to render the light without shadows.
  */
-R3DAPI void R3D_PushLight(R3D_Light light, const R3D_ShadowMap* map);
+R3DAPI void R3D_PushLight(R3D_Light light);
+
+/**
+ * @brief Queues a light to be rendered for the current frame, with an associated shadow map.
+ *
+ * The light is submitted for rendering during R3D_End(), and must be pushed
+ * again on every frame between R3D_Begin() and R3D_End() to remain visible.
+ *
+ * @param light The light data to submit (see R3D_Light).
+ * @param map The shadow map to associate with this light for this frame.
+ * @param updateShadow Whether the shadow map should be re-rendered this frame.
+ *                     If false, the previously rendered shadow map content is reused.
+ *                     Note: the very first time a given shadow map is used, it is always
+ *                     rendered regardless of this flag, so static lights can safely pass
+ *                     false from the start and still get valid shadows.
+ */
+R3DAPI void R3D_PushLightEx(R3D_Light light, R3D_ShadowMap map, bool updateShadow);
 
 /**
  * @brief Queues an array of lights to be rendered for the current frame, without shadows.
  *
- * Equivalent to calling R3D_PushLight() for each light with a NULL shadow map.
+ * Equivalent to calling R3D_PushLight() for each light in the array.
  * Useful for pushing a large number of unshadowed lights efficiently.
  *
  * @param lights Array of lights to submit.

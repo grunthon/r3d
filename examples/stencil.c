@@ -82,7 +82,7 @@ int main(void)
             ClearBackground(BLACK);
 
             R3D_Begin(camera);
-                R3D_PushLight(light, &map);
+                R3D_PushLightEx(light, map, false);
 
                 // Base scene geometry
                 R3D_DrawMesh(plane, matGround, (Vector3){  0.0f, -0.5f,  0.0f }, 1.0f);

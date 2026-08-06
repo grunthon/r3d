@@ -64,6 +64,13 @@ typedef struct {
     int layerFace;
 } r3d_light_shadow_job_t;
 
+typedef struct {
+    Matrix viewProj;        // stored for projection (dir/spot)
+    float near;             // stored for projection
+    float far;              // stored for projection
+    bool valid;             // false as long nothing was rendered for this layer
+} r3d_light_shadow_cache_t;
+
 // ========================================
 // MODULE STATE
 // ========================================
@@ -71,6 +78,7 @@ typedef struct {
 extern struct r3d_light {
 
     r3d_list_t* listShadowFreeds[R3D_LIGHT_TYPE_COUNT];
+    r3d_list_t* listShadowCache[R3D_LIGHT_TYPE_COUNT];
     r3d_list_t* listShadowJobs;
     r3d_list_t* listLightData;
 
@@ -92,7 +100,7 @@ bool r3d_light_init(void);
 void r3d_light_quit(void);
 
 /**/
-void r3d_light_push(const R3D_Light* light, const R3D_ShadowMap* map);
+void r3d_light_push(const R3D_Light* light, const R3D_ShadowMap* map, bool updateShadow);
 
 /**/
 r3d_light_data_t* r3d_light_get(int lightIndex);
@@ -117,6 +125,9 @@ int r3d_light_shadow_map_size(R3D_LightType type);
 
 /* Get a shadow map array texture ID */
 GLuint r3d_light_shadow_map(R3D_LightType type);
+
+/**/
+r3d_light_shadow_cache_t* r3d_light_shadow_cache(R3D_LightType type, int layer);
 
 // ========================================
 // INLINE QUERIES

@@ -334,16 +334,21 @@ void R3D_EndCluster(void)
     }
 }
 
-void R3D_PushLight(R3D_Light light, const R3D_ShadowMap* map)
+void R3D_PushLight(R3D_Light light)
 {
-    r3d_light_push(&light, map);
+    r3d_light_push(&light, NULL, false);
+}
+
+void R3D_PushLightEx(R3D_Light light, R3D_ShadowMap map, bool updateShadow)
+{
+    r3d_light_push(&light, &map, updateShadow);
 }
 
 void R3D_PushLights(R3D_Light* lights, int count)
 {
     for (int i = 0; i < count; i++)
     {
-        r3d_light_push(&lights[i], NULL);
+        r3d_light_push(&lights[i], NULL, false);
     }
 }
 

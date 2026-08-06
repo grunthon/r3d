@@ -61,7 +61,7 @@ int main(void)
 
             // Draw spheres
             R3D_Begin(camera);
-                R3D_PushLight(light, NULL);
+                R3D_PushLight(light);
                 for (int i = 0; i < 5; i++) {
                     R3D_DrawMesh(sphere, materials[i], (Vector3) {(float)i - 2, 0, 0}, 1.0f);
                 }

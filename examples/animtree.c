@@ -144,7 +144,7 @@ int main(void)
         BeginDrawing();
             ClearBackground(RAYWHITE);
             R3D_Begin(camera);
-                R3D_PushLight(light, &map);
+                R3D_PushLightEx(light, map, true);
                 R3D_DrawMesh(plane, R3D_MATERIAL_BASE, Vector3Zero(), 1.0f);
                 R3D_DrawAnimatedModel(model, modelPlayer, Vector3Zero(), 1.0f);
             R3D_End();

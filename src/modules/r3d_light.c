@@ -130,6 +130,8 @@ static bool shadow_array_expand_capacity(R3D_LightType type)
 
     *shadowLayer += growth;
 
+    R3D_LIST_RESIZE(R3D_MOD_LIGHT.listShadowCache[type], *shadowLayer);
+
     return true;
 }
 
@@ -137,12 +139,10 @@ static bool shadow_array_expand_capacity(R3D_LightType type)
 // LIGHT FUNCTIONS
 // ========================================
 
-static Matrix light_update_dir_view_proj(r3d_light_data_t* light, R3D_Camera camera, double aspect)
+static Matrix light_dir_view_proj(Vector3 dir, float range, R3D_Camera camera, double aspect, float* outNear, float* outFar)
 {
-    assert(light->type == R3D_LIGHT_DIR);
-
-    float camNear   = light->range / 1000.0f;
-    float camFar    = light->range;
+    float camNear   = range / 1000.0f;
+    float camFar    = range;
     float camFovy   = (float)camera.fovy;
     float camAspect = (float)aspect;
 
@@ -153,79 +153,77 @@ static Matrix light_update_dir_view_proj(r3d_light_data_t* light, R3D_Camera cam
     Vector3 forward       = R3D_GetCameraForward(camera);
     Vector3 frustumCenter = Vector3Add(camera.position, Vector3Scale(forward, (camNear + camFar) * 0.5f));
 
-    float ax = fabsf(light->direction.x);
-    float ay = fabsf(light->direction.y);
-    float az = fabsf(light->direction.z);
+    float ax = fabsf(dir.x);
+    float ay = fabsf(dir.y);
+    float az = fabsf(dir.z);
 
     Vector3 up         = (ax <= ay && ax <= az) ? (Vector3){1,0,0} : (ay <= az) ? (Vector3){0,1,0} : (Vector3){0,0,1};
-    Vector3 lightRight = Vector3Normalize(Vector3CrossProduct(up, light->direction));
-    Vector3 lightUp    = Vector3CrossProduct(light->direction, lightRight);
+    Vector3 lightRight = Vector3Normalize(Vector3CrossProduct(up, dir));
+    Vector3 lightUp    = Vector3CrossProduct(dir, lightRight);
 
     float texelSize = (radius * 2.0f) / (float)R3D_HINT(R3D_HINT_SHADOW_DIR_SIZE);
     float cx = floorf(Vector3DotProduct(frustumCenter, lightRight) / texelSize) * texelSize;
     float cy = floorf(Vector3DotProduct(frustumCenter, lightUp) / texelSize) * texelSize;
-    float cz = Vector3DotProduct(frustumCenter, light->direction);
+    float cz = Vector3DotProduct(frustumCenter, dir);
 
     Vector3 snappedCenter = Vector3Add(
         Vector3Add(
             Vector3Scale(lightRight, cx),
             Vector3Scale(lightUp, cy)
         ),
-        Vector3Scale(light->direction, cz)
+        Vector3Scale(dir, cz)
     );
 
     const float zExtension = 100.0f; // Extent to capture objects behind the camera
-    Vector3 eye = Vector3Subtract(snappedCenter, Vector3Scale(light->direction, radius + zExtension));
+    Vector3 eye = Vector3Subtract(snappedCenter, Vector3Scale(dir, radius + zExtension));
     Matrix view = MatrixLookAt(eye, snappedCenter, lightUp);
 
-    light->near = 0.0f;
-    light->far  = zExtension + radius * 2.0f;
+    *outNear = 0.0f;
+    *outFar  = zExtension + radius * 2.0f;
 
-    return MatrixMultiply(view, MatrixOrtho(-radius, radius, -radius, radius, light->near, light->far));
-}
-
-static Matrix light_update_spot_view_proj(r3d_light_data_t* light)
-{
-    assert(light->type == R3D_LIGHT_SPOT);
-
-    light->near = 0.05f;
-    light->far  = light->range;
-
-    Vector3 up  = {0, 1, 0};
-    float upDot = fabsf(Vector3DotProduct(light->direction, up));
-    if (upDot > 0.99f) up = (Vector3){1, 0, 0};
-
-    Matrix view = MatrixLookAt(light->position, Vector3Add(light->position, light->direction), up);
-    Matrix proj = MatrixPerspective(90 * DEG2RAD, 1.0, light->near, light->far);
+    Matrix proj = MatrixOrtho(-radius, radius, -radius, radius, *outNear, *outFar);
 
     return MatrixMultiply(view, proj);
 }
 
-static void light_update_omni_view_proj(r3d_light_data_t* light, Matrix* outMatrices)
+static Matrix light_spot_view_proj(Vector3 pos, Vector3 dir, float range, float* outNear, float* outFar)
 {
-    assert(light->type == R3D_LIGHT_OMNI);
+    *outNear = 0.05f;
+    *outFar  = range;
 
-    static const Vector3 dirs[6] = {
+    Vector3 up  = {0, 1, 0};
+    float upDot = fabsf(Vector3DotProduct(dir, up));
+    if (upDot > 0.99f) up = (Vector3){1, 0, 0};
+
+    Matrix view = MatrixLookAt(pos, Vector3Add(pos, dir), up);
+    Matrix proj = MatrixPerspective(90 * DEG2RAD, 1.0, *outNear, *outFar);
+
+    return MatrixMultiply(view, proj);
+}
+
+static void light_omni_view_proj(Vector3 pos, float range, Matrix* outMatrices, float* outNear, float* outFar)
+{
+    static const Vector3 DIRS[6] = {
         {  1.0,  0.0,  0.0 }, { -1.0,  0.0,  0.0 },
         {  0.0,  1.0,  0.0 }, {  0.0, -1.0,  0.0 },
         {  0.0,  0.0,  1.0 }, {  0.0,  0.0, -1.0 }
     };
 
-    static const Vector3 ups[6] = {
+    static const Vector3 UPS[6] = {
         {  0.0, -1.0,  0.0 }, {  0.0, -1.0,  0.0 },
         {  0.0,  0.0,  1.0 }, {  0.0,  0.0, -1.0 },
         {  0.0, -1.0,  0.0 }, {  0.0, -1.0,  0.0 }
     };
 
-    light->near = 0.05f;
-    light->far  = light->range;
+    *outNear = 0.05f;
+    *outFar  = range;
 
-    Matrix proj = MatrixPerspective(90 * DEG2RAD, 1.0, light->near, light->far);
+    Matrix proj = MatrixPerspective(90 * DEG2RAD, 1.0, *outNear, *outFar);
 
     for (int face = 0; face < 6; face++)
     {
-        Vector3 target = Vector3Add(light->position, dirs[face]);
-        Matrix view = MatrixLookAt(light->position, target, ups[face]);
+        Vector3 target = Vector3Add(pos, DIRS[face]);
+        Matrix view = MatrixLookAt(pos, target, UPS[face]);
         outMatrices[face] = MatrixMultiply(view, proj);
     }
 }
@@ -244,7 +242,7 @@ static void light_spot_bounding_sphere(Vector3* outCenter, float* outRadius, Vec
     }
 }
 
-static void light_dir_push(const R3D_Light* light, const R3D_ShadowMap* map, R3D_Camera camera, double aspect)
+static void light_dir_push(const R3D_Light* light, const R3D_ShadowMap* map, R3D_Camera camera, double aspect, bool updateShadow)
 {
     r3d_light_data_t data = {
         .aabb = {
@@ -268,16 +266,27 @@ static void light_dir_push(const R3D_Light* light, const R3D_ShadowMap* map, R3D
 
     if (map && map->layer >= 0 && light->range > 0.0f)
     {
-        r3d_light_shadow_job_t job = {0};
+        r3d_light_shadow_cache_t* cache = r3d_light_shadow_cache(map->type, map->layer);
 
-        job.viewProj   = light_update_dir_view_proj(&data, camera, aspect);
-        job.frustum    = R3D_ComputeFrustum(job.viewProj);
-        job.lightIndex = R3D_LIST_LENGTH(R3D_MOD_LIGHT.listLightData);
-        job.cullMask   = map->cullMask;
+        if (!cache->valid || updateShadow)
+        {
+            cache->viewProj = light_dir_view_proj(data.direction, data.range, camera, aspect, &cache->near, &cache->far);
+            cache->valid    = true;
 
-        R3D_LIST_PUSH(R3D_MOD_LIGHT.listShadowJobs, job);
+            r3d_light_shadow_job_t job = {
+                .frustum    = R3D_ComputeFrustum(cache->viewProj),
+                .viewProj   = cache->viewProj,
+                .cullMask   = map->cullMask,
+                .lightIndex = R3D_LIST_LENGTH(R3D_MOD_LIGHT.listLightData),
+                .layerFace  = 0,
+            };
 
-        data.viewProj        = job.viewProj;
+            R3D_LIST_PUSH(R3D_MOD_LIGHT.listShadowJobs, job);
+        }
+
+        data.viewProj        = cache->viewProj;
+        data.near            = cache->near;
+        data.far             = cache->far;
         data.shadowSoftness  = map->softness / (float)R3D_HINT(R3D_HINT_SHADOW_DIR_SIZE);
         data.shadowOpacity   = map->opacity;
         data.shadowDepthBias = map->depthBias;
@@ -292,7 +301,7 @@ static void light_dir_push(const R3D_Light* light, const R3D_ShadowMap* map, R3D
     R3D_LIST_PUSH(R3D_MOD_LIGHT.listLightData, data);
 }
 
-static void light_spot_push(const R3D_Light* light, const R3D_ShadowMap* map, const R3D_Frustum* frustum)
+static void light_spot_push(const R3D_Light* light, const R3D_ShadowMap* map, const R3D_Frustum* frustum, bool updateShadow)
 {
     float range = light->range;
     if (range <= 0.0f) return;
@@ -332,16 +341,27 @@ static void light_spot_push(const R3D_Light* light, const R3D_ShadowMap* map, co
 
     if (map && map->layer >= 0)
     {
-        r3d_light_shadow_job_t job = {0};
+        r3d_light_shadow_cache_t* cache = r3d_light_shadow_cache(map->type, map->layer);
 
-        job.viewProj   = light_update_spot_view_proj(&data);
-        job.frustum    = R3D_ComputeFrustum(job.viewProj);
-        job.lightIndex = R3D_LIST_LENGTH(R3D_MOD_LIGHT.listLightData);
-        job.cullMask   = map->cullMask;
+        if (!cache->valid || updateShadow)
+        {
+            cache->viewProj = light_spot_view_proj(data.position, data.direction, data.range, &cache->near, &cache->far);
+            cache->valid    = true;
 
-        R3D_LIST_PUSH(R3D_MOD_LIGHT.listShadowJobs, job);
+            r3d_light_shadow_job_t job = {
+                .frustum    = R3D_ComputeFrustum(cache->viewProj),
+                .viewProj   = cache->viewProj,
+                .cullMask   = map->cullMask,
+                .lightIndex = R3D_LIST_LENGTH(R3D_MOD_LIGHT.listLightData),
+                .layerFace  = 0,
+            };
 
-        data.viewProj        = job.viewProj;
+            R3D_LIST_PUSH(R3D_MOD_LIGHT.listShadowJobs, job);
+        }
+
+        data.viewProj        = cache->viewProj;
+        data.near            = cache->near;
+        data.far             = cache->far;
         data.shadowSoftness  = map->softness / (float)R3D_HINT(R3D_HINT_SHADOW_SPOT_SIZE);
         data.shadowOpacity   = map->opacity;
         data.shadowDepthBias = map->depthBias;
@@ -356,7 +376,7 @@ static void light_spot_push(const R3D_Light* light, const R3D_ShadowMap* map, co
     R3D_LIST_PUSH(R3D_MOD_LIGHT.listLightData, data);
 }
 
-static void light_omni_push(const R3D_Light* light, const R3D_ShadowMap* map, const R3D_Frustum* frustum)
+static void light_omni_push(const R3D_Light* light, const R3D_ShadowMap* map, const R3D_Frustum* frustum, bool updateShadow)
 {
     if (light->range <= 0.0f) return;
 
@@ -387,22 +407,31 @@ static void light_omni_push(const R3D_Light* light, const R3D_ShadowMap* map, co
 
     if (map && map->layer >= 0)
     {
-        Matrix viewProjs[6];
-        light_update_omni_view_proj(&data, viewProjs);
+        r3d_light_shadow_cache_t* cache = r3d_light_shadow_cache(map->type, map->layer);
 
-        for (int i = 0; i < 6; i++)
+        if (!cache->valid || updateShadow)
         {
-            r3d_light_shadow_job_t job = {0};
+            cache->valid = true;
 
-            job.viewProj   = viewProjs[i];
-            job.frustum    = R3D_ComputeFrustum(job.viewProj);
-            job.lightIndex = R3D_LIST_LENGTH(R3D_MOD_LIGHT.listLightData);
-            job.cullMask   = map->cullMask;
-            job.layerFace  = i;
+            Matrix viewProjs[6];
+            light_omni_view_proj(data.position, data.range, viewProjs, &cache->near, &cache->far);
 
-            R3D_LIST_PUSH(R3D_MOD_LIGHT.listShadowJobs, job);
+            for (int i = 0; i < 6; i++)
+            {
+                r3d_light_shadow_job_t job = {0};
+
+                job.viewProj   = viewProjs[i];
+                job.frustum    = R3D_ComputeFrustum(job.viewProj);
+                job.lightIndex = R3D_LIST_LENGTH(R3D_MOD_LIGHT.listLightData);
+                job.cullMask   = map->cullMask;
+                job.layerFace  = i;
+
+                R3D_LIST_PUSH(R3D_MOD_LIGHT.listShadowJobs, job);
+            }
         }
 
+        data.near            = cache->near;
+        data.far             = cache->far;
         data.shadowSoftness  = map->softness / (float)R3D_HINT(R3D_HINT_SHADOW_OMNI_SIZE);
         data.shadowOpacity   = map->opacity;
         data.shadowDepthBias = map->depthBias;
@@ -450,6 +479,7 @@ bool r3d_light_init(void)
     for (int i = 0; i < R3D_LIGHT_TYPE_COUNT; i++)
     {
         R3D_MOD_LIGHT.listShadowFreeds[i] = R3D_LIST_CREATE(int, 16);
+        R3D_MOD_LIGHT.listShadowCache[i]  = R3D_LIST_CREATE(r3d_light_shadow_cache_t, 16);
     }
     R3D_MOD_LIGHT.listShadowJobs = R3D_LIST_CREATE(r3d_light_shadow_job_t, 32);
     R3D_MOD_LIGHT.listLightData  = R3D_LIST_CREATE(r3d_light_data_t, 256);
@@ -475,12 +505,13 @@ void r3d_light_quit(void)
     for (int i = 0; i < R3D_LIGHT_TYPE_COUNT; i++)
     {
         R3D_LIST_DESTROY(R3D_MOD_LIGHT.listShadowFreeds[i]);
+        R3D_LIST_DESTROY(R3D_MOD_LIGHT.listShadowCache[i]);
     }
     R3D_LIST_DESTROY(R3D_MOD_LIGHT.listShadowJobs);
     R3D_LIST_DESTROY(R3D_MOD_LIGHT.listLightData);
 }
 
-void r3d_light_push(const R3D_Light* light, const R3D_ShadowMap* map)
+void r3d_light_push(const R3D_Light* light, const R3D_ShadowMap* map, bool updateShadow)
 {
     if (map && map->type != light->type)
     {
@@ -494,15 +525,15 @@ void r3d_light_push(const R3D_Light* light, const R3D_ShadowMap* map)
     switch (light->type)
     {
     case R3D_LIGHT_DIR:
-        light_dir_push(light, map, R3D.viewState.camera, R3D.viewState.aspect);
+        light_dir_push(light, map, R3D.viewState.camera, R3D.viewState.aspect, updateShadow);
         break;
 
     case R3D_LIGHT_SPOT:
-        light_spot_push(light, map, &R3D.viewState.frustum);
+        light_spot_push(light, map, &R3D.viewState.frustum, updateShadow);
         break;
 
     case R3D_LIGHT_OMNI:
-        light_omni_push(light, map, &R3D.viewState.frustum);
+        light_omni_push(light, map, &R3D.viewState.frustum, updateShadow);
         break;
 
     default:
@@ -594,6 +625,12 @@ int r3d_light_acquire_shadow_layer(R3D_LightType type)
         layer = R3D_MOD_LIGHT.shadowCounts[type]++;
     }
 
+    if (layer >= 0)
+    {
+        r3d_light_shadow_cache_t* cache = r3d_light_shadow_cache(type, layer);
+        cache->valid = false;
+    }
+
     return layer;
 }
 
@@ -638,4 +675,16 @@ int r3d_light_shadow_map_size(R3D_LightType type)
 GLuint r3d_light_shadow_map(R3D_LightType type)
 {
     return R3D_MOD_LIGHT.shadowArrays[type];
+}
+
+r3d_light_shadow_cache_t* r3d_light_shadow_cache(R3D_LightType type, int layer)
+{
+    assert(layer >= 0);
+
+    r3d_light_shadow_cache_t* cache = &R3D_LIST_GET(
+        R3D_MOD_LIGHT.listShadowCache[type],
+        r3d_light_shadow_cache_t, layer
+    );
+
+    return cache;
 }

@@ -60,7 +60,7 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             R3D_Begin(camera);
-                R3D_PushLight(light, &map);
+                R3D_PushLightEx(light, map, false);
 
                 material.orm.roughness = 0.5f;
                 material.orm.metalness = 0.0f;

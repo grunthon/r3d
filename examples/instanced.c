@@ -120,7 +120,7 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             R3D_Begin(camera);
-                R3D_PushLight(light, NULL);
+                R3D_PushLight(light);
                 R3D_DrawMeshInstanced(mesh, material, instances, INSTANCE_COUNT);
             R3D_End();
 

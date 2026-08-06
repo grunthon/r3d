@@ -65,7 +65,7 @@ int main(void)
         BeginDrawing();
             ClearBackground(RAYWHITE);
             R3D_Begin(camera);
-                R3D_PushLight(light, &map);
+                R3D_PushLightEx(light, map, true);
                 R3D_DrawMesh(plane, material, (Vector3) {0, -0.5f, 0}, 1.0f);
                 R3D_DrawMeshInstanced(sphere, material, instances, INSTANCE_COUNT);
             R3D_End();

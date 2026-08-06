@@ -89,7 +89,7 @@ int main(void)
 
             // Render scene
             R3D_Begin(camDefault);
-                R3D_PushLight(light, NULL);
+                R3D_PushLight(light);
                 R3D_DrawMeshInstanced(meshSphere, matDefault, instances, INSTANCE_COUNT);
             R3D_End();
 
