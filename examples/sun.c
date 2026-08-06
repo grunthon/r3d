@@ -42,13 +42,9 @@ int main(void)
     R3D_AmbientMap ambientMap = R3D_GenAmbientMap(skybox, R3D_AMBIENT_ILLUMINATION | R3D_AMBIENT_REFLECTION);
     R3D_ENVIRONMENT_SET(ambient.map, ambientMap);;
 
-    // Create directional light with shadows
-    R3D_Light light = R3D_CreateLight(R3D_LIGHT_DIR);
-    R3D_SetLightDirection(light, (Vector3){-1, -1, -1});
-    R3D_EnableLight(light);
-    R3D_SetLightRange(light, 16.0f);
-    R3D_SetShadowSoftness(light, 2.0f);
-    R3D_EnableShadow(light);
+    // Setup lights with shadows
+    R3D_Light light = R3D_CreateDirLight((Vector3) {-1, -1, -1}, WHITE, 1.0f);
+    R3D_ShadowMap map = R3D_LoadShadowMap(R3D_LIGHT_DIR);
 
     // Setup camera
     Camera3D camera = {
@@ -69,6 +65,7 @@ int main(void)
         BeginDrawing();
             ClearBackground(RAYWHITE);
             R3D_Begin(camera);
+                R3D_PushLight(light, &map);
                 R3D_DrawMesh(plane, material, (Vector3) {0, -0.5f, 0}, 1.0f);
                 R3D_DrawMeshInstanced(sphere, material, instances, INSTANCE_COUNT);
             R3D_End();

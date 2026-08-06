@@ -42,10 +42,8 @@ int main(void)
     R3D_SetScreenShaderUniform(shader, "u_time_scale", (float[]){2.5f});
 
     // Create light
-    R3D_Light light = R3D_CreateLight(R3D_LIGHT_SPOT);
-    R3D_SetLightTarget(light, (Vector3){0, 10, 5}, (Vector3){0});
-    R3D_EnableShadow(light);
-    R3D_EnableLight(light);
+    R3D_Light light = R3D_CreateSpotLight((Vector3) {0, 10, 5}, (Vector3) {0, -1, -0.5f}, 16.0f, WHITE, 1.0f);
+    R3D_ShadowMap map = R3D_LoadShadowMap(R3D_LIGHT_SPOT);
 
     // Setup camera
     Camera3D camera = {
@@ -63,6 +61,7 @@ int main(void)
         BeginDrawing();
             ClearBackground(RAYWHITE);
             R3D_Begin(camera);
+                R3D_PushLight(light, &map);
                 R3D_DrawMesh(plane, R3D_MATERIAL_BASE, (Vector3) {0, -0.5f, 0}, 1.0f);
                 R3D_DrawMesh(torus, material, Vector3Zero(), 1.0f);
             R3D_End();

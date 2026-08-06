@@ -41,10 +41,8 @@ int main(void)
     R3D_ENVIRONMENT_SET(ambient.color, (Color){ 10, 10, 10, 255 });
 
     // Create light
-    R3D_Light light = R3D_CreateLight(R3D_LIGHT_DIR);
-    R3D_SetLightDirection(light, (Vector3){ 0.5f, -1, -0.5f });
-    R3D_EnableShadow(light);
-    R3D_EnableLight(light);
+    R3D_Light light = R3D_CreateDirLight((Vector3) {0.5f, -1, -0.5f}, WHITE, 1.0f);
+    R3D_ShadowMap map = R3D_LoadShadowMap(R3D_LIGHT_DIR);
 
     // Setup camera
     Camera3D camera = (Camera3D){
@@ -66,6 +64,8 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             R3D_Begin(camera);
+                R3D_PushLight(light, &map);
+
                 R3D_DrawMesh(plane, material, (Vector3){ 0, 0, 0 }, 1.0f);
                 R3D_DrawMesh(sphere, material, (Vector3){ -1, 0.5f, -1 }, 1.0f);
                 R3D_DrawMeshEx(cylinder, material, (Vector3){ 1, 0.5f, -1 }, QuaternionFromEuler(0, 0, PI/2), Vector3One());

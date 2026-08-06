@@ -1,3 +1,5 @@
+#include "r3d/r3d_draw.h"
+#include "r3d/r3d_lighting.h"
 #include <r3d/r3d.h>
 #include <raymath.h>
 
@@ -30,14 +32,10 @@ int main(void)
 
     // Setup lights
     R3D_Light lights[2];
+    R3D_ShadowMap maps[2];
     for (int i = 0; i < 2; i++) {
-        lights[i] = R3D_CreateLight(R3D_LIGHT_OMNI);
-        R3D_SetLightPosition(lights[i], (Vector3) {i ? -5.0f : 5.0f, 5.0f, 0.0f});
-        R3D_SetShadowUpdateMode(lights[i], R3D_SHADOW_UPDATE_MANUAL);
-        R3D_SetLightEnergy(lights[i], 8.0f);
-        R3D_SetLightRange(lights[i], 16.0f);
-        R3D_EnableShadow(lights[i]);
-        R3D_EnableLight(lights[i]);
+        lights[i] = R3D_CreateOmniLight((Vector3) {i ? -5.0f : 5.0f, 5.0f, 0.0f}, 16.0f, WHITE, 8.0f);
+        maps[i] = R3D_LoadShadowMap(R3D_LIGHT_OMNI);
     }
 
     // Setup camera
@@ -108,13 +106,15 @@ int main(void)
 
             // Draw Sponza model
             R3D_Begin(camera);
+                R3D_PushLight(lights[0], &maps[0]);
+                R3D_PushLight(lights[1], &maps[1]);
                 R3D_DrawModel(sponza, Vector3Zero(), 1.0f);
             R3D_End();
 
             // Draw lights
             BeginMode3D(camera);
-                DrawSphere(R3D_GetLightPosition(lights[0]), 0.2f, WHITE);
-                DrawSphere(R3D_GetLightPosition(lights[1]), 0.2f, WHITE);
+                DrawSphere(lights[0].position, 0.2f, WHITE);
+                DrawSphere(lights[1].position, 0.2f, WHITE);
             EndMode3D();
 
             // Display tonemapping

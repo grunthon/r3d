@@ -19,10 +19,8 @@ int main(void)
     R3D_ENVIRONMENT_SET(ambient.color, (Color){10, 10, 10, 255});
 
     // Create light
-    R3D_Light light = R3D_CreateLight(R3D_LIGHT_SPOT);
-    R3D_SetLightTarget(light, (Vector3){0, 10, 5}, (Vector3){0});
-    R3D_EnableShadow(light);
-    R3D_EnableLight(light);
+    R3D_Light light = R3D_CreateSpotLight((Vector3) {0, 10, 5}, (Vector3) {0, -1, -0.5f}, 16.0f, WHITE, 1.0f);
+    R3D_ShadowMap map = R3D_LoadShadowMap(R3D_LIGHT_SPOT);
 
     // Render texture
     RenderTexture target = LoadRenderTexture(1024, 512);
@@ -58,6 +56,7 @@ int main(void)
             };
 
             R3D_BeginPro(view);
+                R3D_PushLight(light, &map);
                 R3D_DrawMesh(plane, material, (Vector3) {0, -0.5f, 0}, 1.0f);
                 R3D_DrawMesh(sphere, material, Vector3Zero(), 1.0f);
             R3D_End();

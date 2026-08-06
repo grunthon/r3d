@@ -12,6 +12,7 @@
 #include "./r3d_animation_player.h"
 #include "./r3d_instance.h"
 #include "./r3d_platform.h"
+#include "./r3d_lighting.h"
 #include "./r3d_camera.h"
 #include "./r3d_model.h"
 #include "./r3d_decal.h"
@@ -122,6 +123,29 @@ R3DAPI void R3D_BeginCluster(BoundingBox aabb);
  * Stops submitting draw calls to the active cluster.
  */
 R3DAPI void R3D_EndCluster(void);
+
+/**
+ * @brief Queues a light to be rendered for the current frame.
+ *
+ * The light is submitted for rendering during R3D_End(), and must be pushed
+ * again on every frame between R3D_Begin() and R3D_End() to remain visible.
+ *
+ * @param light The light data to submit (see R3D_Light).
+ * @param map Optional shadow map to associate with this light for this frame,
+ *            or NULL to render the light without shadows.
+ */
+R3DAPI void R3D_PushLight(R3D_Light light, const R3D_ShadowMap* map);
+
+/**
+ * @brief Queues an array of lights to be rendered for the current frame, without shadows.
+ *
+ * Equivalent to calling R3D_PushLight() for each light with a NULL shadow map.
+ * Useful for pushing a large number of unshadowed lights efficiently.
+ *
+ * @param lights Array of lights to submit.
+ * @param count Number of lights in the array.
+ */
+R3DAPI void R3D_PushLights(R3D_Light* lights, int count);
 
 /**
  * @brief Queues a mesh draw command with position and uniform scale.

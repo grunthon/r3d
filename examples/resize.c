@@ -1,5 +1,6 @@
 #include <r3d/r3d.h>
 #include <raymath.h>
+#include <stddef.h>
 
 static const char* GetAspectModeName(R3D_AspectMode mode);
 static const char* GetUpscaleModeName(R3D_UpscaleMode mode);
@@ -24,9 +25,7 @@ int main(void)
     }
 
     // Setup directional light
-    R3D_Light light = R3D_CreateLight(R3D_LIGHT_DIR);
-    R3D_SetLightDirection(light, (Vector3){0, 0, -1});
-    R3D_EnableLight(light);
+    R3D_Light light = R3D_CreateDirLight((Vector3) {0, 0, -1}, WHITE, 1.0f);
 
     // Setup camera
     Camera3D camera = {
@@ -62,6 +61,7 @@ int main(void)
 
             // Draw spheres
             R3D_Begin(camera);
+                R3D_PushLight(light, NULL);
                 for (int i = 0; i < 5; i++) {
                     R3D_DrawMesh(sphere, materials[i], (Vector3) {(float)i - 2, 0, 0}, 1.0f);
                 }

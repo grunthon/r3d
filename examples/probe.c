@@ -33,10 +33,8 @@ int main(void)
     R3D_Material material = R3D_GetDefaultMaterial();
 
     // Create light
-    R3D_Light light = R3D_CreateLight(R3D_LIGHT_SPOT);
-    R3D_SetLightTarget(light, (Vector3){0, 10, 5}, (Vector3){0});
-    R3D_EnableLight(light);
-    R3D_EnableShadow(light);
+    R3D_Light light = R3D_CreateSpotLight((Vector3) {0, 10, 5}, (Vector3) {0, -1, -0.5f}, 16.0f, WHITE, 1.0f);
+    R3D_ShadowMap map = R3D_LoadShadowMap(R3D_LIGHT_SPOT);
 
     // Create probe
     R3D_Probe probe = R3D_CreateProbe(R3D_PROBE_ILLUMINATION | R3D_PROBE_REFLECTION);
@@ -62,6 +60,7 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             R3D_Begin(camera);
+                R3D_PushLight(light, &map);
 
                 material.orm.roughness = 0.5f;
                 material.orm.metalness = 0.0f;
@@ -72,7 +71,6 @@ int main(void)
                     material.orm.metalness = 1.0f - fabsf((float)i);
                     R3D_DrawMesh(sphere, material, (Vector3) {(float)i * 3.0f, 1.0f, 0}, 2.0f);
                 }
-
             R3D_End();
 
         EndDrawing();

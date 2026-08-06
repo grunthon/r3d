@@ -64,8 +64,8 @@ static void upload_view_block(void);
 static void upload_env_block(void);
 static void upload_fx_block(void);
 
-static void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, r3d_light_t* light);
-static void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, r3d_light_t* light);
+static void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, r3d_light_data_t* light);
+static void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, r3d_light_data_t* light);
 static void raster_probe_forward(const r3d_render_call_t* call, const r3d_env_probe_t* probe, int face);
 static void raster_probe_unlit(const r3d_render_call_t* call, const r3d_env_probe_t* probe, int face);
 static void raster_geometry(const r3d_render_call_t* call, bool matchPrepass);
@@ -134,6 +134,7 @@ void R3D_BeginPro(R3D_View view)
     update_view_state(view);
     R3D.screen = view.target;
     r3d_render_clear();
+    r3d_light_clear();
 }
 
 void R3D_End(void)
@@ -152,23 +153,16 @@ void R3D_End(void)
     upload_env_block();
     upload_fx_block();
 
-    /* --- Update all visible lights and render their shadow maps --- */
+    /* --- Render all shadow maps and bind them --- */
 
-    bool hasVisibleShadows = false;
-    r3d_light_update_and_cull(
-        &R3D.viewState.frustum,
-        R3D.viewState.camera,
-        R3D.viewState.aspect,
-        &hasVisibleShadows
-    );
-
-    if (hasVisibleShadows)
+    if (r3d_light_has_shadow_job())
     {
         pass_scene_shadow();
-        r3d_shader_bind_sampler(R3D_SHADER_SAMPLER_SHADOW_DIR, r3d_light_shadow_get(R3D_LIGHT_DIR));
-        r3d_shader_bind_sampler(R3D_SHADER_SAMPLER_SHADOW_SPOT, r3d_light_shadow_get(R3D_LIGHT_SPOT));
-        r3d_shader_bind_sampler(R3D_SHADER_SAMPLER_SHADOW_OMNI, r3d_light_shadow_get(R3D_LIGHT_OMNI));
     }
+
+    r3d_shader_bind_sampler(R3D_SHADER_SAMPLER_SHADOW_DIR, r3d_light_shadow_map(R3D_LIGHT_DIR));
+    r3d_shader_bind_sampler(R3D_SHADER_SAMPLER_SHADOW_SPOT, r3d_light_shadow_map(R3D_LIGHT_SPOT));
+    r3d_shader_bind_sampler(R3D_SHADER_SAMPLER_SHADOW_OMNI, r3d_light_shadow_map(R3D_LIGHT_OMNI));
 
     /* --- Update all visible environment probes and render their cubemaps --- */
 
@@ -337,6 +331,19 @@ void R3D_EndCluster(void)
     if (!r3d_render_cluster_end())
     {
         R3D_TRACELOG(LOG_WARNING, "Failed to end cluster");
+    }
+}
+
+void R3D_PushLight(R3D_Light light, const R3D_ShadowMap* map)
+{
+    r3d_light_push(&light, map);
+}
+
+void R3D_PushLights(R3D_Light* lights, int count)
+{
+    for (int i = 0; i < count; i++)
+    {
+        r3d_light_push(&lights[i], NULL);
     }
 }
 
@@ -750,25 +757,25 @@ void upload_light_array_block_for_mesh(const r3d_render_call_t* call, bool shado
         }
 
         r3d_shader_block_light_t* data = &lights.uLights[lights.uNumLights];
-        data->viewProj = MatrixTranspose(light->viewProj[0]);
-        data->color = light->color;
-        data->position = light->position;
-        data->direction = light->direction;
-        data->energy = light->energy;
-        data->specular = light->specular;
-        data->range = light->range;
-        data->falloff = light->falloff;
-        data->innerCutOff = light->innerCutOff;
-        data->outerCutOff = light->outerCutOff;
-        data->fogEnergy = light->fogEnergy;
-        data->near = light->near;
-        data->far = light->far;
-        data->shadowSoftness = light->shadowSoftness;
-        data->shadowOpacity = light->shadowOpacity;
+        data->viewProj        = MatrixTranspose(light->viewProj);
+        data->color           = light->color;
+        data->position        = light->position;
+        data->direction       = light->direction;
+        data->energy          = light->energy;
+        data->specular        = light->specular;
+        data->range           = light->range;
+        data->falloff         = light->falloff;
+        data->innerCutOff     = light->innerCutOff;
+        data->outerCutOff     = light->outerCutOff;
+        data->fogEnergy       = light->fogEnergy;
+        data->near            = light->near;
+        data->far             = light->far;
+        data->shadowSoftness  = light->shadowSoftness;
+        data->shadowOpacity   = light->shadowOpacity;
         data->shadowDepthBias = light->shadowDepthBias;
         data->shadowSlopeBias = light->shadowSlopeBias;
-        data->shadowLayer = shadow ? light->shadowLayer : -1;
-        data->type = light->type;
+        data->shadowLayer     = shadow ? light->shadowLayer : -1;
+        data->type            = light->type;
 
         if (++lights.uNumLights == R3D_HINT(R3D_HINT_FORWARD_LIGHT_PER_MESH))
         {
@@ -955,7 +962,7 @@ void upload_fx_block(void)
     r3d_shader_set_uniform_block(R3D_SHADER_BLOCK_FX, &block, false);
 }
 
-void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, r3d_light_t* light)
+void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, r3d_light_data_t* light)
 {
     assert(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
 
@@ -1039,7 +1046,7 @@ void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, r3d_lig
     }
 }
 
-void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, r3d_light_t* light)
+void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, r3d_light_data_t* light)
 {
     assert(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
 
@@ -1640,48 +1647,30 @@ void pass_scene_shadow(void)
 
     #define COND (                                                          \
         (call->mesh.instance.shadowCastMode != R3D_SHADOW_CAST_DISABLED) && \
-        IS_MESH_VISIBLE(call->mesh.instance, light->casterMask)             \
+        IS_MESH_VISIBLE(call->mesh.instance, job->cullMask)                 \
     )
 
-    R3D_LIGHT_FOR_EACH_VISIBLE(light)
+    R3D_LIGHT_FOR_EACH_SHADOW_JOB(job)
     {
-        if (!r3d_light_shadow_should_be_updated(light, true))
-        {
-            continue;
-        }
+        r3d_light_data_t* light = r3d_light_get(job->lightIndex);
 
-        if (light->type == R3D_LIGHT_OMNI)
+        r3d_light_bind_shadow_fbo(light->type, light->shadowLayer, job->layerFace);
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+        const R3D_Frustum* frustum = &job->frustum;
+        r3d_render_cull_groups(frustum);
+
+        R3D_RENDER_FOR_EACH(call, COND, frustum, R3D_RENDER_PACKLIST_SHADOW)
         {
-            for (int iFace = 0; iFace < 6; iFace++)
+            if (r3d_render_should_cast_shadow(call))
             {
-                r3d_light_shadow_bind_fbo(light->type, light->shadowLayer, iFace);
-                glClear(GL_DEPTH_BUFFER_BIT);
-
-                const R3D_Frustum* frustum = &light->frustum[iFace];
-                r3d_render_cull_groups(frustum);
-
-                R3D_RENDER_FOR_EACH(call, COND, frustum, R3D_RENDER_PACKLIST_SHADOW)
+                if (light->type == R3D_LIGHT_OMNI)
                 {
-                    if (r3d_render_should_cast_shadow(call))
-                    {
-                        raster_depth_cube(call, &light->viewProj[iFace], light);
-                    }
+                    raster_depth_cube(call, &job->viewProj, light);
                 }
-            }
-        }
-        else
-        {
-            r3d_light_shadow_bind_fbo(light->type, light->shadowLayer, 0);
-            glClear(GL_DEPTH_BUFFER_BIT);
-
-            const R3D_Frustum* frustum = &light->frustum[0];
-            r3d_render_cull_groups(frustum);
-
-            R3D_RENDER_FOR_EACH(call, COND, frustum, R3D_RENDER_PACKLIST_SHADOW)
-            {
-                if (r3d_render_should_cast_shadow(call))
+                else
                 {
-                    raster_depth(call, &light->viewProj[0], light);
+                    raster_depth(call, &job->viewProj, light);
                 }
             }
         }
@@ -2208,25 +2197,25 @@ void pass_deferred_lights(void)
 
         // Send light data to the GPU
         r3d_shader_block_light_t data = {
-            .viewProj = MatrixTranspose(light->viewProj[0]),
-            .color = light->color,
-            .position = light->position,
-            .direction = light->direction,
-            .energy = light->energy,
-            .specular = light->specular,
-            .range = light->range,
-            .falloff = light->falloff,
-            .innerCutOff = light->innerCutOff,
-            .outerCutOff = light->outerCutOff,
-            .fogEnergy = light->fogEnergy,
-            .near = light->near,
-            .far = light->far,
-            .shadowSoftness = light->shadowSoftness,
-            .shadowOpacity = light->shadowOpacity,
+            .viewProj        = MatrixTranspose(light->viewProj),
+            .color           = light->color,
+            .position        = light->position,
+            .direction       = light->direction,
+            .energy          = light->energy,
+            .specular        = light->specular,
+            .range           = light->range,
+            .falloff         = light->falloff,
+            .innerCutOff     = light->innerCutOff,
+            .outerCutOff     = light->outerCutOff,
+            .fogEnergy       = light->fogEnergy,
+            .near            = light->near,
+            .far             = light->far,
+            .shadowSoftness  = light->shadowSoftness,
+            .shadowOpacity   = light->shadowOpacity,
             .shadowDepthBias = light->shadowDepthBias,
             .shadowSlopeBias = light->shadowSlopeBias,
-            .shadowLayer = light->shadowLayer,
-            .type = light->type,
+            .shadowLayer     = light->shadowLayer,
+            .type            = light->type,
         };
         r3d_shader_set_uniform_block(R3D_SHADER_BLOCK_LIGHT, &data, true);
 
@@ -2354,25 +2343,25 @@ void pass_deferred_volumetric_fog(r3d_target_t sceneTarget)
         r3d_driver_set_scissor(dst.x, dst.y, dst.w, dst.h);
 
         r3d_shader_block_light_t data = {
-            .viewProj = MatrixTranspose(light->viewProj[0]),
-            .color = light->color,
-            .position = light->position,
-            .direction = light->direction,
-            .energy = light->energy,
-            .specular = light->specular,
-            .range = light->range,
-            .falloff = light->falloff,
-            .innerCutOff = light->innerCutOff,
-            .outerCutOff = light->outerCutOff,
-            .fogEnergy = light->fogEnergy,
-            .near = light->near,
-            .far = light->far,
-            .shadowSoftness = light->shadowSoftness,
-            .shadowOpacity = light->shadowOpacity,
+            .viewProj        = MatrixTranspose(light->viewProj),
+            .color           = light->color,
+            .position        = light->position,
+            .direction       = light->direction,
+            .energy          = light->energy,
+            .specular        = light->specular,
+            .range           = light->range,
+            .falloff         = light->falloff,
+            .innerCutOff     = light->innerCutOff,
+            .outerCutOff     = light->outerCutOff,
+            .fogEnergy       = light->fogEnergy,
+            .near            = light->near,
+            .far             = light->far,
+            .shadowSoftness  = light->shadowSoftness,
+            .shadowOpacity   = light->shadowOpacity,
             .shadowDepthBias = light->shadowDepthBias,
             .shadowSlopeBias = light->shadowSlopeBias,
-            .shadowLayer = light->shadowLayer,
-            .type = light->type,
+            .shadowLayer     = light->shadowLayer,
+            .type            = light->type,
         };
         r3d_shader_set_uniform_block(R3D_SHADER_BLOCK_LIGHT, &data, true);
 

@@ -62,11 +62,10 @@ int main(void)
     // Configure lighting, shadows, and ambient color
     R3D_ENVIRONMENT_SET(ambient.color, (Color){10, 10, 15, 255});
 
-    R3D_Light light = R3D_CreateLight(R3D_LIGHT_SPOT);
-    R3D_SetLightTarget(light, (Vector3){4, 8, 5}, (Vector3){0});
-    R3D_SetShadowSoftness(light, 8.0f);
-    R3D_EnableLight(light);
-    R3D_EnableShadow(light);
+    // Setup directional light with shadows
+    R3D_Light light = R3D_CreateSpotLight((Vector3) {4, 8, 5}, (Vector3) {-4, -8, -5}, 16.0f, WHITE, 1.0f);
+    R3D_ShadowMap map = R3D_LoadShadowMap(R3D_LIGHT_SPOT);
+    map.softness = 8.0f;
 
     Camera3D camera = {
         .position = {0, 3, 5},
@@ -83,6 +82,8 @@ int main(void)
             ClearBackground(BLACK);
 
             R3D_Begin(camera);
+                R3D_PushLight(light, &map);
+
                 // Base scene geometry
                 R3D_DrawMesh(plane, matGround, (Vector3){  0.0f, -0.5f,  0.0f }, 1.0f);
                 R3D_DrawMesh(box,   matWall,   (Vector3){  0.0f,  0.5f,  0.0f }, 1.0f);
