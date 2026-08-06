@@ -365,7 +365,8 @@ static bool stm_find_path(r3d_animtree_stm_t* node, R3D_AnimationStmIndex target
         for (int pIdx = 0; pIdx < pathsCount; pIdx++)
         {
             R3D_AnimationStmIndex stateIdx = openPaths[pIdx*maxPathLen + pathLen-1]->endIdx;
-            if (stateIdx == targetIdx) {
+            if (stateIdx == targetIdx)
+            {
                 memcpy(node->path.edges, &openPaths[pIdx*maxPathLen], pathLen * sizeof(r3d_stmedge_t*));
                 node->path.idx = 0;
                 node->path.len = pathLen;
@@ -1198,8 +1199,10 @@ static void atree_delete(R3D_AnimationTreeNode anode)
         MemFree(anode.swch->inWeights);
         return;
     case R3D_ANIMTREE_STM:
-        for (int i = 0; i < anode.stm->statesCount; i++) {
-            if (anode.stm->stateList[i].outList) {
+        for (int i = 0; i < anode.stm->statesCount; i++)
+        {
+            if (anode.stm->stateList[i].outList)
+            {
                 MemFree(anode.stm->stateList[i].outList);
             }
         }
@@ -1311,7 +1314,8 @@ R3D_AnimationTree R3D_LoadAnimationTreePro(R3D_AnimationPlayer player, int maxSi
 void R3D_UnloadAnimationTree(R3D_AnimationTree tree)
 {
     int poolSize = tree.nodePoolSize;
-    for (int i = 0; i < poolSize; i++) {
+    for (int i = 0; i < poolSize; i++)
+    {
         R3D_AnimationTreeNode node = tree.nodePool[i];
         atree_delete(node);
         MemFree(node.base);
