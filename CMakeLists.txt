@@ -253,7 +253,6 @@ add_library(${PROJECT_NAME}
     "${R3D_ROOT_PATH}/src/common/r3d_image.c"
     "${R3D_ROOT_PATH}/src/common/r3d_stack.c"
     "${R3D_ROOT_PATH}/src/common/r3d_list.c"
-    "${R3D_ROOT_PATH}/src/common/r3d_pool.c"
     "${R3D_ROOT_PATH}/src/common/r3d_pass.c"
     # Modules
     "${R3D_ROOT_PATH}/src/modules/r3d_texture.c"
