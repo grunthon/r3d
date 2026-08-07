@@ -39,7 +39,8 @@ int main(void)
     // Create probe
     R3D_Probe rfProbe = R3D_LoadProbe(R3D_PROBE_REFLECTION, false, true);
     rfProbe.position  = (Vector3) {0, 1, 0};
-    rfProbe.range     = 4.0f;
+    rfProbe.falloff   = 0.0f; //< clamped internally
+    rfProbe.range     = 8.0f;
 
     // Setup camera
     Camera3D camera = {
