@@ -424,6 +424,13 @@ R3D_Probe* r3d_env_probe_get(R3D_ProbeType type, int probeIndex)
     return NULL;
 }
 
+void r3d_env_probe_clear(void)
+{
+    R3D_LIST_CLEAR(R3D_MOD_ENV.listProbeIllumination);
+    R3D_LIST_CLEAR(R3D_MOD_ENV.listProbeReflection);
+    R3D_LIST_CLEAR(R3D_MOD_ENV.listProbeJobs);
+}
+
 void r3d_env_probe_capture_bind_fbo(R3D_ProbeType type, int face)
 {
     switch (type)

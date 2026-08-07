@@ -96,6 +96,9 @@ void r3d_env_push_probe(const R3D_Probe* probe, bool updateProbe);
 /**/
 R3D_Probe* r3d_env_probe_get(R3D_ProbeType type, int probeIndex);
 
+/**/
+void r3d_env_probe_clear(void);
+
 /* Bind probe capture framebuffer for the given face */
 void r3d_env_probe_capture_bind_fbo(R3D_ProbeType type, int face);
 

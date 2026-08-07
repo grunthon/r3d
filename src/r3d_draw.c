@@ -133,6 +133,7 @@ void R3D_BeginPro(R3D_View view)
     rlDrawRenderBatchActive();
     update_view_state(view);
     R3D.screen = view.target;
+    r3d_env_probe_clear();
     r3d_render_clear();
     r3d_light_clear();
 }
