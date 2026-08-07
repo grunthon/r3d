@@ -111,6 +111,9 @@ GLuint r3d_env_probe_capture_get(R3D_ProbeType type);
 /* Get probe capture cubemap texture size */
 int r3d_env_probe_capture_size(R3D_ProbeType type);
 
+/**/
+const char* r3d_env_probe_type_name(R3D_ProbeType type);
+
 /* Reserve a new irradiance map layer (returns -1 on failure) */
 int r3d_env_irradiance_acquire_layer(void);
 

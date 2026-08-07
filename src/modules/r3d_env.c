@@ -483,6 +483,17 @@ int r3d_env_probe_capture_size(R3D_ProbeType type)
     return 0;
 }
 
+const char* r3d_env_probe_type_name(R3D_ProbeType type)
+{
+    switch (type)
+    {
+    case R3D_PROBE_ILLUMINATION: return "Illumination";
+    case R3D_PROBE_REFLECTION:   return "Reflection";
+    default: break;
+    }
+    return NULL;
+}
+
 int r3d_env_irradiance_acquire_layer(void)
 {
     return cubemap_array_acquire_layer(&R3D_MOD_ENV.irradiance);

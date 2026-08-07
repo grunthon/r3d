@@ -117,6 +117,15 @@ R3D_ShadowMap R3D_LoadShadowMap(R3D_LightType type)
         break;
     }
 
+    if (map.layer >= 0)
+    {
+        R3D_TRACELOG(LOG_INFO, "Shadow map loaded successfully (type: %s)", r3d_light_type_name(type));
+    }
+    else
+    {
+        R3D_TRACELOG(LOG_WARNING, "Failed to load shadow map (type: %s)", r3d_light_type_name(type));
+    }
+
     return map;
 }
 

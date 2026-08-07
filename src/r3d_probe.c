@@ -38,6 +38,15 @@ R3D_Probe R3D_LoadProbe(R3D_ProbeType type, bool interior, bool shadow)
     probe.interior = interior;
     probe.shadows  = shadow;
 
+    if (probe.layer >= 0)
+    {
+        R3D_TRACELOG(LOG_INFO, "Probe loaded successfully (type: %s)", r3d_env_probe_type_name(type));
+    }
+    else
+    {
+        R3D_TRACELOG(LOG_WARNING, "Failed to load probe (type: %s)", r3d_env_probe_type_name(type));
+    }
+
     return probe;
 }
 
@@ -52,4 +61,6 @@ void R3D_UnloadProbe(R3D_Probe probe)
         r3d_env_prefilter_release_layer(probe.layer);
         break;
     }
+
+    R3D_TRACELOG(LOG_INFO, "Probe unloaded successfully (type: %s)", r3d_env_probe_type_name(probe.type));
 }

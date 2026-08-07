@@ -476,18 +476,6 @@ static void light_omni_push(const R3D_Light* light, const R3D_ShadowMap* map, co
     R3D_LIST_PUSH(R3D_MOD_LIGHT.listLightData, data);
 }
 
-static const char* light_type_name(R3D_LightType type)
-{
-    switch (type)
-    {
-    case R3D_LIGHT_DIR:  return "Directional";
-    case R3D_LIGHT_SPOT: return "Spot";
-    case R3D_LIGHT_OMNI: return "Omni";
-    default: break;
-    }
-    return NULL;
-}
-
 // ========================================
 // MODULE FUNCTIONS
 // ========================================
@@ -521,8 +509,8 @@ void r3d_light_push(const R3D_Light* light, const R3D_ShadowMap* map, bool updat
 {
     if (map && map->type != light->type)
     {
-        const char* mType = light_type_name(map->type);
-        const char* lType = light_type_name(light->type);
+        const char* mType = r3d_light_type_name(map->type);
+        const char* lType = r3d_light_type_name(light->type);
         R3D_TRACELOG(LOG_WARNING, "Incompatible shadow map (type: %s) given with light (type: %s)", mType, lType);
 
         map = NULL;
@@ -558,7 +546,7 @@ void r3d_light_clear(void)
     R3D_LIST_CLEAR(R3D_MOD_LIGHT.listLightData);
 }
 
-r3d_rect_t r3d_light_get_screen_rect(const r3d_light_data_t* light, const Matrix* viewProj, Vector3 camPos, int w, int h)
+r3d_rect_t r3d_light_screen_rect(const r3d_light_data_t* light, const Matrix* viewProj, Vector3 camPos, int w, int h)
 {
     assert(light->type != R3D_LIGHT_DIR);
 
@@ -612,6 +600,18 @@ r3d_rect_t r3d_light_get_screen_rect(const r3d_light_data_t* light, const Matrix
     }
 
     return (r3d_rect_t){x, y, rectW, rectH};
+}
+
+const char* r3d_light_type_name(R3D_LightType type)
+{
+    switch (type)
+    {
+    case R3D_LIGHT_DIR:  return "Directional";
+    case R3D_LIGHT_SPOT: return "Spot";
+    case R3D_LIGHT_OMNI: return "Omni";
+    default: break;
+    }
+    return NULL;
 }
 
 int r3d_light_acquire_shadow_layer(R3D_LightType type)
