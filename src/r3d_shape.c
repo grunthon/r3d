@@ -1167,7 +1167,8 @@ RayCollision R3D_RaycastModel(Ray ray, R3D_Model model, Matrix transform)
         if (mesh.vertices == NULL) continue;
 
         // Per-mesh AABB culling
-        RayCollision meshBoxCol = GetRayCollisionBox(ray, model.meshes[meshIdx].aabb);
+        Ray localRay = {.position = localOrigin, .direction = localDirection};
+        RayCollision meshBoxCol = GetRayCollisionBox(localRay, model.meshes[meshIdx].aabb);
         if (!meshBoxCol.hit) continue;
 
         int triangleCount = mesh.indices ? (mesh.indexCount / 3) : (mesh.vertexCount / 3);
