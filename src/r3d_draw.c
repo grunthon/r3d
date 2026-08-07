@@ -346,7 +346,7 @@ void R3D_PushLightEx(R3D_Light light, R3D_ShadowMap map, bool updateShadow)
     r3d_light_push(&light, &map, updateShadow);
 }
 
-void R3D_PushLights(R3D_Light* lights, int count)
+void R3D_PushLights(const R3D_Light* lights, int count)
 {
     for (int i = 0; i < count; i++)
     {

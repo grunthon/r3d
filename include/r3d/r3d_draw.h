@@ -160,7 +160,7 @@ R3DAPI void R3D_PushLightEx(R3D_Light light, R3D_ShadowMap map, bool updateShado
  * @param lights Array of lights to submit.
  * @param count Number of lights in the array.
  */
-R3DAPI void R3D_PushLights(R3D_Light* lights, int count);
+R3DAPI void R3D_PushLights(const R3D_Light* lights, int count);
 
 /**
  * @brief Queues a probe to be rendered for the current frame.
