@@ -1,3 +1,5 @@
+#include "r3d/r3d_probe.h"
+#include "raylib.h"
 #include <r3d/r3d.h>
 #include <raymath.h>
 
@@ -37,11 +39,9 @@ int main(void)
     R3D_ShadowMap map = R3D_LoadShadowMap(R3D_LIGHT_SPOT);
 
     // Create probe
-    R3D_Probe probe = R3D_CreateProbe(R3D_PROBE_ILLUMINATION | R3D_PROBE_REFLECTION);
-    R3D_SetProbePosition(probe, (Vector3) {0, 1, 0});
-    R3D_SetProbeShadows(probe, true);
-    R3D_SetProbeFalloff(probe, 0.5f);
-    R3D_EnableProbe(probe);
+    R3D_Probe rfProbe = R3D_LoadProbe(R3D_PROBE_REFLECTION, false, true);
+    rfProbe.position  = (Vector3) {0, 1, 0};
+    rfProbe.range     = 4.0f;
 
     // Setup camera
     Camera3D camera = {
@@ -60,6 +60,7 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             R3D_Begin(camera);
+                R3D_PushProbe(rfProbe, false);
                 R3D_PushLightEx(light, map, false);
 
                 material.orm.roughness = 0.5f;

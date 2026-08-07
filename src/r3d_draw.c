@@ -66,8 +66,8 @@ static void upload_fx_block(void);
 
 static void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, r3d_light_data_t* light);
 static void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, r3d_light_data_t* light);
-static void raster_probe_forward(const r3d_render_call_t* call, const r3d_env_probe_t* probe, int face);
-static void raster_probe_unlit(const r3d_render_call_t* call, const r3d_env_probe_t* probe, int face);
+static void raster_probe_forward(const r3d_render_call_t* call, const R3D_Probe* probe, const r3d_env_probe_job_t* job, int face);
+static void raster_probe_unlit(const r3d_render_call_t* call, const R3D_Probe* probe, const r3d_env_probe_job_t* job, int face);
 static void raster_geometry(const r3d_render_call_t* call, bool matchPrepass);
 static void raster_decal(const r3d_render_call_t* call);
 static void raster_forward(const r3d_render_call_t* call);
@@ -166,15 +166,16 @@ void R3D_End(void)
 
     /* --- Update all visible environment probes and render their cubemaps --- */
 
-    bool hasVisibleProbes = false;
-    r3d_env_probe_update_and_cull(&R3D.viewState.frustum, &hasVisibleProbes);
-
-    if (hasVisibleProbes || R3D.environment.ambient.map.flags != 0)
+    if (r3d_env_has_any_probes() || R3D.environment.ambient.map.flags != 0)
     {
         r3d_shader_bind_sampler(R3D_SHADER_SAMPLER_IBL_IRRADIANCE, r3d_env_irradiance_get());
         r3d_shader_bind_sampler(R3D_SHADER_SAMPLER_IBL_PREFILTER, r3d_env_prefilter_get());
         r3d_shader_bind_sampler(R3D_SHADER_SAMPLER_IBL_BRDF_LUT, r3d_texture_get(R3D_TEXTURE_BRDF_LUT));
-        if (hasVisibleProbes) pass_scene_probes(); // Must have the IBL bind in case of ambient map
+
+        if (r3d_env_has_any_probe_jobs())
+        {
+            pass_scene_probes();
+        }
     }
 
     /* --- Cull groups and sort all draw calls before rendering --- */
@@ -350,6 +351,11 @@ void R3D_PushLights(R3D_Light* lights, int count)
     {
         r3d_light_push(&lights[i], NULL, false);
     }
+}
+
+void R3D_PushProbe(R3D_Probe probe, bool updateProbe)
+{
+    r3d_env_push_probe(&probe, updateProbe);
 }
 
 void R3D_DrawMesh(R3D_Mesh mesh, R3D_Material material, Vector3 position, float scale)
@@ -824,37 +830,57 @@ void upload_view_block(void)
 
 void upload_env_block(void)
 {
-    const R3D_EnvBackground* background = &R3D.environment.background;
-    const R3D_EnvAmbient* ambient = &R3D.environment.ambient;
+    bool ok;
 
-    r3d_shader_block_env_t env = {0};
-
-    int iProbe = 0;
-    R3D_ENV_PROBE_FOR_EACH_VISIBLE(probe)
+    R3D_STACK_SCOPE(&R3D.stack, sizeof(r3d_shader_block_env_t), ok)
     {
-        env.uProbes[iProbe] = (struct r3d_shader_block_env_probe) {
-            .position = probe->position,
-            .falloff = probe->falloff,
-            .range = probe->range,
-            .irradiance = probe->irradiance,
-            .prefilter = probe->prefilter
-        };
-        if (++iProbe >= R3D_HINT(R3D_HINT_PROBE_MAX_ACTIVE))
+        const R3D_EnvBackground* background = &R3D.environment.background;
+        const R3D_EnvAmbient* ambient = &R3D.environment.ambient;
+
+        r3d_shader_block_env_t* env = r3d_stack_alloc(&R3D.stack, sizeof(r3d_shader_block_env_t));
+
+        int iIlluminationProbe = 0;
+        R3D_ENV_FOR_EACH_ILLUMINATION_PROBE(probe)
         {
-            break;
+            env->uIlluminationProbes[iIlluminationProbe] = (r3d_shader_block_env_probe_t) {
+                .position = probe->position,
+                .falloff  = probe->falloff,
+                .range    = probe->range,
+                .layer    = probe->layer,
+            };
+            if (++iIlluminationProbe >= R3D_HINT(R3D_HINT_PROBE_ILLUMINATION_MAX_ACTIVE))
+            {
+                break;
+            }
         }
+
+        int iReflectionProbe = 0;
+        R3D_ENV_FOR_EACH_REFLECTION_PROBE(probe)
+        {
+            env->uReflectionProbes[iReflectionProbe] = (r3d_shader_block_env_probe_t) {
+                .position = probe->position,
+                .falloff  = probe->falloff,
+                .range    = probe->range,
+                .layer    = probe->layer,
+            };
+            if (++iReflectionProbe >= R3D_HINT(R3D_HINT_PROBE_REFLECTION_MAX_ACTIVE))
+            {
+                break;
+            }
+        }
+
+        env->uAmbient.rotation   = background->rotation;
+        env->uAmbient.color      = r3d_color_to_vec4(ambient->color);
+        env->uAmbient.energy     = ambient->energy;
+        env->uAmbient.irradiance = (int)ambient->map.irradiance - 1;
+        env->uAmbient.prefilter  = (int)ambient->map.prefilter - 1;
+
+        env->uNumIlluminationProbes = iIlluminationProbe;
+        env->uNumReflectionProbes   = iReflectionProbe;
+        env->uNumPrefilterLevels    = r3d_get_mip_levels_1d(R3D_HINT(R3D_HINT_IBL_PREFILTER_SIZE));
+
+        r3d_shader_set_uniform_block(R3D_SHADER_BLOCK_ENV, env, false);
     }
-
-    env.uAmbient.rotation = background->rotation;
-    env.uAmbient.color = r3d_color_to_vec4(ambient->color);
-    env.uAmbient.energy = ambient->energy;
-    env.uAmbient.irradiance = (int)ambient->map.irradiance - 1;
-    env.uAmbient.prefilter = (int)ambient->map.prefilter - 1;
-
-    env.uNumPrefilterLevels = r3d_get_mip_levels_1d(R3D_HINT(R3D_HINT_IBL_PREFILTER_SIZE));
-    env.uNumProbes = iProbe;
-
-    r3d_shader_set_uniform_block(R3D_SHADER_BLOCK_ENV, &env, false);
 }
 
 void upload_fx_block(void)
@@ -1142,7 +1168,7 @@ void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, r3
     }
 }
 
-void raster_probe_forward(const r3d_render_call_t* call, const r3d_env_probe_t* probe, int face)
+void raster_probe_forward(const r3d_render_call_t* call, const R3D_Probe* probe, const r3d_env_probe_job_t* job, int face)
 {
     assert(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
 
@@ -1166,9 +1192,9 @@ void raster_probe_forward(const r3d_render_call_t* call, const r3d_env_probe_t* 
 
     R3D_SHADER_SET_MAT4_SELECT(scene.probeForward, shader, uMatModel, group->transform);
     R3D_SHADER_SET_MAT4_SELECT(scene.probeForward, shader, uMatNormal, matNormal);
-    R3D_SHADER_SET_MAT4_SELECT(scene.probeForward, shader, uMatView, probe->view[face]);
-    R3D_SHADER_SET_MAT4_SELECT(scene.probeForward, shader, uMatInvView, probe->invView[face]);
-    R3D_SHADER_SET_MAT4_SELECT(scene.probeForward, shader, uMatViewProj, probe->viewProj[face]);
+    R3D_SHADER_SET_MAT4_SELECT(scene.probeForward, shader, uMatView, job->view[face]);
+    R3D_SHADER_SET_MAT4_SELECT(scene.probeForward, shader, uMatInvView, job->invView[face]);
+    R3D_SHADER_SET_MAT4_SELECT(scene.probeForward, shader, uMatViewProj, job->viewProj[face]);
 
     /* --- Send skinning related data --- */
 
@@ -1233,7 +1259,7 @@ void raster_probe_forward(const r3d_render_call_t* call, const r3d_env_probe_t* 
     }
 }
 
-void raster_probe_unlit(const r3d_render_call_t* call, const r3d_env_probe_t* probe, int face)
+void raster_probe_unlit(const r3d_render_call_t* call, const R3D_Probe* probe, const r3d_env_probe_job_t* job, int face)
 {
     assert(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
 
@@ -1252,9 +1278,9 @@ void raster_probe_unlit(const r3d_render_call_t* call, const r3d_env_probe_t* pr
 
     R3D_SHADER_SET_MAT4_SELECT(scene.probeUnlit, shader, uMatModel, group->transform);
     R3D_SHADER_SET_MAT4_SELECT(scene.probeUnlit, shader, uMatNormal, matNormal);
-    R3D_SHADER_SET_MAT4_SELECT(scene.probeUnlit, shader, uMatView, probe->view[face]);
-    R3D_SHADER_SET_MAT4_SELECT(scene.probeUnlit, shader, uMatInvView, probe->invView[face]);
-    R3D_SHADER_SET_MAT4_SELECT(scene.probeUnlit, shader, uMatViewProj, probe->viewProj[face]);
+    R3D_SHADER_SET_MAT4_SELECT(scene.probeUnlit, shader, uMatView, job->view[face]);
+    R3D_SHADER_SET_MAT4_SELECT(scene.probeUnlit, shader, uMatInvView, job->invView[face]);
+    R3D_SHADER_SET_MAT4_SELECT(scene.probeUnlit, shader, uMatViewProj, job->viewProj[face]);
 
     /* --- Send skinning related data --- */
 
@@ -1688,49 +1714,43 @@ void pass_scene_probes(void)
     const R3D_EnvBackground* bg = &R3D.environment.background;
     const R3D_EnvFog* fog = &R3D.environment.fog;
 
-    R3D_ENV_PROBE_FOR_EACH_VISIBLE(probe)
+    R3D_ENV_FOR_EACH_PROBE_JOB(job)
     {
-        if (!r3d_env_probe_should_be_updated(probe, true))
-        {
-            continue;
-        }
+        R3D_Probe* probe = r3d_env_probe_get(job->probeType, job->probeIndex);
 
         for (int iFace = 0; iFace < 6; iFace++)
         {
-            /* --- Generates the list of visible groups for the current face of the capture --- */
-
-            const R3D_Frustum* frustum = &probe->frustum[iFace];
+            // Generates the list of visible groups for the current face of the capture
+            const R3D_Frustum* frustum = &job->frustum[iFace];
             r3d_render_cull_groups(frustum);
 
-            /* --- Render scene --- */
-
+            // Render scene
             r3d_driver_enable(GL_STENCIL_TEST);
             r3d_driver_enable(GL_DEPTH_TEST);
             r3d_driver_enable(GL_BLEND);
 
             r3d_driver_set_depth_mask(GL_TRUE);
 
-            r3d_env_capture_bind_fbo(iFace, 0);
+            r3d_env_probe_capture_bind_fbo(probe->type, iFace);
             glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
             R3D_RENDER_FOR_EACH(call, true, frustum, R3D_RENDER_PACKLIST_PROBE)
             {
                 if (call->mesh.material.unlit)
                 {
-                    raster_probe_unlit(call, probe, iFace);
+                    raster_probe_unlit(call, probe, job, iFace);
                 }
                 else
                 {
                     upload_light_array_block_for_mesh(call, probe->shadows);
-                    raster_probe_forward(call, probe, iFace);
+                    raster_probe_forward(call, probe, job, iFace);
                 }
             }
 
             r3d_driver_set_depth_offset(0.0f, 0.0f);
             r3d_driver_set_depth_range(0.0f, 1.0f);
 
-            /* --- Render background --- */
-
+            // Render background
             r3d_driver_disable(GL_STENCIL_TEST);
             r3d_driver_disable(GL_CULL_FACE);
             r3d_driver_disable(GL_BLEND);
@@ -1746,8 +1766,8 @@ void pass_scene_probes(void)
                 R3D_SHADER_SET_FLOAT(scene.skybox, uEnergy, bg->energy);
                 R3D_SHADER_SET_FLOAT(scene.skybox, uLod, bg->skyBlur * lod);
                 R3D_SHADER_SET_VEC4(scene.skybox, uRotation, bg->rotation);
-                R3D_SHADER_SET_MAT4(scene.skybox, uMatInvView, probe->invView[iFace]);
-                R3D_SHADER_SET_MAT4(scene.skybox, uMatInvProj, probe->invProj);
+                R3D_SHADER_SET_MAT4(scene.skybox, uMatInvView, job->invView[iFace]);
+                R3D_SHADER_SET_MAT4(scene.skybox, uMatInvProj, job->invProj);
             }
             else
             {
@@ -1764,18 +1784,20 @@ void pass_scene_probes(void)
             R3D_RENDER_SCREEN();
         }
 
-        /* --- Generate irradiance and prefilter maps --- */
-
-        r3d_env_capture_gen_mipmaps();
-
-        if (probe->irradiance >= 0)
+        // Generate irradiance/prefilter map
+        GLuint captureTex = r3d_env_probe_capture_get(probe->type);
+        int captureSize   = r3d_env_probe_capture_size(probe->type);
+        switch (probe->type)
         {
-            r3d_pass_prepare_irradiance(probe->irradiance, r3d_env_capture_get(), R3D_HINT(R3D_HINT_PROBE_CAPTURE_SIZE));
-        }
-
-        if (probe->prefilter >= 0)
-        {
-            r3d_pass_prepare_prefilter(probe->prefilter, r3d_env_capture_get(), R3D_HINT(R3D_HINT_PROBE_CAPTURE_SIZE));
+        case R3D_PROBE_ILLUMINATION:
+            r3d_pass_prepare_irradiance(probe->layer, captureTex, captureSize);
+            break;
+        case R3D_PROBE_REFLECTION:
+            r3d_env_probe_capture_gen_mipmaps(probe->type);
+            r3d_pass_prepare_prefilter(probe->layer, captureTex, captureSize);
+            break;
+        default:
+            assert(false);
         }
 
         r3d_target_invalidate_cache(); //< The IBL gen functions bind framebuffers; resetting them prevents any problems

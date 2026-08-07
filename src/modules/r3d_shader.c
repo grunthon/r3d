@@ -849,14 +849,16 @@ bool r3d_shader_load_scene_geometry(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_scene_forward(r3d_shader_custom_t* custom)
 {
-    char defNumLights[32] = {0};
-    char defNumProbes[32] = {0};
+    char defNumIlluminationProbes[32] = {0};
+    char defNumReflectionProbes[32]   = {0};
+    char defNumLights[32]             = {0};
 
+    r3d_string_format(defNumIlluminationProbes, sizeof(defNumIlluminationProbes), "MAX_ILLUMINATION_PROBES %i", R3D_SHADER_PROBE_ILLUMINATION_UBO_CAP);
+    r3d_string_format(defNumReflectionProbes, sizeof(defNumReflectionProbes), "MAX_REFLECTION_PROBES %i", R3D_SHADER_PROBE_REFLECTION_UBO_CAP);
     r3d_string_format(defNumLights, sizeof(defNumLights), "MAX_LIGHTS_FORWARD %i", R3D_SHADER_LIGHT_FORWARD_UBO_CAP);
-    r3d_string_format(defNumProbes, sizeof(defNumProbes), "MAX_PROBES %i", R3D_SHADER_PROBE_UBO_CAP);
 
     const char* VS_DEFINES[] = {"STAGE_VERT", "FORWARD", defNumLights};
-    const char* FS_DEFINES[] = {"STAGE_FRAG", "FORWARD", defNumLights, defNumProbes};
+    const char* FS_DEFINES[] = {"STAGE_FRAG", "FORWARD", defNumLights, defNumIlluminationProbes, defNumReflectionProbes};
 
     const char* userCode = custom ? custom->program->userCode : NULL;
 
@@ -1108,14 +1110,16 @@ bool r3d_shader_load_scene_depth_cube(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_scene_probe_forward(r3d_shader_custom_t* custom)
 {
-    char defNumLights[32] = {0};
-    char defNumProbes[32] = {0};
+    char defNumIlluminationProbes[32] = {0};
+    char defNumReflectionProbes[32]   = {0};
+    char defNumLights[32]             = {0};
 
+    r3d_string_format(defNumIlluminationProbes, sizeof(defNumIlluminationProbes), "MAX_ILLUMINATION_PROBES %i", R3D_SHADER_PROBE_ILLUMINATION_UBO_CAP);
+    r3d_string_format(defNumReflectionProbes, sizeof(defNumReflectionProbes), "MAX_REFLECTION_PROBES %i", R3D_SHADER_PROBE_REFLECTION_UBO_CAP);
     r3d_string_format(defNumLights, sizeof(defNumLights), "MAX_LIGHTS_FORWARD %i", R3D_SHADER_LIGHT_FORWARD_UBO_CAP);
-    r3d_string_format(defNumProbes, sizeof(defNumProbes), "MAX_PROBES %i", R3D_SHADER_PROBE_UBO_CAP);
 
     const char* VS_DEFINES[] = {"STAGE_VERT", "PROBE", "PROBE_FORWARD", defNumLights};
-    const char* FS_DEFINES[] = {"STAGE_FRAG", "PROBE", "PROBE_FORWARD", defNumLights, defNumProbes};
+    const char* FS_DEFINES[] = {"STAGE_FRAG", "PROBE", "PROBE_FORWARD", defNumLights, defNumIlluminationProbes, defNumReflectionProbes};
 
     const char* userCode = custom ? custom->program->userCode : NULL;
 
@@ -1305,10 +1309,13 @@ bool r3d_shader_load_scene_decal(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_deferred_ambient(r3d_shader_custom_t* custom)
 {
-    char defNumProbes[32] = {0};
-    r3d_string_format(defNumProbes, sizeof(defNumProbes), "MAX_PROBES %i", R3D_SHADER_PROBE_UBO_CAP);
+    char defNumIlluminationProbes[32] = {0};
+    char defNumReflectionProbes[32]   = {0};
 
-    const char* FS_DEFINES[] = {defNumProbes};
+    r3d_string_format(defNumIlluminationProbes, sizeof(defNumIlluminationProbes), "MAX_ILLUMINATION_PROBES %i", R3D_SHADER_PROBE_ILLUMINATION_UBO_CAP);
+    r3d_string_format(defNumReflectionProbes, sizeof(defNumReflectionProbes), "MAX_REFLECTION_PROBES %i", R3D_SHADER_PROBE_REFLECTION_UBO_CAP);
+
+    const char* FS_DEFINES[] = {defNumIlluminationProbes, defNumReflectionProbes};
 
     shader_source_desc_t desc = {
         .vsTemplate    = SCREEN_VERT,

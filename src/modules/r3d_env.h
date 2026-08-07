@@ -12,85 +12,72 @@
 #include <r3d/r3d_frustum.h>
 #include <r3d/r3d_probe.h>
 #include <raylib.h>
+#include <stdint.h>
 #include <glad.h>
 
-#include "../common/r3d_pool.h"
+#include "../common/r3d_list.h"
 
 // ========================================
 // HELPER MACROS
 // ========================================
 
-#define R3D_ENV_PROBE_FOR_EACH(varname) \
-    R3D_POOL_FOR_EACH(R3D_MOD_ENV.pool, r3d_env_probe_t, varname)
+#define R3D_ENV_FOR_EACH_ILLUMINATION_PROBE(probe) \
+    R3D_LIST_FOR_EACH(R3D_MOD_ENV.listProbeIllumination, R3D_Probe, probe)
 
-#define R3D_ENV_PROBE_FOR_EACH_VISIBLE(varname)                 \
-    for (uint32_t _i = 0; _i < R3D_MOD_ENV.visibleCount; _i++)  \
-        for (r3d_env_probe_t* varname = r3d_pool_get(           \
-                 R3D_MOD_ENV.pool,                              \
-                 R3D_MOD_ENV.visible[_i]);                      \
-             varname; varname = NULL)
+#define R3D_ENV_FOR_EACH_REFLECTION_PROBE(probe) \
+    R3D_LIST_FOR_EACH(R3D_MOD_ENV.listProbeReflection, R3D_Probe, probe)
+
+#define R3D_ENV_FOR_EACH_PROBE_JOB(job) \
+    R3D_LIST_FOR_EACH(R3D_MOD_ENV.listProbeJobs, r3d_env_probe_job_t, job)
 
 // ========================================
 // TYPES
 // ========================================
 
 typedef struct {
-    R3D_ProbeUpdateMode updateMode;
-    bool matrixShouldBeUpdated;
-    bool sceneShouldBeUpdated;
-} r3d_env_probe_state_t;
+    R3D_Frustum   frustum[6];
+    Matrix        view[6];
+    Matrix        viewProj[6];
+    Matrix        invView[6];
+    Matrix        invProj;
+    R3D_ProbeType probeType;
+    int           probeIndex;
+} r3d_env_probe_job_t;
 
 typedef struct {
-    r3d_env_probe_state_t state;
-    R3D_Frustum frustum[6];
-    Matrix view[6];
-    Matrix viewProj[6];
-    Matrix invView[6];
-    Matrix invProj;
+    GLuint      framebuffer;
+    GLuint      texture;        // GL_TEXTURE_CUBE_MAP_ARRAY handle, 0 until first expand
+    r3d_list_t* freeList;       // list<int> of currently free layer indices
+    r3d_list_t* validity;       // list<bool> of validity state for each layer
+    uint32_t    layerCount;     // total number of allocated layers (GL side)
+    int         size;           // cubemap face resolution
+    int         mipLevels;      // 1 if not mipmapped
+} r3d_env_cubemap_array_t;
 
-    R3D_ProbeFlags flags;
-    int irradiance;     // Layer index, -1 if unused
-    int prefilter;      // Layer index, -1 if unused
-
-    Vector3 position;
-    float falloff;
-    float range;
-
-    bool interior;
-    bool shadows;
-    bool enabled;
-} r3d_env_probe_t;
-
-// Cubemap layer pool (manages reusable texture layers)
 typedef struct {
-    int* freeLayers;        // Stack of available layer indices
-    int freeCount;          // Number of free layers
-    int freeCapacity;       // Capacity of freeLayers array
-    int totalLayers;        // Total allocated layers
-} r3d_env_layer_pool_t;
+    GLuint      framebuffer;
+    GLuint      texture;        // GL_TEXTURE_CUBE_MAP handle
+    GLuint      depthStencil;   // depth-stencil renderbuffer used while capturing the scene
+    int         size;           // cubemap face resolution
+    int         mipLevels;      // 1 if not mipmapped
+} r3d_env_cubemap_t;
 
 // ========================================
 // MODULE STATE
 // ========================================
 
 extern struct r3d_env {
-    GLuint workFramebuffer;
-    GLuint irradianceArray;
-    GLuint prefilterArray;
 
-    GLuint captureFramebuffer;
-    GLuint captureDepth;
-    GLuint captureCube;
+    r3d_env_cubemap_t irradianceCapture;
+    r3d_env_cubemap_t prefilterCapture;
 
-    r3d_env_layer_pool_t irradiancePool;
-    r3d_env_layer_pool_t prefilterPool;
+    r3d_env_cubemap_array_t irradiance;
+    r3d_env_cubemap_array_t prefilter;
 
-    bool captureCubeAllocated;
+    r3d_list_t* listProbeIllumination;
+    r3d_list_t* listProbeReflection;
+    r3d_list_t* listProbeJobs;
 
-    r3d_pool_t* pool;           // Owns all r3d_env_probe_t objects
-    R3D_Probe* visible;         // Handles of probes visible this frame
-    uint32_t visibleCount;
-    uint32_t visibleCapacity;
 } R3D_MOD_ENV;
 
 // ========================================
@@ -103,26 +90,26 @@ bool r3d_env_init(void);
 /* Deinitialize module (called once during R3D_Close) */
 void r3d_env_quit(void);
 
-/* Create a new probe of the given type */
-R3D_Probe r3d_env_probe_new(R3D_ProbeFlags type);
+/**/
+void r3d_env_push_probe(const R3D_Probe* probe, bool updateProbe);
 
-/* Delete a probe and return it to the free list */
-void r3d_env_probe_delete(R3D_Probe index);
+/**/
+R3D_Probe* r3d_env_probe_get(R3D_ProbeType type, int probeIndex);
 
-/* Check whether a probe handle is valid */
-bool r3d_env_probe_is_valid(R3D_Probe index);
+/* Bind probe capture framebuffer for the given face */
+void r3d_env_probe_capture_bind_fbo(R3D_ProbeType type, int face);
 
-/* Get internal probe structure (returns NULL if invalid) */
-r3d_env_probe_t* r3d_env_probe_get(R3D_Probe index);
+/* Generate the mip chain of the probe capture */
+void r3d_env_probe_capture_gen_mipmaps(R3D_ProbeType type);
 
-/* Update probe states and collect visible ones (can indicate if probes influcences are visible) */
-void r3d_env_probe_update_and_cull(const R3D_Frustum* viewFrustum, bool* hasVisibleProbes);
+/* Get probe capture cubemap texture ID */
+GLuint r3d_env_probe_capture_get(R3D_ProbeType type);
 
-/* Check if probe should be rendered (updates state if willBeUpdated is true) */
-bool r3d_env_probe_should_be_updated(r3d_env_probe_t* probe, bool willBeUpdated);
+/* Get probe capture cubemap texture size */
+int r3d_env_probe_capture_size(R3D_ProbeType type);
 
 /* Reserve a new irradiance map layer (returns -1 on failure) */
-int r3d_env_irradiance_reserve_layer(void);
+int r3d_env_irradiance_acquire_layer(void);
 
 /* Release an irradiance map layer */
 void r3d_env_irradiance_release_layer(int layer);
@@ -134,7 +121,7 @@ void r3d_env_irradiance_bind_fbo(int layer, int face);
 GLuint r3d_env_irradiance_get(void);
 
 /* Reserve a new prefilter map layer (returns -1 on failure) */
-int r3d_env_prefilter_reserve_layer(void);
+int r3d_env_prefilter_acquire_layer(void);
 
 /* Release a prefilter map layer */
 void r3d_env_prefilter_release_layer(int layer);
@@ -145,27 +132,29 @@ void r3d_env_prefilter_bind_fbo(int layer, int face, int mipLevel);
 /* Get prefiltered cubemap array texture ID */
 GLuint r3d_env_prefilter_get(void);
 
-/* Bind capture framebuffer for the given face and mip level */
-void r3d_env_capture_bind_fbo(int face, int mipLevel);
-
-/* Generate mipmaps for the capture target */
-void r3d_env_capture_gen_mipmaps(void);
-
-/* Get capture cubemap texture ID */
-GLuint r3d_env_capture_get(void);
-
 // ========================================
 // INLINE QUERIES
 // ========================================
 
-static inline bool r3d_env_probe_has_visible(void)
+static inline bool r3d_env_has_illumination_probes(void)
 {
-    return R3D_MOD_ENV.visibleCount > 0;
+    return !R3D_LIST_EMPTY(R3D_MOD_ENV.listProbeIllumination);
 }
 
-static inline bool r3d_env_probe_has_any(void)
+static inline bool r3d_env_has_reflection_probes(void)
 {
-    return R3D_MOD_ENV.pool->count > 0;
+    return !R3D_LIST_EMPTY(R3D_MOD_ENV.listProbeReflection);
+}
+
+static inline bool r3d_env_has_any_probes(void)
+{
+    return r3d_env_has_illumination_probes()
+        || r3d_env_has_reflection_probes();
+}
+
+static inline bool r3d_env_has_any_probe_jobs(void)
+{
+    return !R3D_LIST_EMPTY(R3D_MOD_ENV.listProbeJobs);
 }
 
 #endif // R3D_MODULE_ENV_H

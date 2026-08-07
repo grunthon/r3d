@@ -6,25 +6,27 @@
  * For conditions of distribution and use, see accompanying LICENSE file.
  */
 
-struct E_Ambient {
-    vec4 rotation;
-    vec4 color;
-    float energy;
-    int irradiance;
-    int prefilter;
-};
-
 struct E_Probe {
-    vec3 position;
+    vec3  position;
     float falloff;
     float range;
-    int irradiance;
-    int prefilter;
+    int   layer;
+};
+
+struct E_Ambient {
+    vec4  rotation;
+    vec4  color;
+    float energy;
+    int   irradiance;
+    int   prefilter;
 };
 
 layout(std140) uniform EnvBlock {
-    E_Probe uProbes[MAX_PROBES];
+    E_Probe   uIlluminationProbes[MAX_ILLUMINATION_PROBES];
+    E_Probe   uReflectionProbes[MAX_REFLECTION_PROBES];
     E_Ambient uAmbient;
+
+    int uNumIlluminationProbes;
+    int uNumReflectionProbes;
     int uNumPrefilterLevels;
-    int uNumProbes;
 };

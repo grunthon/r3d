@@ -16,6 +16,7 @@
 #include "./r3d_camera.h"
 #include "./r3d_model.h"
 #include "./r3d_decal.h"
+#include "./r3d_probe.h"
 #include <raylib.h>
 
 /**
@@ -160,6 +161,21 @@ R3DAPI void R3D_PushLightEx(R3D_Light light, R3D_ShadowMap map, bool updateShado
  * @param count Number of lights in the array.
  */
 R3DAPI void R3D_PushLights(R3D_Light* lights, int count);
+
+/**
+ * @brief Queues a probe to be rendered for the current frame.
+ *
+ * The probe is submitted for rendering during R3D_End(), and must be pushed
+ * again on every frame between R3D_Begin() and R3D_End() to remain active.
+ *
+ * @param probe The probe data to submit (see R3D_Probe).
+ * @param updateProbe Whether the probe's capture should be re-rendered this frame.
+ *                    If false, the previously captured content is reused.
+ *                    Note: the very first time a given probe is used, it is always
+ *                    captured regardless of this flag, so static probes can safely
+ *                    pass false from the start and still get valid data.
+ */
+R3DAPI void R3D_PushProbe(R3D_Probe probe, bool updateProbe);
 
 /**
  * @brief Queues a mesh draw command with position and uniform scale.

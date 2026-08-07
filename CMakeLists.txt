@@ -51,13 +51,14 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${R3D_ARCHIVE_OUTPUT_DIRECTORY})
 # ========================================
 
 set(R3D_CONFIG_DEFAULTS
-    R3D_MAX_SHADER_CODE_LENGTH          16384
-    R3D_MAX_SHADER_SAMPLERS             4
-    R3D_MAX_SHADER_UNIFORMS             16
-    R3D_MAX_SCREEN_SHADERS              4       #< Max possible in each screen shader chain hook
-    R3D_SHADER_LIGHT_FORWARD_UBO_CAP    32
-    R3D_SHADER_PROBE_UBO_CAP            16
-    R3D_ENABLE_TRACELOG                 1       #< Log level can be set via raylib
+    R3D_MAX_SHADER_CODE_LENGTH              16384
+    R3D_MAX_SHADER_SAMPLERS                 4
+    R3D_MAX_SHADER_UNIFORMS                 16
+    R3D_MAX_SCREEN_SHADERS                  4       #< Max possible in each screen shader chain hook
+    R3D_SHADER_LIGHT_FORWARD_UBO_CAP        32
+    R3D_SHADER_PROBE_ILLUMINATION_UBO_CAP   64
+    R3D_SHADER_PROBE_REFLECTION_UBO_CAP     16
+    R3D_ENABLE_TRACELOG                     1       #< Log level can be set via raylib
 )
 
 list(LENGTH R3D_CONFIG_DEFAULTS _len)
