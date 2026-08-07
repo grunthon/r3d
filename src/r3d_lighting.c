@@ -18,20 +18,6 @@
 #include "./common/r3d_math.h"
 
 // ========================================
-// HELPER MACROS
-// ========================================
-
-#define GET_LIGHT_OR_RETURN(var_name, id, ...)  \
-    r3d_light_t* var_name;                      \
-    do {                                        \
-        var_name = r3d_light_get(id);           \
-        if (var_name == NULL) {                 \
-            R3D_TRACELOG(LOG_ERROR, "Invalid light [ID %i] given to '%s'", id, __func__);  \
-            return __VA_ARGS__;                 \
-        }                                       \
-    } while(0)
-
-// ========================================
 // PUBLIC API
 // ========================================
 
