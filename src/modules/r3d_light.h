@@ -70,22 +70,25 @@ typedef struct {
     bool valid;             // false as long nothing was rendered for this layer
 } r3d_light_shadow_cache_t;
 
+typedef struct {
+    GLuint      framebuffer;
+    GLuint      texture;        // GL_TEXTURE_2D_ARRAY or GL_TEXTURE_CUBE_MAP_ARRAY handle, 0 until first expand
+    GLenum      target;         // GL_TEXTURE_2D_ARRAY (dir/spot) or GL_TEXTURE_CUBE_MAP_ARRAY (omni)
+    r3d_list_t* freeList;       // list<int> of currently free layer indices
+    r3d_list_t* cache;          // list<r3d_light_shadow_cache_t> indexed by layer
+    uint32_t    layerCount;     // total number of allocated layers (GL side)
+    int         size;           // shadow map resolution
+    int         growth;         // number of layers added per expand
+} r3d_light_shadow_array_t;
+
 // ========================================
 // MODULE STATE
 // ========================================
 
 extern struct r3d_light {
-
-    r3d_list_t* listShadowFreeds[R3D_LIGHT_TYPE_COUNT];
-    r3d_list_t* listShadowCache[R3D_LIGHT_TYPE_COUNT];
+    r3d_light_shadow_array_t shadowArrays[R3D_LIGHT_TYPE_COUNT];
     r3d_list_t* listShadowJobs;
     r3d_list_t* listLightData;
-
-    GLuint   shadowArrays[R3D_LIGHT_TYPE_COUNT];    //< Shadow texture arrays
-    uint32_t shadowLayers[R3D_LIGHT_TYPE_COUNT];    //< Actual number of allocated layers
-    uint32_t shadowCounts[R3D_LIGHT_TYPE_COUNT];    //< Actuel number of used layers
-    GLuint   workFramebuffer;
-
 } R3D_MOD_LIGHT;
 
 // ========================================
