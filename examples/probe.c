@@ -1,5 +1,3 @@
-#include "r3d/r3d_probe.h"
-#include "raylib.h"
 #include <r3d/r3d.h>
 #include <raymath.h>
 
