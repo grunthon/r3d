@@ -27,16 +27,6 @@
 #define SHADOW_SPOT_LAYER_GROWTH    4
 #define SHADOW_OMNI_LAYER_GROWTH    4
 
-// ========================================
-// MODULE STATE
-// ========================================
-
-struct r3d_light R3D_MOD_LIGHT;
-
-// ========================================
-// CONSTANTS
-// ========================================
-
 static const GLenum SHADOW_TEXTURE_TARGET[] = {
     [R3D_LIGHT_DIR]  = GL_TEXTURE_2D_ARRAY,
     [R3D_LIGHT_SPOT] = GL_TEXTURE_2D_ARRAY,
@@ -48,6 +38,12 @@ static const int SHADOW_LAYER_GROWTH[] = {
     [R3D_LIGHT_SPOT] = SHADOW_SPOT_LAYER_GROWTH,
     [R3D_LIGHT_OMNI] = SHADOW_OMNI_LAYER_GROWTH,
 };
+
+// ========================================
+// MODULE STATE
+// ========================================
+
+struct r3d_light R3D_MOD_LIGHT;
 
 // ========================================
 // SHADOW ARRAY FUNCTIONS
