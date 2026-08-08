@@ -78,10 +78,10 @@ r3d_env_cubemap_array_t cubemap_array_create(int size, bool mipmapped)
 {
     r3d_env_cubemap_array_t arr = {0};
 
-    arr.freeList  = R3D_LIST_CREATE(int,  R3D_ENV_CUBEMAP_ARRAY_INIT_CAPACITY);
-    arr.validity  = R3D_LIST_CREATE(bool, R3D_ENV_CUBEMAP_ARRAY_INIT_CAPACITY);
-    arr.size      = size;
-    arr.mipLevels = mipmapped ? r3d_get_mip_levels_1d(size) : 1;
+    arr.freeList    = R3D_LIST_CREATE(int, R3D_ENV_CUBEMAP_ARRAY_INIT_CAPACITY);
+    arr.layerStates = R3D_LIST_CREATE(r3d_env_cubemap_layer_state_t, R3D_ENV_CUBEMAP_ARRAY_INIT_CAPACITY);
+    arr.size        = size;
+    arr.mipLevels   = mipmapped ? r3d_get_mip_levels_1d(size) : 1;
 
     glGenFramebuffers(1, &arr.framebuffer);
 
@@ -93,7 +93,7 @@ void cubemap_array_destroy(r3d_env_cubemap_array_t* arr)
     if (arr->texture != 0)     glDeleteTextures(1, &arr->texture);
     if (arr->framebuffer != 0) glDeleteFramebuffers(1, &arr->framebuffer);
 
-    R3D_LIST_DESTROY(arr->validity);
+    R3D_LIST_DESTROY(arr->layerStates);
     R3D_LIST_DESTROY(arr->freeList);
 
     *arr = (r3d_env_cubemap_array_t){0};
@@ -139,8 +139,8 @@ bool cubemap_array_expand(r3d_env_cubemap_array_t* arr, uint32_t growth)
     }
     arr->texture = newTexture;
 
-    // Resize validity cache (new entries are zeroed)
-    R3D_LIST_RESIZE(arr->validity, newLayerCount);
+    // Resize layer states cache (new entries are zeroed)
+    R3D_LIST_RESIZE(arr->layerStates, newLayerCount);
 
     // Newly allocated layers become available
     for (uint32_t layer = arr->layerCount; layer < newLayerCount; layer++)
@@ -166,12 +166,20 @@ int cubemap_array_acquire_layer(r3d_env_cubemap_array_t* arr)
 
     int layer = -1;
     R3D_LIST_POP(arr->freeList, &layer);
+
+    r3d_env_cubemap_layer_state_t* state = &R3D_LIST_GET(arr->layerStates, r3d_env_cubemap_layer_state_t, layer);
+    state->acquired = true;
+    state->valid    = false;
+
     return layer;
 }
 
 void cubemap_array_release_layer(r3d_env_cubemap_array_t* arr, int layer)
 {
-    R3D_LIST_SET(arr->validity, bool, layer, false);
+    r3d_env_cubemap_layer_state_t* state = &R3D_LIST_GET(arr->layerStates, r3d_env_cubemap_layer_state_t, layer);
+    state->acquired = false;
+    state->valid    = false;
+
     R3D_LIST_PUSH(arr->freeList, layer);
 }
 
@@ -291,16 +299,17 @@ static void probe_job_init(r3d_env_probe_job_t* job, const R3D_Probe* probe)
     job->probeType = probe->type;
     job->interior  = probe->interior;
     job->shadows   = probe->shadows;
-    job->layer     = probe->layer;
+    job->layer     = (int)probe->handle - 1;
 }
 
 static void probe_push(const R3D_Probe* probe, r3d_env_cubemap_array_t* cubemapArray, r3d_list_t* targetList, bool updateProbe)
 {
     if (probe->range <= 0.0f) return;
 
-    bool valid = R3D_LIST_GET(cubemapArray->validity, bool, probe->layer);
-    bool mustCapture = !valid || updateProbe;
+    int layer = (int)probe->handle - 1;
+    r3d_env_cubemap_layer_state_t* state = &R3D_LIST_GET(cubemapArray->layerStates, r3d_env_cubemap_layer_state_t, layer);
 
+    bool mustCapture = !state->valid || updateProbe;
     bool visible = R3D_FrustumIntersectsSphere(&R3D.viewState.frustum, probe->position, probe->range);
 
     if (mustCapture)
@@ -314,7 +323,7 @@ static void probe_push(const R3D_Probe* probe, r3d_env_cubemap_array_t* cubemapA
     {
         R3D_Probe p = {
             .type     = probe->type,
-            .layer    = probe->layer,
+            .handle   = probe->handle,
             .position = probe->position,
             .falloff  = R3D_MAX(probe->falloff, 1e-4f),
             .range    = probe->range,
@@ -362,10 +371,10 @@ void r3d_env_quit(void)
 
 void r3d_env_push_probe(const R3D_Probe* probe, bool updateProbe)
 {
-    if (!r3d_env_probe_layer_is_valid(probe->type, probe->layer))
+    if (!r3d_env_probe_layer_is_valid(probe->type, (int)probe->handle - 1))
     {
         const char* pType = r3d_env_probe_type_name(probe->type);
-        R3D_TRACELOG(LOG_WARNING, "Invalid pushed probe (type: %s - layer: %d)", pType, probe->layer);
+        R3D_TRACELOG(LOG_WARNING, "Invalid pushed probe (type: %s - handle: %d)", pType, probe->handle);
 
         return;
     }
@@ -408,22 +417,18 @@ void r3d_env_probe_clear(void)
 
 bool r3d_env_probe_layer_is_valid(R3D_ProbeType type, int layer)
 {
-    r3d_env_cubemap_array_t* arr = NULL;
-
     switch (type)
     {
     case R3D_PROBE_ILLUMINATION:
-        arr = &R3D_MOD_ENV.irradiance;
-        break;
+        return r3d_env_irradiance_layer_is_valid(layer);
     case R3D_PROBE_REFLECTION:
-        arr = &R3D_MOD_ENV.prefilter;
-        break;
+        return r3d_env_prefilter_layer_is_valid(layer);
     default:
         assert(false);
         break;
     }
 
-    return (layer >= 0 || layer < arr->layerCount);
+    return false;
 }
 
 void r3d_env_probe_capture_bind_fbo(R3D_ProbeType type, int face)
@@ -496,7 +501,7 @@ int r3d_env_irradiance_acquire_layer(void)
 
 void r3d_env_irradiance_release_layer(int layer)
 {
-    if (layer >= 0)
+    if (r3d_env_irradiance_layer_is_valid(layer))
     {
         cubemap_array_release_layer(&R3D_MOD_ENV.irradiance, layer);
     }
@@ -506,7 +511,8 @@ void r3d_env_irradiance_bind_fbo(int layer, int face)
 {
     r3d_env_cubemap_array_t* arr = &R3D_MOD_ENV.irradiance;
 
-    R3D_LIST_SET(arr->validity, bool, layer, true);
+    r3d_env_cubemap_layer_state_t* state = &R3D_LIST_GET(arr->layerStates, r3d_env_cubemap_layer_state_t, layer);
+    state->valid = true;
 
     glBindFramebuffer(GL_FRAMEBUFFER, arr->framebuffer);
     glFramebufferTextureLayer(
@@ -515,6 +521,19 @@ void r3d_env_irradiance_bind_fbo(int layer, int face)
     );
 
     glViewport(0, 0, arr->size, arr->size);
+}
+
+bool r3d_env_irradiance_layer_is_valid(int layer)
+{
+    r3d_env_cubemap_array_t* arr = &R3D_MOD_ENV.irradiance;
+
+    if (layer < 0 || (uint32_t)layer >= arr->layerCount)
+    {
+        return false;
+    }
+
+    r3d_env_cubemap_layer_state_t* state = &R3D_LIST_GET(arr->layerStates, r3d_env_cubemap_layer_state_t, layer);
+    return state->acquired;
 }
 
 GLuint r3d_env_irradiance_get(void)
@@ -529,7 +548,7 @@ int r3d_env_prefilter_acquire_layer(void)
 
 void r3d_env_prefilter_release_layer(int layer)
 {
-    if (layer >= 0)
+    if (r3d_env_prefilter_layer_is_valid(layer))
     {
         cubemap_array_release_layer(&R3D_MOD_ENV.prefilter, layer);
     }
@@ -541,7 +560,8 @@ void r3d_env_prefilter_bind_fbo(int layer, int face, int mipLevel)
 
     assert(mipLevel < arr->mipLevels);
 
-    R3D_LIST_SET(arr->validity, bool, layer, true);
+    r3d_env_cubemap_layer_state_t* state = &R3D_LIST_GET(arr->layerStates, r3d_env_cubemap_layer_state_t, layer);
+    state->valid = true;
 
     glBindFramebuffer(GL_FRAMEBUFFER, arr->framebuffer);
     glFramebufferTextureLayer(
@@ -551,6 +571,19 @@ void r3d_env_prefilter_bind_fbo(int layer, int face, int mipLevel)
 
     int mipSize = arr->size >> mipLevel;
     glViewport(0, 0, mipSize, mipSize);
+}
+
+bool r3d_env_prefilter_layer_is_valid(int layer)
+{
+    r3d_env_cubemap_array_t* arr = &R3D_MOD_ENV.prefilter;
+
+    if (layer < 0 || (uint32_t)layer >= arr->layerCount)
+    {
+        return false;
+    }
+
+    r3d_env_cubemap_layer_state_t* state = &R3D_LIST_GET(arr->layerStates, r3d_env_cubemap_layer_state_t, layer);
+    return state->acquired;
 }
 
 GLuint r3d_env_prefilter_get(void)

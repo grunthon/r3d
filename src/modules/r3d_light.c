@@ -163,13 +163,19 @@ static int shadow_array_acquire_layer(r3d_light_shadow_array_t* arr)
 
     int layer = -1;
     R3D_LIST_POP(arr->freeList, &layer);
+
+    r3d_light_shadow_cache_t* cache = &R3D_LIST_GET(arr->cache, r3d_light_shadow_cache_t, layer);
+    cache->acquired = true;
+    cache->valid    = false;
+
     return layer;
 }
 
 static void shadow_array_release_layer(r3d_light_shadow_array_t* arr, int layer)
 {
     r3d_light_shadow_cache_t* cache = &R3D_LIST_GET(arr->cache, r3d_light_shadow_cache_t, layer);
-    cache->valid = false;
+    cache->acquired = false;
+    cache->valid    = false;
 
     R3D_LIST_PUSH(arr->freeList, layer);
 }
@@ -303,9 +309,11 @@ static void light_dir_push(const R3D_Light* light, const R3D_ShadowMap* map, R3D
         .type        = light->type,
     };
 
-    if (map && map->layer >= 0 && light->range > 0.0f)
+    if (map && light->range > 0.0f)
     {
-        r3d_light_shadow_cache_t* cache = r3d_light_shadow_cache(map->type, map->layer);
+        int mapLayer = (int)map->handle - 1;
+
+        r3d_light_shadow_cache_t* cache = r3d_light_shadow_cache(map->type, mapLayer);
 
         if (!cache->valid || updateShadow)
         {
@@ -319,7 +327,7 @@ static void light_dir_push(const R3D_Light* light, const R3D_ShadowMap* map, R3D
                 .far         = 0.0f,
                 .cullMask    = map->cullMask,
                 .type        = light->type,
-                .shadowLayer = map->layer,
+                .shadowLayer = mapLayer,
                 .layerFace   = 0,
             };
 
@@ -332,7 +340,7 @@ static void light_dir_push(const R3D_Light* light, const R3D_ShadowMap* map, R3D
         data.shadowDepthBias = map->depthBias;
         data.shadowSlopeBias = map->slopeBias;
         data.shadowFar       = cache->far;
-        data.shadowLayer     = map->layer;
+        data.shadowLayer     = mapLayer;
     }
     else
     {
@@ -357,10 +365,12 @@ static void light_spot_push(const R3D_Light* light, const R3D_ShadowMap* map, co
 
     r3d_light_shadow_cache_t* cache = NULL;
     bool mustRenderShadow = false;
+    int  mapLayer = -1;
 
-    if (map && map->layer >= 0)
+    if (map)
     {
-        cache = r3d_light_shadow_cache(map->type, map->layer);
+        mapLayer = (int)map->handle - 1;
+        cache = r3d_light_shadow_cache(map->type, mapLayer);
         mustRenderShadow = !cache->valid || updateShadow;
     }
 
@@ -383,7 +393,7 @@ static void light_spot_push(const R3D_Light* light, const R3D_ShadowMap* map, co
             .far         = 0.0f,
             .cullMask    = map->cullMask,
             .type        = light->type,
-            .shadowLayer = map->layer,
+            .shadowLayer = mapLayer,
             .layerFace   = 0,
         };
 
@@ -410,7 +420,7 @@ static void light_spot_push(const R3D_Light* light, const R3D_ShadowMap* map, co
             .type        = light->type,
         };
 
-        if (map && map->layer >= 0)
+        if (map)
         {
             data.viewProj        = cache->viewProj;
             data.shadowSoftness  = map->softness / (float)R3D_HINT(R3D_HINT_SHADOW_SPOT_SIZE);
@@ -418,7 +428,7 @@ static void light_spot_push(const R3D_Light* light, const R3D_ShadowMap* map, co
             data.shadowDepthBias = map->depthBias;
             data.shadowSlopeBias = map->slopeBias;
             data.shadowFar       = cache->far;
-            data.shadowLayer     = map->layer;
+            data.shadowLayer     = mapLayer;
         }
         else
         {
@@ -435,10 +445,12 @@ static void light_omni_push(const R3D_Light* light, const R3D_ShadowMap* map, co
 
     r3d_light_shadow_cache_t* cache = NULL;
     bool mustRenderShadow = false;
+    int  mapLayer = -1;
 
-    if (map && map->layer >= 0)
+    if (map)
     {
-        cache = r3d_light_shadow_cache(map->type, map->layer);
+        mapLayer = (int)map->handle - 1;
+        cache = r3d_light_shadow_cache(map->type, mapLayer);
         mustRenderShadow = !cache->valid || updateShadow;
     }
 
@@ -465,7 +477,7 @@ static void light_omni_push(const R3D_Light* light, const R3D_ShadowMap* map, co
                 .far         = cache->far,
                 .cullMask    = map->cullMask,
                 .type        = light->type,
-                .shadowLayer = map->layer,
+                .shadowLayer = mapLayer,
                 .layerFace   = i,
             };
 
@@ -493,14 +505,14 @@ static void light_omni_push(const R3D_Light* light, const R3D_ShadowMap* map, co
             .type        = light->type,
         };
 
-        if (map && map->layer >= 0)
+        if (map)
         {
             data.shadowSoftness  = map->softness / (float)R3D_HINT(R3D_HINT_SHADOW_OMNI_SIZE);
             data.shadowOpacity   = map->opacity;
             data.shadowDepthBias = map->depthBias;
             data.shadowSlopeBias = map->slopeBias;
             data.shadowFar       = cache->far;
-            data.shadowLayer     = map->layer;
+            data.shadowLayer     = mapLayer;
         }
         else
         {
@@ -546,10 +558,10 @@ void r3d_light_push(const R3D_Light* light, const R3D_ShadowMap* map, bool updat
     {
         bool invalid = false;
 
-        if (!r3d_light_shadow_layer_is_valid(map->type, map->layer))
+        if (!r3d_light_shadow_layer_is_valid(map->type, (int)map->handle - 1))
         {
             const char* mType = r3d_light_type_name(map->type);
-            R3D_TRACELOG(LOG_WARNING, "Invalid pushed shadow map (type: %s - layer: %d)", mType, map->layer);
+            R3D_TRACELOG(LOG_WARNING, "Invalid pushed shadow map (type: %s - handle: %d)", mType, map->handle);
 
             invalid = true;
         }
@@ -670,7 +682,7 @@ int r3d_light_acquire_shadow_layer(R3D_LightType type)
 
 void r3d_light_release_shadow_layer(R3D_LightType type, int layer)
 {
-    if (layer >= 0)
+    if (r3d_light_shadow_layer_is_valid(type, layer))
     {
         shadow_array_release_layer(&R3D_MOD_LIGHT.shadowArrays[type], layer);
     }
@@ -692,7 +704,13 @@ bool r3d_light_shadow_layer_is_valid(R3D_LightType type, int layer)
 {
     r3d_light_shadow_array_t* arr = &R3D_MOD_LIGHT.shadowArrays[type];
 
-    return (layer >= 0 && layer < arr->layerCount);
+    if (layer < 0 || (uint32_t)layer >= arr->layerCount)
+    {
+        return false;
+    }
+
+    r3d_light_shadow_cache_t* cache = &R3D_LIST_GET(arr->cache, r3d_light_shadow_cache_t, layer);
+    return cache->acquired;
 }
 
 int r3d_light_shadow_map_size(R3D_LightType type)

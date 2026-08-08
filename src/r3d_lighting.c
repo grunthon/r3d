@@ -90,7 +90,14 @@ R3D_ShadowMap R3D_LoadShadowMap(R3D_LightType type)
 {
     R3D_ShadowMap shadowMap = {0};
 
-    shadowMap.layer    = r3d_light_acquire_shadow_layer(type);
+    int layer = r3d_light_acquire_shadow_layer(type);
+    if (!r3d_light_shadow_layer_is_valid(type, layer))
+    {
+        R3D_TRACELOG(LOG_WARNING, "Failed to load shadow map (type: %s)", r3d_light_type_name(type));
+        return shadowMap;
+    }
+
+    shadowMap.handle   = (uint32_t)(1 + layer);
     shadowMap.softness = 2.0f;
     shadowMap.opacity  = 1.0f;
     shadowMap.cullMask = R3D_LAYER_ALL;
@@ -117,26 +124,21 @@ R3D_ShadowMap R3D_LoadShadowMap(R3D_LightType type)
         break;
     }
 
-    if (shadowMap.layer >= 0)
-    {
-        R3D_TRACELOG(LOG_INFO, "Shadow map loaded successfully (type: %s)", r3d_light_type_name(type));
-    }
-    else
-    {
-        R3D_TRACELOG(LOG_WARNING, "Failed to load shadow map (type: %s)", r3d_light_type_name(type));
-    }
+    R3D_TRACELOG(LOG_INFO, "Shadow map loaded successfully (type: %s)", r3d_light_type_name(type));
 
     return shadowMap;
 }
 
 void R3D_UnloadShadowMap(R3D_ShadowMap shadowMap)
 {
-    r3d_light_release_shadow_layer(shadowMap.type, shadowMap.layer);
+    r3d_light_release_shadow_layer(shadowMap.type, (int)shadowMap.handle - 1);
+
+    R3D_TRACELOG(LOG_INFO, "Shadow map unloaded successfully (type: %s)", r3d_light_type_name(shadowMap.type));
 }
 
 bool R3D_IsShadowMapValid(R3D_ShadowMap shadowMap)
 {
-    return r3d_light_shadow_layer_is_valid(shadowMap.type, shadowMap.layer);
+    return r3d_light_shadow_layer_is_valid(shadowMap.type, (int)shadowMap.handle - 1);
 }
 
 // ----------------------------------------

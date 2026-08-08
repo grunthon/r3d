@@ -847,7 +847,7 @@ void upload_env_block(void)
                 .position = probe->position,
                 .falloff  = probe->falloff,
                 .range    = probe->range,
-                .layer    = probe->layer,
+                .layer    = (int)probe->handle - 1,
             };
             if (++iIlluminationProbe >= R3D_HINT(R3D_HINT_PROBE_ILLUMINATION_MAX_ACTIVE))
             {
@@ -862,7 +862,7 @@ void upload_env_block(void)
                 .position = probe->position,
                 .falloff  = probe->falloff,
                 .range    = probe->range,
-                .layer    = probe->layer,
+                .layer    = (int)probe->handle - 1,
             };
             if (++iReflectionProbe >= R3D_HINT(R3D_HINT_PROBE_REFLECTION_MAX_ACTIVE))
             {

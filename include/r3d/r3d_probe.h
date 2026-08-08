@@ -33,7 +33,7 @@ typedef enum R3D_ProbeType {
 
 typedef struct R3D_Probe {
     R3D_ProbeType type;
-    int layer;
+    uint32_t handle;        ///< Internal probe handle (don't touch)
     Vector3 position;
     float falloff;
     float range;
@@ -62,6 +62,11 @@ R3DAPI R3D_Probe R3D_LoadProbe(R3D_ProbeType type, bool interior, bool shadow);
  * @brief Releases a probe, freeing its layer for reuse.
  */
 R3DAPI void R3D_UnloadProbe(R3D_Probe probe);
+
+/**
+ * @brief Returns whether the probe has a valid allocated layer.
+ */
+R3DAPI bool R3D_IsProbeValid(R3D_Probe probe);
 
 #ifdef __cplusplus
 } // extern "C"

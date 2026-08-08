@@ -10,6 +10,7 @@
 #include <r3d_config.h>
 #include <raymath.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #include "./modules/r3d_env.h"
 
@@ -21,31 +22,32 @@ R3D_Probe R3D_LoadProbe(R3D_ProbeType type, bool interior, bool shadow)
 {
     R3D_Probe probe = {0};
 
+    int layer = -1;
     switch (type)
     {
     case R3D_PROBE_ILLUMINATION:
-        probe.layer = r3d_env_irradiance_acquire_layer();
+        layer = r3d_env_irradiance_acquire_layer();
         break;
     case R3D_PROBE_REFLECTION:
-        probe.layer = r3d_env_prefilter_acquire_layer();
+        layer = r3d_env_prefilter_acquire_layer();
         break;
     }
 
+    if (!r3d_env_probe_layer_is_valid(type, layer))
+    {
+        R3D_TRACELOG(LOG_WARNING, "Failed to load probe (type: %s)", r3d_env_probe_type_name(type));
+        return probe;
+    }
+
     probe.type     = type;
+    probe.handle   = (uint32_t)(1 + layer);
     probe.position = (Vector3) {0};
     probe.falloff  = 1.0f;
     probe.range    = 10.0f;
     probe.interior = interior;
     probe.shadows  = shadow;
 
-    if (probe.layer >= 0)
-    {
-        R3D_TRACELOG(LOG_INFO, "Probe loaded successfully (type: %s)", r3d_env_probe_type_name(type));
-    }
-    else
-    {
-        R3D_TRACELOG(LOG_WARNING, "Failed to load probe (type: %s)", r3d_env_probe_type_name(type));
-    }
+    R3D_TRACELOG(LOG_INFO, "Probe loaded successfully (type: %s)", r3d_env_probe_type_name(type));
 
     return probe;
 }
@@ -55,10 +57,10 @@ void R3D_UnloadProbe(R3D_Probe probe)
     switch (probe.type)
     {
     case R3D_PROBE_ILLUMINATION:
-        r3d_env_irradiance_release_layer(probe.layer);
+        r3d_env_irradiance_release_layer((int)probe.handle - 1);
         break;
     case R3D_PROBE_REFLECTION:
-        r3d_env_prefilter_release_layer(probe.layer);
+        r3d_env_prefilter_release_layer((int)probe.handle - 1);
         break;
     }
 
@@ -67,5 +69,5 @@ void R3D_UnloadProbe(R3D_Probe probe)
 
 bool R3D_IsProbeValid(R3D_Probe probe)
 {
-    return r3d_env_probe_layer_is_valid(probe.type, probe.layer);
+    return r3d_env_probe_layer_is_valid(probe.type, (int)probe.handle - 1);
 }

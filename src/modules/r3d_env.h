@@ -48,10 +48,15 @@ typedef struct {
 } r3d_env_probe_job_t;
 
 typedef struct {
+    bool acquired;              // true from acquire until release; drives handle validity checks
+    bool valid;                 // true once the layer's content has been captured at least once since (re)acquired
+} r3d_env_cubemap_layer_state_t;
+
+typedef struct {
     GLuint      framebuffer;
     GLuint      texture;        // GL_TEXTURE_CUBE_MAP_ARRAY handle, 0 until first expand
     r3d_list_t* freeList;       // list<int> of currently free layer indices
-    r3d_list_t* validity;       // list<bool> of validity state for each layer
+    r3d_list_t* layerStates;    // list<r3d_env_cubemap_layer_state_t> indexed by layer
     uint32_t    layerCount;     // total number of allocated layers (GL side)
     int         size;           // cubemap face resolution
     int         mipLevels;      // 1 if not mipmapped
@@ -70,17 +75,13 @@ typedef struct {
 // ========================================
 
 extern struct r3d_env {
-
     r3d_env_cubemap_t irradianceCapture;
     r3d_env_cubemap_t prefilterCapture;
-
     r3d_env_cubemap_array_t irradiance;
     r3d_env_cubemap_array_t prefilter;
-
     r3d_list_t* listProbeIllumination;
     r3d_list_t* listProbeReflection;
     r3d_list_t* listProbeJobs;
-
 } R3D_MOD_ENV;
 
 // ========================================
@@ -129,6 +130,9 @@ void r3d_env_irradiance_release_layer(int layer);
 /* Bind irradiance framebuffer for the given layer and face */
 void r3d_env_irradiance_bind_fbo(int layer, int face);
 
+/**/
+bool r3d_env_irradiance_layer_is_valid(int layer);
+
 /* Get irradiance cubemap array texture ID */
 GLuint r3d_env_irradiance_get(void);
 
@@ -140,6 +144,9 @@ void r3d_env_prefilter_release_layer(int layer);
 
 /* Bind prefilter framebuffer for the given layer, face and mip level */
 void r3d_env_prefilter_bind_fbo(int layer, int face, int mipLevel);
+
+/**/
+bool r3d_env_prefilter_layer_is_valid(int layer);
 
 /* Get prefiltered cubemap array texture ID */
 GLuint r3d_env_prefilter_get(void);

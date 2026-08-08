@@ -54,7 +54,7 @@ typedef struct R3D_Light {
 } R3D_Light;
 
 typedef struct R3D_ShadowMap {
-    int   layer;            ///< Shadow map layer index in the corresponding shadow texture array
+    uint32_t handle;        ///< Internal shadow map handle (don't touch)
     float softness;         ///< Softness factor for penumbra
     float opacity;          ///< Shadow opacity factor
     float depthBias;        ///< Constant depth bias
