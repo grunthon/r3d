@@ -109,7 +109,7 @@ R3DAPI R3D_ShadowMap R3D_LoadShadowMap(R3D_LightType type);
 /**
  * @brief Releases a shadow map, freeing its layer for reuse.
  */
-R3DAPI void R3D_UnloadShadowMap(R3D_ShadowMap map);
+R3DAPI void R3D_UnloadShadowMap(R3D_ShadowMap shadowMap);
 
 // ----------------------------------------
 // LIGHTING: Light Helper Functions

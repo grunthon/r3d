@@ -88,36 +88,36 @@ R3D_Light R3D_CreateOmniLight(Vector3 pos, float range, Color color, float energ
 
 R3D_ShadowMap R3D_LoadShadowMap(R3D_LightType type)
 {
-    R3D_ShadowMap map = {0};
+    R3D_ShadowMap shadowMap = {0};
 
-    map.layer    = r3d_light_acquire_shadow_layer(type);
-    map.softness = 2.0f;
-    map.opacity  = 1.0f;
-    map.cullMask = R3D_LAYER_ALL;
-    map.type     = type;
+    shadowMap.layer    = r3d_light_acquire_shadow_layer(type);
+    shadowMap.softness = 2.0f;
+    shadowMap.opacity  = 1.0f;
+    shadowMap.cullMask = R3D_LAYER_ALL;
+    shadowMap.type     = type;
 
     switch (type)
     {
     case R3D_LIGHT_DIR:
-        map.depthBias = 0.001f;
-        map.slopeBias = 0.0015f;
+        shadowMap.depthBias = 0.001f;
+        shadowMap.slopeBias = 0.0015f;
         break;
 
     case R3D_LIGHT_SPOT:
-        map.depthBias = 0.0001f;
-        map.slopeBias = 0.0005f;
+        shadowMap.depthBias = 0.0001f;
+        shadowMap.slopeBias = 0.0005f;
         break;
 
     case R3D_LIGHT_OMNI:
-        map.depthBias = 0.025f;
-        map.slopeBias = 0.1f;
+        shadowMap.depthBias = 0.025f;
+        shadowMap.slopeBias = 0.1f;
         break;
 
     default:
         break;
     }
 
-    if (map.layer >= 0)
+    if (shadowMap.layer >= 0)
     {
         R3D_TRACELOG(LOG_INFO, "Shadow map loaded successfully (type: %s)", r3d_light_type_name(type));
     }
@@ -126,12 +126,12 @@ R3D_ShadowMap R3D_LoadShadowMap(R3D_LightType type)
         R3D_TRACELOG(LOG_WARNING, "Failed to load shadow map (type: %s)", r3d_light_type_name(type));
     }
 
-    return map;
+    return shadowMap;
 }
 
-void R3D_UnloadShadowMap(R3D_ShadowMap map)
+void R3D_UnloadShadowMap(R3D_ShadowMap shadowMap)
 {
-    r3d_light_release_shadow_layer(map.type, map.layer);
+    r3d_light_release_shadow_layer(shadowMap.type, shadowMap.layer);
 }
 
 // ----------------------------------------
