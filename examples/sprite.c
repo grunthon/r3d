@@ -37,7 +37,7 @@ int main(void)
     matSprite.billboardMode = R3D_BILLBOARD_Y_AXIS;
 
     // Create light
-    R3D_Light light = R3D_CreateSpotLight((Vector3) {0, 10,10}, (Vector3) {0, -1, -1}, 16.0f, WHITE, 1.0f);
+    R3D_Light light = R3D_CreateSpotLight((Vector3) {0, 10,10}, (Vector3) {0, -1, -1}, 32.0f, WHITE, 1.0f);
     R3D_ShadowMap map = R3D_LoadShadowMap(R3D_LIGHT_SPOT);
 
     // Setup camera
