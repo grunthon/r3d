@@ -129,7 +129,7 @@ int main(void)
         BeginDrawing();
             ClearBackground(BLACK);
             R3D_Begin(camera);
-                R3D_PushLightEx(light, map, false);
+                R3D_PushLightEx(light, map, true);
                 R3D_DrawMeshPro(slopeMesh, slopeMat, slopeTransform);
                 R3D_DrawMesh(groundMesh, groundMat, Vector3Zero(), 1.0f);
                 R3D_DrawMesh(capsMesh, R3D_MATERIAL_BASE, CAPSULE_CENTER(capsule), 1.0f);
