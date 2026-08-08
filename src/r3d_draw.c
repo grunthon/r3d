@@ -1795,6 +1795,7 @@ void pass_scene_probes(void)
             break;
         default:
             assert(false);
+            break;
         }
 
         r3d_target_invalidate_cache(); //< The IBL gen functions bind framebuffers; resetting them prevents any problems
