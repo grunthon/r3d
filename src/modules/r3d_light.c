@@ -18,6 +18,7 @@
 #include <float.h>
 
 #include "../r3d_core_state.h"
+#include "r3d/r3d_lighting.h"
 
 // ========================================
 // CONSTANTS
@@ -511,6 +512,29 @@ static void light_omni_push(const R3D_Light* light, const R3D_ShadowMap* map, co
     }
 }
 
+static bool light_check_shadow_validity(const R3D_Light* light, const R3D_ShadowMap* map)
+{
+    bool valid = true;
+
+    if (!r3d_light_shadow_layer_is_valid(map->type, (int)map->handle - 1))
+    {
+        const char* mType = r3d_light_type_name(map->type);
+        R3D_TRACELOG(LOG_WARNING, "Invalid pushed shadow map (type: %s | handle: %d)", mType, map->handle);
+
+        valid = false;
+    }
+    else if (map->type != light->type)
+    {
+        const char* mType = r3d_light_type_name(map->type);
+        const char* lType = r3d_light_type_name(light->type);
+        R3D_TRACELOG(LOG_WARNING, "Incompatible pushed shadow map (type: %s) with given light (type: %s)", mType, lType);
+
+        valid = false;
+    }
+
+    return valid;
+}
+
 // ========================================
 // MODULE FUNCTIONS
 // ========================================
@@ -542,27 +566,9 @@ void r3d_light_quit(void)
 
 void r3d_light_push(const R3D_Light* light, const R3D_ShadowMap* map, bool updateShadow)
 {
-    if (map != NULL)
+    if (map && !light_check_shadow_validity(light, map))
     {
-        bool invalid = false;
-
-        if (!r3d_light_shadow_layer_is_valid(map->type, (int)map->handle - 1))
-        {
-            const char* mType = r3d_light_type_name(map->type);
-            R3D_TRACELOG(LOG_WARNING, "Invalid pushed shadow map (type: %s - handle: %d)", mType, map->handle);
-
-            invalid = true;
-        }
-        else if (map->type != light->type)
-        {
-            const char* mType = r3d_light_type_name(map->type);
-            const char* lType = r3d_light_type_name(light->type);
-            R3D_TRACELOG(LOG_WARNING, "Incompatible pushed shadow map (type: %s) with given light (type: %s)", mType, lType);
-
-            invalid = true;
-        }
-
-        if (invalid) map = NULL;
+        map = NULL;
     }
 
     switch (light->type)
