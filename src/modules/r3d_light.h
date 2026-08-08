@@ -56,18 +56,20 @@ typedef struct {
 } r3d_light_data_t;
 
 typedef struct {
-    R3D_Frustum frustum;
-    Matrix viewProj;
-    R3D_Layer cullMask;
-    int lightIndex;
-    int layerFace;
+    R3D_Frustum   frustum;
+    Matrix        viewProj;
+    Vector3       position;
+    float         far;
+    R3D_Layer     cullMask;
+    R3D_LightType type;
+    int           shadowLayer;
+    int           layerFace;
 } r3d_light_shadow_job_t;
 
 typedef struct {
     Matrix viewProj;        // stored for projection (dir/spot)
-    float near;             // stored for projection
-    float far;              // stored for projection
-    bool valid;             // false as long nothing was rendered for this layer
+    float  far;             // stored for projection (omni)
+    bool   valid;           // false as long nothing was rendered for this layer
 } r3d_light_shadow_cache_t;
 
 typedef struct {

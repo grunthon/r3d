@@ -64,8 +64,8 @@ static void upload_view_block(void);
 static void upload_env_block(void);
 static void upload_fx_block(void);
 
-static void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, r3d_light_data_t* light);
-static void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, r3d_light_data_t* light);
+static void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, const r3d_light_shadow_job_t* shadowJob);
+static void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, const r3d_light_shadow_job_t* shadowJob);
 static void raster_probe_forward(const r3d_render_call_t* call, const R3D_Probe* probe, const r3d_env_probe_job_t* job, int face);
 static void raster_probe_unlit(const r3d_render_call_t* call, const R3D_Probe* probe, const r3d_env_probe_job_t* job, int face);
 static void raster_geometry(const r3d_render_call_t* call, bool matchPrepass);
@@ -993,7 +993,7 @@ void upload_fx_block(void)
     r3d_shader_set_uniform_block(R3D_SHADER_BLOCK_FX, &block, false);
 }
 
-void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, r3d_light_data_t* light)
+void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, const r3d_light_shadow_job_t* shadowJob)
 {
     assert(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
 
@@ -1043,7 +1043,7 @@ void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, r3d_lig
 
     if (material->transparencyMode == R3D_TRANSPARENCY_PREPASS)
     {
-        R3D_SHADER_SET_FLOAT_SELECT(scene.depth, shader, uAlphaCutoff, (light != NULL) ? 0.1f : 0.99f);
+        R3D_SHADER_SET_FLOAT_SELECT(scene.depth, shader, uAlphaCutoff, (shadowJob != NULL) ? 0.1f : 0.99f);
     }
     else
     {
@@ -1052,7 +1052,7 @@ void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, r3d_lig
 
     /* --- Applying material parameters that are independent of shaders --- */
 
-    if (light != NULL)
+    if (shadowJob != NULL)
     {
         r3d_driver_set_shadow_cast_mode(mesh->shadowCastMode, material->cullMode);
     }
@@ -1077,7 +1077,7 @@ void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, r3d_lig
     }
 }
 
-void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, r3d_light_data_t* light)
+void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, const r3d_light_shadow_job_t* shadowJob)
 {
     assert(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
 
@@ -1092,10 +1092,10 @@ void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, r3
 
     /* --- Set shadow related data --- */
 
-    if (light != NULL)
+    if (shadowJob != NULL)
     {
-        R3D_SHADER_SET_FLOAT_SELECT(scene.depthCube, shader, uFar, light->shadowFar);
-        R3D_SHADER_SET_VEC3_SELECT(scene.depthCube, shader, uViewPosition, light->position);
+        R3D_SHADER_SET_FLOAT_SELECT(scene.depthCube, shader, uFar, shadowJob->far);
+        R3D_SHADER_SET_VEC3_SELECT(scene.depthCube, shader, uViewPosition, shadowJob->position);
     }
 
     /* --- Send matrices --- */
@@ -1135,7 +1135,7 @@ void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, r3
 
     if (material->transparencyMode == R3D_TRANSPARENCY_PREPASS)
     {
-        R3D_SHADER_SET_FLOAT_SELECT(scene.depthCube, shader, uAlphaCutoff, (light != NULL) ? 0.1f : 0.99f);
+        R3D_SHADER_SET_FLOAT_SELECT(scene.depthCube, shader, uAlphaCutoff, (shadowJob != NULL) ? 0.1f : 0.99f);
     }
     else
     {
@@ -1144,7 +1144,7 @@ void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, r3
 
     /* --- Applying material parameters that are independent of shaders --- */
 
-    if (light != NULL)
+    if (shadowJob != NULL)
     {
         r3d_driver_set_shadow_cast_mode(mesh->shadowCastMode, material->cullMode);
     }
@@ -1683,9 +1683,7 @@ void pass_scene_shadow(void)
 
     R3D_LIGHT_FOR_EACH_SHADOW_JOB(job)
     {
-        r3d_light_data_t* light = r3d_light_get(job->lightIndex);
-
-        r3d_light_bind_shadow_fbo(light->type, light->shadowLayer, job->layerFace);
+        r3d_light_bind_shadow_fbo(job->type, job->shadowLayer, job->layerFace);
         glClear(GL_DEPTH_BUFFER_BIT);
 
         const R3D_Frustum* frustum = &job->frustum;
@@ -1695,13 +1693,13 @@ void pass_scene_shadow(void)
         {
             if (r3d_render_should_cast_shadow(call))
             {
-                if (light->type == R3D_LIGHT_OMNI)
+                if (job->type == R3D_LIGHT_OMNI)
                 {
-                    raster_depth_cube(call, &job->viewProj, light);
+                    raster_depth_cube(call, &job->viewProj, job);
                 }
                 else
                 {
-                    raster_depth(call, &job->viewProj, light);
+                    raster_depth(call, &job->viewProj, job);
                 }
             }
         }
