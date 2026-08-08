@@ -73,7 +73,7 @@ static void raster_decal(const r3d_render_call_t* call);
 static void raster_forward(const r3d_render_call_t* call);
 static void raster_unlit(const r3d_render_call_t* call);
 
-static void pass_scene_shadow(void);
+static void pass_scene_shadows(void);
 static void pass_scene_probes(void);
 static void pass_scene_geometry(void);
 static void pass_scene_prepass(void);
@@ -158,7 +158,7 @@ void R3D_End(void)
 
     if (r3d_light_has_shadow_job())
     {
-        pass_scene_shadow();
+        pass_scene_shadows();
     }
 
     r3d_shader_bind_sampler(R3D_SHADER_SAMPLER_SHADOW_DIR, r3d_light_shadow_map(R3D_LIGHT_DIR));
@@ -1668,7 +1668,7 @@ void raster_unlit(const r3d_render_call_t* call)
     }
 }
 
-void pass_scene_shadow(void)
+void pass_scene_shadows(void)
 {
     r3d_driver_disable(GL_STENCIL_TEST);
     r3d_driver_enable(GL_DEPTH_TEST);
