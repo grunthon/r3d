@@ -40,8 +40,11 @@ typedef struct {
     Matrix        viewProj[6];
     Matrix        invView[6];
     Matrix        invProj;
+    Vector3       position;
     R3D_ProbeType probeType;
-    int           probeIndex;
+    bool          interior;
+    bool          shadows;
+    int           layer;
 } r3d_env_probe_job_t;
 
 typedef struct {

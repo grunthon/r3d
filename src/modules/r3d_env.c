@@ -261,7 +261,7 @@ static void cubemap_gen_mipmaps(r3d_env_cubemap_t* cm)
 // PROBE FUNCTIONS
 // ========================================
 
-static void probe_job_init(r3d_env_probe_job_t* job, const R3D_Probe* probe, int probeIndex)
+static void probe_job_init(r3d_env_probe_job_t* job, const R3D_Probe* probe)
 {
     static const Vector3 DIRS[6] = {
         { 1.0,  0.0,  0.0}, {-1.0,  0.0,  0.0},  // +X, -X
@@ -287,58 +287,31 @@ static void probe_job_init(r3d_env_probe_job_t* job, const R3D_Probe* probe, int
         job->invView[face]  = MatrixInvert(job->view[face]);
     }
 
-    job->probeType  = probe->type;
-    job->probeIndex = probeIndex;
+    job->position  = probe->position;
+    job->probeType = probe->type;
+    job->interior  = probe->interior;
+    job->shadows   = probe->shadows;
+    job->layer     = probe->layer;
 }
 
-static void probe_push_illumination(const R3D_Probe* probe, bool updateProbe)
+static void probe_push(const R3D_Probe* probe, r3d_env_cubemap_array_t* cubemapArray, r3d_list_t* targetList, bool updateProbe)
 {
     if (probe->range <= 0.0f) return;
 
-    if (R3D_FrustumIntersectsSphere(&R3D.viewState.frustum, probe->position, probe->range))
+    bool valid = R3D_LIST_GET(cubemapArray->validity, bool, probe->layer);
+    bool mustCapture = !valid || updateProbe;
+
+    bool visible = R3D_FrustumIntersectsSphere(&R3D.viewState.frustum, probe->position, probe->range);
+
+    if (mustCapture)
     {
-        bool valid = R3D_LIST_GET(R3D_MOD_ENV.irradiance.validity, bool, probe->layer);
-
-        if (!valid || updateProbe)
-        {
-            int probeIndex = R3D_LIST_LENGTH(R3D_MOD_ENV.listProbeIllumination);
-
-            r3d_env_probe_job_t job = {0};
-            probe_job_init(&job, probe, probeIndex);
-            R3D_LIST_PUSH(R3D_MOD_ENV.listProbeJobs, job);
-        }
-
-        R3D_Probe p = {
-            .type     = probe->type,
-            .layer    = probe->layer,
-            .position = probe->position,
-            .falloff  = R3D_MAX(probe->falloff, 1e-4f),
-            .range    = probe->range,
-            .interior = probe->interior,
-            .shadows  = probe->shadows,
-        };
-
-        R3D_LIST_PUSH(R3D_MOD_ENV.listProbeIllumination, p);
+        r3d_env_probe_job_t job = {0};
+        probe_job_init(&job, probe);
+        R3D_LIST_PUSH(R3D_MOD_ENV.listProbeJobs, job);
     }
-}
 
-static void probe_push_reflection(const R3D_Probe* probe, bool updateProbe)
-{
-    if (probe->range <= 0.0f) return;
-
-    if (R3D_FrustumIntersectsSphere(&R3D.viewState.frustum, probe->position, probe->range))
+    if (visible)
     {
-        bool valid = R3D_LIST_GET(R3D_MOD_ENV.prefilter.validity, bool, probe->layer);
-
-        if (!valid || updateProbe)
-        {
-            int probeIndex = R3D_LIST_LENGTH(R3D_MOD_ENV.listProbeReflection);
-
-            r3d_env_probe_job_t job = {0};
-            probe_job_init(&job, probe, probeIndex);
-            R3D_LIST_PUSH(R3D_MOD_ENV.listProbeJobs, job);
-        }
-
         R3D_Probe p = {
             .type     = probe->type,
             .layer    = probe->layer,
@@ -349,7 +322,7 @@ static void probe_push_reflection(const R3D_Probe* probe, bool updateProbe)
             .shadows  = probe->shadows,
         };
 
-        R3D_LIST_PUSH(R3D_MOD_ENV.listProbeReflection, p);
+        R3D_LIST_PUSH(targetList, p);
     }
 }
 
@@ -398,10 +371,10 @@ void r3d_env_push_probe(const R3D_Probe* probe, bool updateProbe)
     switch (probe->type)
     {
     case R3D_PROBE_ILLUMINATION:
-        probe_push_illumination(probe, updateProbe);
+        probe_push(probe, &R3D_MOD_ENV.irradiance, R3D_MOD_ENV.listProbeIllumination, updateProbe);
         break;
     case R3D_PROBE_REFLECTION:
-        probe_push_reflection(probe, updateProbe);
+        probe_push(probe, &R3D_MOD_ENV.prefilter, R3D_MOD_ENV.listProbeReflection, updateProbe);
         break;
     default:
         assert(false);

@@ -66,8 +66,8 @@ static void upload_fx_block(void);
 
 static void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, const r3d_light_shadow_job_t* shadowJob);
 static void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, const r3d_light_shadow_job_t* shadowJob);
-static void raster_probe_forward(const r3d_render_call_t* call, const R3D_Probe* probe, const r3d_env_probe_job_t* job, int face);
-static void raster_probe_unlit(const r3d_render_call_t* call, const R3D_Probe* probe, const r3d_env_probe_job_t* job, int face);
+static void raster_probe_forward(const r3d_render_call_t* call, const r3d_env_probe_job_t* job, int face);
+static void raster_probe_unlit(const r3d_render_call_t* call, const r3d_env_probe_job_t* job, int face);
 static void raster_geometry(const r3d_render_call_t* call, bool matchPrepass);
 static void raster_decal(const r3d_render_call_t* call);
 static void raster_forward(const r3d_render_call_t* call);
@@ -1169,7 +1169,7 @@ void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, co
     }
 }
 
-void raster_probe_forward(const r3d_render_call_t* call, const R3D_Probe* probe, const r3d_env_probe_job_t* job, int face)
+void raster_probe_forward(const r3d_render_call_t* call, const r3d_env_probe_job_t* job, int face)
 {
     assert(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
 
@@ -1184,8 +1184,8 @@ void raster_probe_forward(const r3d_render_call_t* call, const R3D_Probe* probe,
 
     /* --- Set probe related data --- */
 
-    R3D_SHADER_SET_VEC3_SELECT(scene.probeForward, shader, uViewPosition, probe->position);
-    R3D_SHADER_SET_INT_SELECT(scene.probeForward, shader, uProbeInterior, probe->interior);
+    R3D_SHADER_SET_VEC3_SELECT(scene.probeForward, shader, uViewPosition, job->position);
+    R3D_SHADER_SET_INT_SELECT(scene.probeForward, shader, uProbeInterior, job->interior);
 
     /* --- Send matrices --- */
 
@@ -1260,7 +1260,7 @@ void raster_probe_forward(const r3d_render_call_t* call, const R3D_Probe* probe,
     }
 }
 
-void raster_probe_unlit(const r3d_render_call_t* call, const R3D_Probe* probe, const r3d_env_probe_job_t* job, int face)
+void raster_probe_unlit(const r3d_render_call_t* call, const r3d_env_probe_job_t* job, int face)
 {
     assert(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
 
@@ -1715,8 +1715,6 @@ void pass_scene_probes(void)
 
     R3D_ENV_FOR_EACH_PROBE_JOB(job)
     {
-        R3D_Probe* probe = r3d_env_probe_get(job->probeType, job->probeIndex);
-
         for (int iFace = 0; iFace < 6; iFace++)
         {
             // Generates the list of visible groups for the current face of the capture
@@ -1730,19 +1728,19 @@ void pass_scene_probes(void)
 
             r3d_driver_set_depth_mask(GL_TRUE);
 
-            r3d_env_probe_capture_bind_fbo(probe->type, iFace);
+            r3d_env_probe_capture_bind_fbo(job->probeType, iFace);
             glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
             R3D_RENDER_FOR_EACH(call, true, frustum, R3D_RENDER_PACKLIST_PROBE)
             {
                 if (call->mesh.material.unlit)
                 {
-                    raster_probe_unlit(call, probe, job, iFace);
+                    raster_probe_unlit(call, job, iFace);
                 }
                 else
                 {
-                    upload_light_array_block_for_mesh(call, probe->shadows);
-                    raster_probe_forward(call, probe, job, iFace);
+                    upload_light_array_block_for_mesh(call, job->shadows);
+                    raster_probe_forward(call, job, iFace);
                 }
             }
 
@@ -1784,16 +1782,16 @@ void pass_scene_probes(void)
         }
 
         // Generate irradiance/prefilter map
-        GLuint captureTex = r3d_env_probe_capture_get(probe->type);
-        int captureSize   = r3d_env_probe_capture_size(probe->type);
-        switch (probe->type)
+        GLuint captureTex = r3d_env_probe_capture_get(job->probeType);
+        int captureSize   = r3d_env_probe_capture_size(job->probeType);
+        switch (job->probeType)
         {
         case R3D_PROBE_ILLUMINATION:
-            r3d_pass_prepare_irradiance(probe->layer, captureTex, captureSize);
+            r3d_pass_prepare_irradiance(job->layer, captureTex, captureSize);
             break;
         case R3D_PROBE_REFLECTION:
-            r3d_env_probe_capture_gen_mipmaps(probe->type);
-            r3d_pass_prepare_prefilter(probe->layer, captureTex, captureSize);
+            r3d_env_probe_capture_gen_mipmaps(job->probeType);
+            r3d_pass_prepare_prefilter(job->layer, captureTex, captureSize);
             break;
         default:
             assert(false);
