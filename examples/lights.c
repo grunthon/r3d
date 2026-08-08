@@ -64,7 +64,10 @@ int main(void)
 
         // Draw scene
         R3D_Begin(camera);
-            R3D_PushLights(lights, NUM_LIGHTS);
+            for (int i = 0; i < NUM_LIGHTS; i++)
+            {
+                R3D_PushLight(lights[i]);
+            }
             R3D_DrawMesh(plane, material, (Vector3) {0, -0.25f, 0}, 1.0f);
             R3D_DrawMeshInstanced(cube, material, instances, GRID_SIZE*GRID_SIZE);
         R3D_End();
