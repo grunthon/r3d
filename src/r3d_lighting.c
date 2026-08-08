@@ -136,7 +136,7 @@ void R3D_UnloadShadowMap(R3D_ShadowMap shadowMap)
 
 bool R3D_IsShadowMapValid(R3D_ShadowMap shadowMap)
 {
-    return r3d_light_shadow_map_is_valid(shadowMap.type, shadowMap.layer);
+    return r3d_light_shadow_layer_is_valid(shadowMap.type, shadowMap.layer);
 }
 
 // ----------------------------------------

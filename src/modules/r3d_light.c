@@ -546,7 +546,7 @@ void r3d_light_push(const R3D_Light* light, const R3D_ShadowMap* map, bool updat
     {
         bool invalid = false;
 
-        if (!r3d_light_shadow_map_is_valid(map->type, map->layer))
+        if (!r3d_light_shadow_layer_is_valid(map->type, map->layer))
         {
             const char* mType = r3d_light_type_name(map->type);
             R3D_TRACELOG(LOG_WARNING, "Invalid pushed shadow map (type: %s - layer: %d)", mType, map->layer);
@@ -688,7 +688,7 @@ void r3d_light_bind_shadow_fbo(R3D_LightType type, int layer, int face)
     glViewport(0, 0, arr->size, arr->size);
 }
 
-bool r3d_light_shadow_map_is_valid(R3D_LightType type, int layer)
+bool r3d_light_shadow_layer_is_valid(R3D_LightType type, int layer)
 {
     r3d_light_shadow_array_t* arr = &R3D_MOD_LIGHT.shadowArrays[type];
 
