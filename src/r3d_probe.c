@@ -64,3 +64,8 @@ void R3D_UnloadProbe(R3D_Probe probe)
 
     R3D_TRACELOG(LOG_INFO, "Probe unloaded successfully (type: %s)", r3d_env_probe_type_name(probe.type));
 }
+
+bool R3D_IsProbeValid(R3D_Probe probe)
+{
+    return r3d_env_probe_layer_is_valid(probe.type, probe.layer);
+}

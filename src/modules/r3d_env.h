@@ -102,6 +102,9 @@ R3D_Probe* r3d_env_probe_get(R3D_ProbeType type, int probeIndex);
 /**/
 void r3d_env_probe_clear(void);
 
+/* Returns if the the probe layer is valid */
+bool r3d_env_probe_layer_is_valid(R3D_ProbeType type, int layer);
+
 /* Bind probe capture framebuffer for the given face */
 void r3d_env_probe_capture_bind_fbo(R3D_ProbeType type, int face);
 

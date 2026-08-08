@@ -362,9 +362,11 @@ void r3d_env_quit(void)
 
 void r3d_env_push_probe(const R3D_Probe* probe, bool updateProbe)
 {
-    if (probe->layer < 0 /*|| probe->layer >= count*/)
+    if (!r3d_env_probe_layer_is_valid(probe->type, probe->layer))
     {
-        R3D_TRACELOG(LOG_WARNING, "Incomplete probe; Invalid layer: %d", probe->layer);
+        const char* pType = r3d_env_probe_type_name(probe->type);
+        R3D_TRACELOG(LOG_WARNING, "Invalid pushed probe (type: %s - layer: %d)", pType, probe->layer);
+
         return;
     }
 
@@ -402,6 +404,26 @@ void r3d_env_probe_clear(void)
     R3D_LIST_CLEAR(R3D_MOD_ENV.listProbeIllumination);
     R3D_LIST_CLEAR(R3D_MOD_ENV.listProbeReflection);
     R3D_LIST_CLEAR(R3D_MOD_ENV.listProbeJobs);
+}
+
+bool r3d_env_probe_layer_is_valid(R3D_ProbeType type, int layer)
+{
+    r3d_env_cubemap_array_t* arr = NULL;
+
+    switch (type)
+    {
+    case R3D_PROBE_ILLUMINATION:
+        arr = &R3D_MOD_ENV.irradiance;
+        break;
+    case R3D_PROBE_REFLECTION:
+        arr = &R3D_MOD_ENV.prefilter;
+        break;
+    default:
+        assert(false);
+        break;
+    }
+
+    return (layer >= 0 || layer < arr->layerCount);
 }
 
 void r3d_env_probe_capture_bind_fbo(R3D_ProbeType type, int face)
