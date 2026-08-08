@@ -155,17 +155,6 @@ R3DAPI void R3D_PushLight(R3D_Light light);
 R3DAPI void R3D_PushLightEx(R3D_Light light, R3D_ShadowMap map, bool updateShadow);
 
 /**
- * @brief Queues an array of lights to be rendered for the current frame, without shadows.
- *
- * Equivalent to calling R3D_PushLight() for each light in the array.
- * Useful for pushing a large number of unshadowed lights efficiently.
- *
- * @param lights Array of lights to submit.
- * @param count Number of lights in the array.
- */
-R3DAPI void R3D_PushLights(const R3D_Light* lights, int count);
-
-/**
  * @brief Queues a probe to be rendered for the current frame.
  *
  * The probe is submitted for rendering during R3D_End(), and must be pushed

@@ -346,14 +346,6 @@ void R3D_PushLightEx(R3D_Light light, R3D_ShadowMap map, bool updateShadow)
     r3d_light_push(&light, &map, updateShadow);
 }
 
-void R3D_PushLights(const R3D_Light* lights, int count)
-{
-    for (int i = 0; i < count; i++)
-    {
-        r3d_light_push(&lights[i], NULL, false);
-    }
-}
-
 void R3D_PushProbe(R3D_Probe probe, bool updateProbe)
 {
     r3d_env_push_probe(&probe, updateProbe);
