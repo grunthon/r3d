@@ -134,6 +134,11 @@ void R3D_UnloadShadowMap(R3D_ShadowMap shadowMap)
     r3d_light_release_shadow_layer(shadowMap.type, shadowMap.layer);
 }
 
+bool R3D_IsShadowMapValid(R3D_ShadowMap shadowMap)
+{
+    return r3d_light_shadow_map_is_valid(shadowMap.type, shadowMap.layer);
+}
+
 // ----------------------------------------
 // Light Helper Functions
 // ----------------------------------------

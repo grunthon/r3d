@@ -542,13 +542,27 @@ void r3d_light_quit(void)
 
 void r3d_light_push(const R3D_Light* light, const R3D_ShadowMap* map, bool updateShadow)
 {
-    if (map && map->type != light->type)
+    if (map != NULL)
     {
-        const char* mType = r3d_light_type_name(map->type);
-        const char* lType = r3d_light_type_name(light->type);
-        R3D_TRACELOG(LOG_WARNING, "Incompatible shadow map (type: %s) given with light (type: %s)", mType, lType);
+        bool invalid = false;
 
-        map = NULL;
+        if (!r3d_light_shadow_map_is_valid(map->type, map->layer))
+        {
+            const char* mType = r3d_light_type_name(map->type);
+            R3D_TRACELOG(LOG_WARNING, "Invalid pushed shadow map (type: %s - layer: %d)", mType, map->layer);
+
+            invalid = true;
+        }
+        else if (map->type != light->type)
+        {
+            const char* mType = r3d_light_type_name(map->type);
+            const char* lType = r3d_light_type_name(light->type);
+            R3D_TRACELOG(LOG_WARNING, "Incompatible pushed shadow map (type: %s) with given light (type: %s)", mType, lType);
+
+            invalid = true;
+        }
+
+        if (invalid) map = NULL;
     }
 
     switch (light->type)
@@ -672,6 +686,13 @@ void r3d_light_bind_shadow_fbo(R3D_LightType type, int layer, int face)
     glBindFramebuffer(GL_FRAMEBUFFER, arr->framebuffer);
     glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, arr->texture, 0, layer * stride + face);
     glViewport(0, 0, arr->size, arr->size);
+}
+
+bool r3d_light_shadow_map_is_valid(R3D_LightType type, int layer)
+{
+    r3d_light_shadow_array_t* arr = &R3D_MOD_LIGHT.shadowArrays[type];
+
+    return (layer >= 0 && layer < arr->layerCount);
 }
 
 int r3d_light_shadow_map_size(R3D_LightType type)

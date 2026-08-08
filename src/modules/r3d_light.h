@@ -127,6 +127,9 @@ void r3d_light_release_shadow_layer(R3D_LightType type, int layer);
 /* Bind shadow framebuffer for a light type */
 void r3d_light_bind_shadow_fbo(R3D_LightType type, int layer, int face);
 
+/* Returns if the shadow map layer is valid */
+bool r3d_light_shadow_map_is_valid(R3D_LightType type, int layer);
+
 /* Get the shadow map dimensions */
 int r3d_light_shadow_map_size(R3D_LightType type);
 

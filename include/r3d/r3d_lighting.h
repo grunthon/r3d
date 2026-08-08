@@ -111,6 +111,11 @@ R3DAPI R3D_ShadowMap R3D_LoadShadowMap(R3D_LightType type);
  */
 R3DAPI void R3D_UnloadShadowMap(R3D_ShadowMap shadowMap);
 
+/**
+ * @brief Returns whether the shadow map has a valid allocated layer.
+ */
+R3DAPI bool R3D_IsShadowMapValid(R3D_ShadowMap shadowMap);
+
 // ----------------------------------------
 // LIGHTING: Light Helper Functions
 // ----------------------------------------
