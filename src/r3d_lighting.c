@@ -16,6 +16,7 @@
 
 #include "./modules/r3d_light.h"
 #include "./common/r3d_math.h"
+#include "raylib.h"
 
 // ========================================
 // PUBLIC API
@@ -199,13 +200,12 @@ static void r3d_draw_light_spot_debug(const R3D_Light* light)
     Vector3 right = Vector3Normalize(Vector3CrossProduct(dir, ref));
     Vector3 up = Vector3CrossProduct(right, dir);
 
-    // Draw inner and outer cone rings + lines from apex
-    float cutoffs[2] = {
-        cosf(light->innerCutOff * RAD2DEG),
-        cosf(light->outerCutOff * RAD2DEG),
-    };
-    for (int c = 0; c < 2; c++) {
-        float radius = fabsf(light->range * cutoffs[c]);
+    float anglesDeg[2] = { light->innerCutOff, light->outerCutOff };
+
+    for (int c = 0; c < 2; c++)
+    {
+        float thetaRad = anglesDeg[c] * DEG2RAD;
+        float radius = light->range * tanf(thetaRad);
         Vector3 base = Vector3Add(pos, Vector3Scale(dir, light->range));
 
         // Ring
@@ -227,12 +227,12 @@ static void r3d_draw_light_spot_debug(const R3D_Light* light)
         rlEnd();
 
         // 4 lines from apex to ring (cardinal points only)
-        float angles[4] = { 0, PI * 0.5f, PI, PI * 1.5f };
+        float ringAngles[4] = { 0, PI * 0.5f, PI, PI * 1.5f };
         for (int i = 0; i < 4; i++)
         {
             Vector3 rim = Vector3Add(base, Vector3Add(
-                Vector3Scale(right, cosf(angles[i]) * radius),
-                Vector3Scale(up,    sinf(angles[i]) * radius)));
+                Vector3Scale(right, cosf(ringAngles[i]) * radius),
+                Vector3Scale(up,    sinf(ringAngles[i]) * radius)));
             DrawLine3D(pos, rim, light->color);
         }
     }
