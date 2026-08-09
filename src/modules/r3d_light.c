@@ -642,18 +642,18 @@ r3d_rect_t r3d_light_screen_rect(const r3d_light_data_t* light, const Matrix* vi
     }
 
     // NDC to screen
-    int x = (int)fmaxf((minNDC.x * 0.5f + 0.5f) * w, 0.0f);
-    int y = (int)fmaxf((minNDC.y * 0.5f + 0.5f) * h, 0.0f);
-    int rectW = (int)fminf((maxNDC.x * 0.5f + 0.5f) * w, (float)w) - x;
-    int rectH = (int)fminf((maxNDC.y * 0.5f + 0.5f) * h, (float)h) - y;
+    int rectX = (int)fmaxf((minNDC.x * 0.5f + 0.5f) * w, 0.0f);
+    int rectY = (int)fmaxf((minNDC.y * 0.5f + 0.5f) * h, 0.0f);
+    int rectW = (int)fminf((maxNDC.x * 0.5f + 0.5f) * w, (float)w) - rectX;
+    int rectH = (int)fminf((maxNDC.y * 0.5f + 0.5f) * h, (float)h) - rectY;
 
     // Security: Invalid dimensions = skip
     if (rectW <= 0 || rectH <= 0)
     {
-        return (r3d_rect_t){0, 0, 0, 0};
+        return (r3d_rect_t) {0, 0, 0, 0};
     }
 
-    return (r3d_rect_t){x, y, rectW, rectH};
+    return (r3d_rect_t) {rectX, rectY, rectW, rectH};
 }
 
 const char* r3d_light_type_name(R3D_LightType type)
