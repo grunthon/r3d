@@ -750,11 +750,10 @@ void upload_light_array_block_for_mesh(const r3d_render_call_t* call, bool shado
 
     R3D_LIGHT_FOR_EACH_VISIBLE(light)
     {
-        // Check if the geometry "touches" the light area
-        // It's not the most accurate possible but hey
+        // Check if the geometry touches the light volume
         if (light->type != R3D_LIGHT_DIR)
         {
-            if (!CheckCollisionBoxes(light->aabb, call->mesh.instance.aabb))
+            if (!CheckCollisionBoxSphere(call->mesh.instance.aabb, light->volume.center, light->volume.radius))
             {
                 continue;
             }
@@ -2204,8 +2203,6 @@ void pass_deferred_lights(void)
     {
         // Set scissors rect
         r3d_rect_t dst = r3d_light_screen_rect(light, R3D_TARGET_SIZE_W, R3D_TARGET_SIZE_H);
-        if (dst.w <= 0 || dst.h <= 0) continue;
-
         r3d_driver_set_scissor(dst.x, dst.y, dst.w, dst.h);
 
         // Send light data to the GPU
@@ -2347,8 +2344,6 @@ void pass_deferred_volumetric_fog(r3d_target_t sceneTarget)
         if (light->fogEnergy == 0.0f) continue;
 
         r3d_rect_t dst = r3d_light_screen_rect(light, R3D_TARGET_SIZE_W / 2, R3D_TARGET_SIZE_H / 2);
-        if (dst.w <= 0 || dst.h <= 0) continue;
-
         r3d_driver_set_scissor(dst.x, dst.y, dst.w, dst.h);
 
         r3d_shader_block_light_t data = {

@@ -34,8 +34,14 @@
 // ========================================
 
 typedef struct {
+    Vector3 center;
+    float   radius;
+} r3d_light_volume_t;
+
+typedef struct {
+    r3d_light_volume_t volume;  // Light volume (sphere) (spot/omni)
+    Vector2 minNdc, maxNdc;     // Light area to the screen in NDC
     Matrix viewProj;            // Used for shadow projection (dir/spot)
-    BoundingBox aabb;           // AABB in world space of the light volume
     Vector3 color;
     Vector3 position;           // Light position (spot/omni)
     Vector3 direction;          // Light direction (dir/spot)

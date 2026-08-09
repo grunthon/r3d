@@ -264,38 +264,115 @@ static void light_omni_view_proj(Vector3 pos, float range, Matrix* outMatrices, 
     *outFar = far;
 }
 
-static void light_spot_bounding_sphere(Vector3* outCenter, float* outRadius, Vector3 pos, Vector3 dir, float range, float outerCos)
+static r3d_light_volume_t light_spot_volume(Vector3 pos, Vector3 dir, float range, float outerCos)
 {
+    r3d_light_volume_t volume = {0};
+
     float tanTheta2 = (1.0f - outerCos * outerCos) / (outerCos * outerCos);
 
     if (outerCos >= 0.70710678f)
     {
-        *outRadius = range * (1.0f + tanTheta2) * 0.5f;
-        *outCenter = Vector3Add(pos, Vector3Scale(dir, *outRadius));
+        volume.radius = range * (1.0f + tanTheta2) * 0.5f;
+        volume.center = Vector3Add(pos, Vector3Scale(dir, volume.radius));
     }
     else
     {
-        *outRadius = range * sqrtf(tanTheta2);
-        *outCenter = Vector3Add(pos, Vector3Scale(dir, range));
+        volume.radius = range * sqrtf(tanTheta2);
+        volume.center = Vector3Add(pos, Vector3Scale(dir, range));
     }
+
+    return volume;
+}
+
+static void light_volume_sphere_axis_extent(float centerAxis, float f, float radius, float projTerm, float* ndcMin, float* ndcMax)
+{
+    float L2 = centerAxis * centerAxis + f * f;
+    float r2 = radius * radius;
+
+    // Origin inside the circle -> spans the full angular range on this axis
+    if (L2 <= r2)
+    {
+        *ndcMin = -1.0f;
+        *ndcMax = +1.0f;
+        return;
+    }
+
+    // Tangent length from origin to the circle
+    float D = sqrtf(L2 - r2);
+
+    // tan(theta +- alpha) via angle-sum identity, trig-free.
+    // Denominator sign = forward/backward side; if non-positive, the tangent
+    // points sideways/behind -> snap to the edge matching the numerator's sign.
+    float numMin = centerAxis * D - f * radius;
+    float denMin = f * D + centerAxis * radius;
+    *ndcMin = (denMin > 0.0f)
+        ? R3D_MAX(projTerm * (numMin / denMin), -1.0f)
+        : ((numMin > 0.0f) ? +1.0f : -1.0f);
+
+    float numMax = centerAxis * D + f * radius;
+    float denMax = f * D - centerAxis * radius;
+    *ndcMax = (denMax > 0.0f)
+        ? R3D_MIN(projTerm * (numMax / denMax), +1.0f)
+        : ((numMax > 0.0f) ? +1.0f : -1.0f);
+}
+
+static bool light_volume_screen_ndc(const r3d_light_volume_t* volume, Vector2* minNdc, Vector2* maxNdc)
+{
+    Vector3 camPos = R3D.viewState.camera.position;
+    Vector3 center = volume->center;
+    float radius = volume->radius;
+
+    // Camera inside sphere -> covers the whole screen
+    float distSq = Vector3DistanceSqr(camPos, center);
+    if (distSq <= radius * radius)
+    {
+        *minNdc = (Vector2){-1, -1};
+        *maxNdc = (Vector2){+1, +1};
+        return true;
+    }
+
+    // Light volume center in view space
+    Vector3 vsCenter = r3d_vector3_transform(center, &R3D.viewState.view);
+    vsCenter.z = -vsCenter.z; // positive distance in front of camera
+
+    // Sphere entirely behind the camera -> not visible
+    if (vsCenter.z + radius <= 0.0f)
+    {
+        return false;
+    }
+
+    float P00 = R3D.viewState.proj.m0;
+    float P11 = R3D.viewState.proj.m5;
+
+    float minX, maxX, minY, maxY;
+    light_volume_sphere_axis_extent(vsCenter.x, vsCenter.z, radius, P00, &minX, &maxX);
+    light_volume_sphere_axis_extent(vsCenter.y, vsCenter.z, radius, P11, &minY, &maxY);
+
+    // Fully off-screen on at least one axis
+    if (minX > 1.0f || maxX < -1.0f || minY > 1.0f || maxY < -1.0f)
+    {
+        return false;
+    }
+
+    minNdc->x = minX;
+    minNdc->y = minY;
+    maxNdc->x = maxX;
+    maxNdc->y = maxY;
+
+    return true;
 }
 
 static void light_dir_push(const R3D_Light* light, const R3D_ShadowMap* map, R3D_Camera camera, double aspect, bool updateShadow)
 {
     r3d_light_data_t data = {
-        .aabb = {
-            .min = {-FLT_MAX, -FLT_MAX, -FLT_MAX},
-            .max = {+FLT_MAX, +FLT_MAX, +FLT_MAX},
-        },
+        .volume      = {.center = {0}, .radius = FLT_MAX},
+        .minNdc      = {-1, -1},
+        .maxNdc      = {+1, +1},
         .color       = R3D_ColorSrgbToLinearVector3(light->color),
-        .position    = {0},
         .direction   = Vector3Normalize(light->direction),
         .energy      = light->energy,
         .specular    = light->specular,
         .range       = light->range,
-        .falloff     = 0.0f,
-        .innerCutOff = 0.0f,
-        .outerCutOff = 0.0f,
         .fogEnergy   = light->fogEnergy,
         .type        = light->type,
     };
@@ -314,12 +391,9 @@ static void light_dir_push(const R3D_Light* light, const R3D_ShadowMap* map, R3D
             r3d_light_shadow_job_t job = {
                 .frustum     = R3D_ComputeFrustum(cache->viewProj),
                 .viewProj    = cache->viewProj,
-                .position    = {0},
-                .far         = 0.0f,
                 .cullMask    = map->cullMask,
                 .type        = light->type,
                 .shadowLayer = mapLayer,
-                .layerFace   = 0,
             };
 
             R3D_LIST_PUSH(R3D_MOD_LIGHT.listShadowJobs, job);
@@ -349,10 +423,7 @@ static void light_spot_push(const R3D_Light* light, const R3D_ShadowMap* map, co
     Vector3 position  = light->position;
     Vector3 direction = Vector3Normalize(light->direction);
     float outerCutOff = cosf(light->outerCutOff * DEG2RAD);
-
-    Vector3 bsCenter;
-    float   bsRadius;
-    light_spot_bounding_sphere(&bsCenter, &bsRadius, position, direction, range, outerCutOff);
+    r3d_light_volume_t volume = light_spot_volume(position, direction, range, outerCutOff);
 
     r3d_light_shadow_cache_t* cache = NULL;
     bool mustRenderShadow = false;
@@ -365,13 +436,6 @@ static void light_spot_push(const R3D_Light* light, const R3D_ShadowMap* map, co
         mustRenderShadow = !cache->rendered || updateShadow;
     }
 
-    bool visible = R3D_FrustumIntersectsSphere(frustum, bsCenter, bsRadius);
-
-    if (!visible && !mustRenderShadow)
-    {
-        return;
-    }
-
     if (mustRenderShadow)
     {
         cache->viewProj = light_spot_view_proj(position, direction, range);
@@ -380,53 +444,54 @@ static void light_spot_push(const R3D_Light* light, const R3D_ShadowMap* map, co
         r3d_light_shadow_job_t job = {
             .frustum     = R3D_ComputeFrustum(cache->viewProj),
             .viewProj    = cache->viewProj,
-            .position    = {0},
-            .far         = 0.0f,
             .cullMask    = map->cullMask,
             .type        = light->type,
             .shadowLayer = mapLayer,
-            .layerFace   = 0,
         };
 
         R3D_LIST_PUSH(R3D_MOD_LIGHT.listShadowJobs, job);
     }
 
-    if (visible)
+    if (R3D_FrustumIntersectsSphere(frustum, volume.center, volume.radius))
     {
-        r3d_light_data_t data = {
-            .aabb = {
-                .min = Vector3AddValue(bsCenter, -bsRadius),
-                .max = Vector3AddValue(bsCenter, +bsRadius),
-            },
-            .color       = R3D_ColorSrgbToLinearVector3(light->color),
-            .position    = position,
-            .direction   = direction,
-            .energy      = light->energy,
-            .specular    = light->specular,
-            .range       = range,
-            .falloff     = R3D_MAX(light->falloff, 1e-4f),
-            .innerCutOff = cosf(light->innerCutOff * DEG2RAD),
-            .outerCutOff = outerCutOff,
-            .fogEnergy   = light->fogEnergy,
-            .type        = light->type,
-        };
+        Vector2 minNdc, maxNdc;
 
-        if (map)
+        if (light_volume_screen_ndc(&volume, &minNdc, &maxNdc))
         {
-            data.viewProj        = cache->viewProj;
-            data.shadowSoftness  = map->softness / (float)R3D_HINT(R3D_HINT_SHADOW_SPOT_SIZE);
-            data.shadowOpacity   = map->opacity;
-            data.shadowDepthBias = map->depthBias;
-            data.shadowSlopeBias = map->slopeBias;
-            data.shadowFar       = cache->far;
-            data.shadowLayer     = mapLayer;
-        }
-        else
-        {
-            data.shadowLayer = -1;
-        }
+            r3d_light_data_t data = {
+                .volume      = volume,
+                .minNdc      = minNdc,
+                .maxNdc      = maxNdc,
+                .color       = R3D_ColorSrgbToLinearVector3(light->color),
+                .position    = position,
+                .direction   = direction,
+                .energy      = light->energy,
+                .specular    = light->specular,
+                .range       = range,
+                .falloff     = R3D_MAX(light->falloff, 1e-4f),
+                .innerCutOff = cosf(light->innerCutOff * DEG2RAD),
+                .outerCutOff = outerCutOff,
+                .fogEnergy   = light->fogEnergy,
+                .type        = light->type,
+            };
 
-        R3D_LIST_PUSH(R3D_MOD_LIGHT.listLightData, data);
+            if (map)
+            {
+                data.viewProj        = cache->viewProj;
+                data.shadowSoftness  = map->softness / (float)R3D_HINT(R3D_HINT_SHADOW_SPOT_SIZE);
+                data.shadowOpacity   = map->opacity;
+                data.shadowDepthBias = map->depthBias;
+                data.shadowSlopeBias = map->slopeBias;
+                data.shadowFar       = cache->far;
+                data.shadowLayer     = mapLayer;
+            }
+            else
+            {
+                data.shadowLayer = -1;
+            }
+
+            R3D_LIST_PUSH(R3D_MOD_LIGHT.listLightData, data);
+        }
     }
 }
 
@@ -443,13 +508,6 @@ static void light_omni_push(const R3D_Light* light, const R3D_ShadowMap* map, co
         mapLayer = (int)map->handle - 1;
         cache = r3d_light_shadow_cache(map->type, mapLayer);
         mustRenderShadow = !cache->rendered || updateShadow;
-    }
-
-    bool visible = R3D_FrustumIntersectsSphere(frustum, light->position, light->range);
-
-    if (!visible && !mustRenderShadow)
-    {
-        return;
     }
 
     if (mustRenderShadow)
@@ -476,41 +534,47 @@ static void light_omni_push(const R3D_Light* light, const R3D_ShadowMap* map, co
         }
     }
 
-    if (visible)
+    if (R3D_FrustumIntersectsSphere(frustum, light->position, light->range))
     {
-        r3d_light_data_t data = {
-            .aabb = {
-                .min = Vector3AddValue(light->position, -light->range),
-                .max = Vector3AddValue(light->position, +light->range),
-            },
-            .color       = R3D_ColorSrgbToLinearVector3(light->color),
-            .position    = light->position,
-            .direction   = {0},
-            .energy      = light->energy,
-            .specular    = light->specular,
-            .range       = light->range,
-            .falloff     = R3D_MAX(light->falloff, 1e-4f),
-            .innerCutOff = 0.0f,
-            .outerCutOff = 0.0f,
-            .fogEnergy   = light->fogEnergy,
-            .type        = light->type,
+        r3d_light_volume_t volume = {
+            .center = light->position,
+            .radius = light->range,
         };
 
-        if (map)
-        {
-            data.shadowSoftness  = map->softness / (float)R3D_HINT(R3D_HINT_SHADOW_OMNI_SIZE);
-            data.shadowOpacity   = map->opacity;
-            data.shadowDepthBias = map->depthBias;
-            data.shadowSlopeBias = map->slopeBias;
-            data.shadowFar       = cache->far;
-            data.shadowLayer     = mapLayer;
-        }
-        else
-        {
-            data.shadowLayer = -1;
-        }
+        Vector2 minNdc, maxNdc;
 
-        R3D_LIST_PUSH(R3D_MOD_LIGHT.listLightData, data);
+        if (light_volume_screen_ndc(&volume, &minNdc, &maxNdc))
+        {
+            r3d_light_data_t data = {
+                .volume      = volume,
+                .minNdc      = minNdc,
+                .maxNdc      = maxNdc,
+                .color       = R3D_ColorSrgbToLinearVector3(light->color),
+                .position    = light->position,
+                .energy      = light->energy,
+                .specular    = light->specular,
+                .range       = light->range,
+                .falloff     = R3D_MAX(light->falloff, 1e-4f),
+                .fogEnergy   = light->fogEnergy,
+                .type        = light->type,
+            };
+
+            if (map)
+            {
+                data.shadowSoftness  = map->softness / (float)R3D_HINT(R3D_HINT_SHADOW_OMNI_SIZE);
+                data.shadowOpacity   = map->opacity;
+                data.shadowDepthBias = map->depthBias;
+                data.shadowSlopeBias = map->slopeBias;
+                data.shadowFar       = cache->far;
+                data.shadowLayer     = mapLayer;
+            }
+            else
+            {
+                data.shadowLayer = -1;
+            }
+
+            R3D_LIST_PUSH(R3D_MOD_LIGHT.listLightData, data);
+        }
     }
 }
 
@@ -605,56 +669,10 @@ void r3d_light_clear(void)
 
 r3d_rect_t r3d_light_screen_rect(const r3d_light_data_t* light, int w, int h)
 {
-    r3d_rect_t rect = {0, 0, w, h};
-
-    if (light->type == R3D_LIGHT_DIR)
-    {
-        return rect;
-    }
-
-    Vector3 camPos = R3D.viewState.camera.position;
-
-    Vector3 min = light->aabb.min;
-    Vector3 max = light->aabb.max;
-
-    bool cameraInside =
-        (camPos.x >= min.x && camPos.x <= max.x) &&
-        (camPos.y >= min.y && camPos.y <= max.y) &&
-        (camPos.z >= min.z && camPos.z <= max.z);
-
-    if (cameraInside)
-    {
-        return rect;
-    }
-
-    Vector2 minNDC = {+FLT_MAX, +FLT_MAX};
-    Vector2 maxNDC = {-FLT_MAX, -FLT_MAX};
-
-    for (int i = 0; i < 8; i++)
-    {
-        Vector4 corner = {
-            (i & 1) ? max.x : min.x,
-            (i & 2) ? max.y : min.y,
-            (i & 4) ? max.z : min.z,
-            1.0f
-        };
-        Vector4 clip = r3d_vector4_transform(corner, &R3D.viewState.viewProj);
-
-        if (clip.w <= 1e-4f)
-        {
-            return (r3d_rect_t) {0, 0, w, h};
-        }
-
-        Vector2 ndc = Vector2Scale((Vector2) {clip.x, clip.y}, 1.0f / clip.w);
-        minNDC = Vector2Min(minNDC, ndc);
-        maxNDC = Vector2Max(maxNDC, ndc);
-    }
-
-    // NDC to screen
-    int rectX = (int)fmaxf((minNDC.x * 0.5f + 0.5f) * w, 0.0f);
-    int rectY = (int)fmaxf((minNDC.y * 0.5f + 0.5f) * h, 0.0f);
-    int rectW = (int)fminf((maxNDC.x * 0.5f + 0.5f) * w, (float)w) - rectX;
-    int rectH = (int)fminf((maxNDC.y * 0.5f + 0.5f) * h, (float)h) - rectY;
+    int rectX = (int)((light->minNdc.x * 0.5f + 0.5f) * w);
+    int rectY = (int)((light->minNdc.y * 0.5f + 0.5f) * h);
+    int rectW = (int)((light->maxNdc.x * 0.5f + 0.5f) * w) - rectX;
+    int rectH = (int)((light->maxNdc.y * 0.5f + 0.5f) * h) - rectY;
 
     return (r3d_rect_t) {rectX, rectY, rectW, rectH};
 }
