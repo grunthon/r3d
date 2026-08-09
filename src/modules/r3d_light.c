@@ -266,15 +266,17 @@ static void light_omni_view_proj(Vector3 pos, float range, Matrix* outMatrices, 
 
 static void light_spot_bounding_sphere(Vector3* outCenter, float* outRadius, Vector3 pos, Vector3 dir, float range, float outerCos)
 {
+    float tanTheta2 = (1.0f - outerCos * outerCos) / (outerCos * outerCos);
+
     if (outerCos >= 0.70710678f)
     {
-        *outRadius = range / (2.0f * outerCos * outerCos);
+        *outRadius = range * (1.0f + tanTheta2) * 0.5f;
         *outCenter = Vector3Add(pos, Vector3Scale(dir, *outRadius));
     }
     else
     {
-        *outRadius = range * sqrtf(1.0f - outerCos * outerCos);
-        *outCenter = Vector3Add(pos, Vector3Scale(dir, (range * outerCos)));
+        *outRadius = range * sqrtf(tanTheta2);
+        *outCenter = Vector3Add(pos, Vector3Scale(dir, range));
     }
 }
 
