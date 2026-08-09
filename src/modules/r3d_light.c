@@ -631,13 +631,12 @@ r3d_rect_t r3d_light_screen_rect(const r3d_light_data_t* light, const Matrix* vi
         };
         Vector4 clip = r3d_vector4_transform(corner, viewProj);
 
-        float w = clip.w;
-        if (fabsf(w) < 1e-4f)
+        if (clip.w <= 1e-4f)
         {
-            w = (w < 0.0f) ? -1e-4f : 1e-4f;
+            return (r3d_rect_t) {0, 0, w, h};
         }
 
-        Vector2 ndc = Vector2Scale((Vector2){clip.x, clip.y}, 1.0f / w);
+        Vector2 ndc = Vector2Scale((Vector2) {clip.x, clip.y}, 1.0f / clip.w);
         minNDC = Vector2Min(minNDC, ndc);
         maxNDC = Vector2Max(maxNDC, ndc);
     }
