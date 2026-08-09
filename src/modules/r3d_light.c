@@ -603,9 +603,16 @@ void r3d_light_clear(void)
     R3D_LIST_CLEAR(R3D_MOD_LIGHT.listLightData);
 }
 
-r3d_rect_t r3d_light_screen_rect(const r3d_light_data_t* light, const Matrix* viewProj, Vector3 camPos, int w, int h)
+r3d_rect_t r3d_light_screen_rect(const r3d_light_data_t* light, int w, int h)
 {
-    assert(light->type != R3D_LIGHT_DIR);
+    r3d_rect_t rect = {0, 0, w, h};
+
+    if (light->type == R3D_LIGHT_DIR)
+    {
+        return rect;
+    }
+
+    Vector3 camPos = R3D.viewState.camera.position;
 
     Vector3 min = light->aabb.min;
     Vector3 max = light->aabb.max;
@@ -617,7 +624,7 @@ r3d_rect_t r3d_light_screen_rect(const r3d_light_data_t* light, const Matrix* vi
 
     if (cameraInside)
     {
-        return (r3d_rect_t){0, 0, w, h};
+        return rect;
     }
 
     Vector2 minNDC = {+FLT_MAX, +FLT_MAX};
@@ -631,7 +638,7 @@ r3d_rect_t r3d_light_screen_rect(const r3d_light_data_t* light, const Matrix* vi
             (i & 4) ? max.z : min.z,
             1.0f
         };
-        Vector4 clip = r3d_vector4_transform(corner, viewProj);
+        Vector4 clip = r3d_vector4_transform(corner, &R3D.viewState.viewProj);
 
         if (clip.w <= 1e-4f)
         {
@@ -648,12 +655,6 @@ r3d_rect_t r3d_light_screen_rect(const r3d_light_data_t* light, const Matrix* vi
     int rectY = (int)fmaxf((minNDC.y * 0.5f + 0.5f) * h, 0.0f);
     int rectW = (int)fminf((maxNDC.x * 0.5f + 0.5f) * w, (float)w) - rectX;
     int rectH = (int)fminf((maxNDC.y * 0.5f + 0.5f) * h, (float)h) - rectY;
-
-    // Security: Invalid dimensions = skip
-    if (rectW <= 0 || rectH <= 0)
-    {
-        return (r3d_rect_t) {0, 0, 0, 0};
-    }
 
     return (r3d_rect_t) {rectX, rectY, rectW, rectH};
 }

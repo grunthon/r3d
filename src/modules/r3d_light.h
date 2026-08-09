@@ -114,7 +114,7 @@ r3d_light_data_t* r3d_light_get(int lightIndex);
 void r3d_light_clear(void);
 
 /* Returns the screen-space rectangle covered by the light's influence */
-r3d_rect_t r3d_light_screen_rect(const r3d_light_data_t* light, const Matrix* viewProj, Vector3 camPos, int w, int h);
+r3d_rect_t r3d_light_screen_rect(const r3d_light_data_t* light, int w, int h);
 
 /**/
 const char* r3d_light_type_name(R3D_LightType type);
