@@ -155,7 +155,7 @@ static int shadow_array_acquire_layer(r3d_light_shadow_array_t* arr)
 
     r3d_light_shadow_cache_t* cache = &R3D_LIST_GET(arr->cache, r3d_light_shadow_cache_t, layer);
     cache->acquired = true;
-    cache->valid    = false;
+    cache->rendered = false;
 
     return layer;
 }
@@ -164,7 +164,7 @@ static void shadow_array_release_layer(r3d_light_shadow_array_t* arr, int layer)
 {
     r3d_light_shadow_cache_t* cache = &R3D_LIST_GET(arr->cache, r3d_light_shadow_cache_t, layer);
     cache->acquired = false;
-    cache->valid    = false;
+    cache->rendered = false;
 
     R3D_LIST_PUSH(arr->freeList, layer);
 }
@@ -304,10 +304,10 @@ static void light_dir_push(const R3D_Light* light, const R3D_ShadowMap* map, R3D
 
         r3d_light_shadow_cache_t* cache = r3d_light_shadow_cache(map->type, mapLayer);
 
-        if (!cache->valid || updateShadow)
+        if (!cache->rendered || updateShadow)
         {
             cache->viewProj = light_dir_view_proj(data.direction, data.range, camera, aspect);
-            cache->valid    = true;
+            cache->rendered = true; // Assume it will be rendered in advance
 
             r3d_light_shadow_job_t job = {
                 .frustum     = R3D_ComputeFrustum(cache->viewProj),
@@ -360,7 +360,7 @@ static void light_spot_push(const R3D_Light* light, const R3D_ShadowMap* map, co
     {
         mapLayer = (int)map->handle - 1;
         cache = r3d_light_shadow_cache(map->type, mapLayer);
-        mustRenderShadow = !cache->valid || updateShadow;
+        mustRenderShadow = !cache->rendered || updateShadow;
     }
 
     bool visible = R3D_FrustumIntersectsSphere(frustum, bsCenter, bsRadius);
@@ -373,7 +373,7 @@ static void light_spot_push(const R3D_Light* light, const R3D_ShadowMap* map, co
     if (mustRenderShadow)
     {
         cache->viewProj = light_spot_view_proj(position, direction, range);
-        cache->valid    = true;
+        cache->rendered = true; // Assume it will be rendered in advance
 
         r3d_light_shadow_job_t job = {
             .frustum     = R3D_ComputeFrustum(cache->viewProj),
@@ -440,7 +440,7 @@ static void light_omni_push(const R3D_Light* light, const R3D_ShadowMap* map, co
     {
         mapLayer = (int)map->handle - 1;
         cache = r3d_light_shadow_cache(map->type, mapLayer);
-        mustRenderShadow = !cache->valid || updateShadow;
+        mustRenderShadow = !cache->rendered || updateShadow;
     }
 
     bool visible = R3D_FrustumIntersectsSphere(frustum, light->position, light->range);
@@ -452,7 +452,7 @@ static void light_omni_push(const R3D_Light* light, const R3D_ShadowMap* map, co
 
     if (mustRenderShadow)
     {
-        cache->valid = true;
+        cache->rendered = true; // Assume it will be rendered in advance
 
         Matrix viewProjs[6];
         light_omni_view_proj(light->position, light->range, viewProjs, &cache->far);

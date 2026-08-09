@@ -70,7 +70,7 @@ typedef struct {
     Matrix viewProj;            // stored for projection (dir/spot)
     float  far;                 // stored for projection (omni)
     bool   acquired;            // true from acquire until release; drives handle validity checks
-    bool   valid;               // true once shadow content has been rendered at least once since (re)acquired
+    bool   rendered;            // true once shadow content has been rendered at least once since (re)acquired
 } r3d_light_shadow_cache_t;
 
 typedef struct {

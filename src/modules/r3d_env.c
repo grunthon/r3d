@@ -169,7 +169,7 @@ int cubemap_array_acquire_layer(r3d_env_cubemap_array_t* arr)
 
     r3d_env_cubemap_layer_state_t* state = &R3D_LIST_GET(arr->layerStates, r3d_env_cubemap_layer_state_t, layer);
     state->acquired = true;
-    state->valid    = false;
+    state->rendered = false;
 
     return layer;
 }
@@ -178,7 +178,7 @@ void cubemap_array_release_layer(r3d_env_cubemap_array_t* arr, int layer)
 {
     r3d_env_cubemap_layer_state_t* state = &R3D_LIST_GET(arr->layerStates, r3d_env_cubemap_layer_state_t, layer);
     state->acquired = false;
-    state->valid    = false;
+    state->rendered = false;
 
     R3D_LIST_PUSH(arr->freeList, layer);
 }
@@ -309,7 +309,7 @@ static void probe_push(const R3D_Probe* probe, r3d_env_cubemap_array_t* cubemapA
     int layer = (int)probe->handle - 1;
     r3d_env_cubemap_layer_state_t* state = &R3D_LIST_GET(cubemapArray->layerStates, r3d_env_cubemap_layer_state_t, layer);
 
-    bool mustCapture = !state->valid || updateProbe;
+    bool mustCapture = !state->rendered || updateProbe;
     bool visible = R3D_FrustumIntersectsSphere(&R3D.viewState.frustum, probe->position, probe->range);
 
     if (mustCapture)
@@ -512,7 +512,7 @@ void r3d_env_irradiance_bind_fbo(int layer, int face)
     r3d_env_cubemap_array_t* arr = &R3D_MOD_ENV.irradiance;
 
     r3d_env_cubemap_layer_state_t* state = &R3D_LIST_GET(arr->layerStates, r3d_env_cubemap_layer_state_t, layer);
-    state->valid = true;
+    state->rendered = true;
 
     glBindFramebuffer(GL_FRAMEBUFFER, arr->framebuffer);
     glFramebufferTextureLayer(
@@ -561,7 +561,7 @@ void r3d_env_prefilter_bind_fbo(int layer, int face, int mipLevel)
     assert(mipLevel < arr->mipLevels);
 
     r3d_env_cubemap_layer_state_t* state = &R3D_LIST_GET(arr->layerStates, r3d_env_cubemap_layer_state_t, layer);
-    state->valid = true;
+    state->rendered = true;
 
     glBindFramebuffer(GL_FRAMEBUFFER, arr->framebuffer);
     glFramebufferTextureLayer(

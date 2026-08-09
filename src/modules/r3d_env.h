@@ -49,7 +49,7 @@ typedef struct {
 
 typedef struct {
     bool acquired;              // true from acquire until release; drives handle validity checks
-    bool valid;                 // true once the layer's content has been captured at least once since (re)acquired
+    bool rendered;              // true once the layer's content has been captured at least once since (re)acquired
 } r3d_env_cubemap_layer_state_t;
 
 typedef struct {
