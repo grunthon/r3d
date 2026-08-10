@@ -38,8 +38,8 @@ typedef struct {
 #define R3D_LIST_LENGTH(list)                   r3d_list_length((list))
 #define R3D_LIST_EMPTY(list)                    r3d_list_empty((list))
 #define R3D_LIST_CLEAR(list)                    r3d_list_clear((list))
-#define R3D_LIST_GET(list, type, index)         (((type*)((list)->elements))[index])
-#define R3D_LIST_SET(list, type, index, value)  (((type*)((list)->elements))[index] = (type)(value))
+#define R3D_LIST_GET(list, type, index)         (*(type*)r3d_list_get((list), (size_t)(index), sizeof(type)))
+#define R3D_LIST_SET(list, type, index, value)  (R3D_LIST_GET(list, type, index) = (value))
 #define R3D_LIST_GET_INDEX(list, elemPtr)       (((char*)(elemPtr) - (char*)((list)->elements)) / (list)->elemSize)
 
 #define R3D_LIST_FOR_EACH(list, type, elem) \
@@ -60,5 +60,7 @@ void r3d_list_unordered_remove(r3d_list_t* list, size_t index);
 size_t r3d_list_length(r3d_list_t* list);
 bool r3d_list_empty(r3d_list_t* list);
 void r3d_list_clear(r3d_list_t* list);
+void* r3d_list_get(r3d_list_t* list, size_t index, size_t typeSize);
+void r3d_list_set(r3d_list_t* list, size_t index, size_t typeSize, const void* value);
 
 #endif // R3D_COMMON_LIST_H

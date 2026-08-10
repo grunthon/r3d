@@ -10,6 +10,7 @@
 #include <raylib.h>
 #include <stddef.h>
 #include <string.h>
+#include <assert.h>
 
 #include "./r3d_helper.h"
 
@@ -111,6 +112,25 @@ bool r3d_list_empty(r3d_list_t* list)
 void r3d_list_clear(r3d_list_t* list)
 {
     list->elemCount = 0;
+}
+
+void* r3d_list_get(r3d_list_t* list, size_t index, size_t typeSize)
+{
+    assert(list != NULL);
+    assert(typeSize == list->elemSize && "type size does not match the list's element size");
+    assert(index < list->elemCount && "index out of bounds");
+
+    return &((char*)list->elements)[index * list->elemSize];
+}
+
+void r3d_list_set(r3d_list_t* list, size_t index, size_t typeSize, const void* value)
+{
+    assert(list != NULL);
+    assert(typeSize == list->elemSize && "type size does not match the list's element size");
+    assert(index < list->elemCount && "index out of bounds");
+
+    void* dst = &((char*)list->elements)[index * list->elemSize];
+    memcpy(dst, value, list->elemSize);
 }
 
 // ========================================
