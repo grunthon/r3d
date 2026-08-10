@@ -42,7 +42,7 @@ static r3d_stack_t* stack_grow(r3d_stack_t* stack, size_t minCapacity)
         newCap = doubled;
     }
 
-    uint8_t* newMem = MemAlloc(stack_total_size(newCap));
+    uint8_t* newMem = r3d_malloc(stack_total_size(newCap));
     if (!newMem) return NULL;
 
     r3d_stack_t* newStack = (r3d_stack_t*)newMem;
@@ -56,7 +56,7 @@ static r3d_stack_t* stack_grow(r3d_stack_t* stack, size_t minCapacity)
         memcpy(newStack->memory, stack->memory, stack->cursor);
     }
 
-    MemFree(stack);
+    r3d_free(stack);
     return newStack;
 }
 
@@ -71,7 +71,7 @@ r3d_stack_t* r3d_stack_create(size_t capacity)
         return NULL;
     }
 
-    uint8_t* mem = MemAlloc(stack_total_size(capacity));
+    uint8_t* mem = r3d_malloc(stack_total_size(capacity));
     if (!mem) return NULL;
 
     r3d_stack_t* stack = (r3d_stack_t*)mem;
@@ -86,7 +86,7 @@ r3d_stack_t* r3d_stack_create(size_t capacity)
 
 void r3d_stack_destroy(r3d_stack_t* stack)
 {
-    MemFree(stack);
+    r3d_free(stack);
 }
 
 bool r3d_stack_push(r3d_stack_t** stackPtr, size_t reserve)

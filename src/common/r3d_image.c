@@ -16,6 +16,7 @@
 #include <glad.h>
 
 #include "../modules/r3d_driver.h"
+#include "../common/r3d_helper.h"
 
 // ========================================
 // IMAGE FUNCTIONS
@@ -44,7 +45,7 @@ Image r3d_image_compose_rgb(const Image* sources[3], Color defaultColor)
 
     /* --- Allocation --- */
 
-    uint8_t* pixels = MemAlloc(3 * w * h);
+    uint8_t* pixels = r3d_malloc(3 * w * h);
     if (pixels == NULL)
     {
         return image;

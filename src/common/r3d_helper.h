@@ -9,9 +9,12 @@
 #ifndef R3D_COMMON_HELPER_H
 #define R3D_COMMON_HELPER_H
 
+#include "raylib.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdarg.h>
+#include <limits.h>
+#include <assert.h>
 #include <stdio.h>
 
 #if defined(_MSC_VER)
@@ -74,6 +77,25 @@ int r3d_get_cpu_count(void);
 // ========================================
 // INLINED FUNCTIONS
 // ========================================
+
+static inline void* r3d_malloc(size_t size)
+{
+    assert(size <= UINT_MAX);
+
+    return MemAlloc((unsigned int)size);
+}
+
+static inline void* r3d_realloc(void* ptr, size_t size)
+{
+    assert(size <= UINT_MAX);
+
+    return MemRealloc(ptr, (unsigned int)size);
+}
+
+static inline void r3d_free(void* ptr)
+{
+    MemFree(ptr);
+}
 
 static inline int r3d_string_format(char* dst, size_t dstSize, const char* fmt, ...)
 {

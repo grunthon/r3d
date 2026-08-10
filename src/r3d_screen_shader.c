@@ -131,7 +131,7 @@ R3D_ScreenShader* R3D_LoadScreenShaderFromMemory(const char* code)
     if (writer.overflow)
     {
         R3D_TRACELOG(LOG_ERROR, "Failed to load screen shader; Transformed code too long");
-        MemFree(shader);
+        r3d_free(shader);
         return NULL;
     }
 

@@ -1972,7 +1972,7 @@ r3d_shader_custom_t* r3d_shader_custom_alloc(void)
     size_t programOffset = (sizeof(r3d_shader_custom_t) + alignof(r3d_shader_custom_program_t) - 1) & ~(alignof(r3d_shader_custom_program_t) - 1);
     size_t size = programOffset + sizeof(r3d_shader_custom_program_t);
 
-    r3d_shader_custom_t* shader = MemAlloc(size);
+    r3d_shader_custom_t* shader = r3d_malloc(size);
     if (shader == NULL) return NULL;
 
     shader->program = (r3d_shader_custom_program_t*)((uint8_t*)shader + programOffset);
@@ -1983,7 +1983,7 @@ r3d_shader_custom_t* r3d_shader_custom_alloc(void)
 
 r3d_shader_custom_t* r3d_shader_custom_clone(r3d_shader_custom_t* custom)
 {
-    r3d_shader_custom_t* clone = MemAlloc(sizeof(r3d_shader_custom_t));
+    r3d_shader_custom_t* clone = r3d_malloc(sizeof(r3d_shader_custom_t));
     if (clone == NULL) return NULL;
 
     clone->program = custom->program;
@@ -2033,7 +2033,7 @@ void r3d_shader_custom_free(r3d_shader_custom_t* custom)
         DELETE_PROGRAM(custom->program->post.screen.id);
     }
 
-    MemFree(custom);
+    r3d_free(custom);
 
 #undef DELETE_PROGRAM
 }

@@ -12,6 +12,8 @@
 #include <string.h>
 #include <glad.h>
 
+#include "./common/r3d_helper.h"
+
 #ifdef R3D_SUPPORT_ASSIMP
 #   include "./importer/r3d_importer_internal.h"
 #endif
@@ -100,10 +102,10 @@ void R3D_UnloadSkeleton(R3D_Skeleton skeleton)
         glDeleteTextures(1, &skeleton.skinTexture);
     }
 
-    MemFree(skeleton.bones);
-    MemFree(skeleton.invBind);
-    MemFree(skeleton.modelBind);
-    MemFree(skeleton.localBind);
+    r3d_free(skeleton.bones);
+    r3d_free(skeleton.invBind);
+    r3d_free(skeleton.modelBind);
+    r3d_free(skeleton.localBind);
 }
 
 bool R3D_IsSkeletonValid(R3D_Skeleton skeleton)

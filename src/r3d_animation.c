@@ -12,6 +12,8 @@
 #include <string.h>
 #include <glad.h>
 
+#include "./common/r3d_helper.h"
+
 #ifdef R3D_SUPPORT_ASSIMP
 #   include "./importer/r3d_importer_internal.h"
 #endif
@@ -103,20 +105,20 @@ void R3D_UnloadAnimationLib(R3D_AnimationLib animLib)
         {
             R3D_AnimationChannel* channel = &anim->channels[j];
 
-            MemFree((void*)channel->translation.times);
-            MemFree((void*)channel->translation.values);
+            r3d_free((void*)channel->translation.times);
+            r3d_free((void*)channel->translation.values);
 
-            MemFree((void*)channel->rotation.times);
-            MemFree((void*)channel->rotation.values);
+            r3d_free((void*)channel->rotation.times);
+            r3d_free((void*)channel->rotation.values);
 
-            MemFree((void*)channel->scale.times);
-            MemFree((void*)channel->scale.values);
+            r3d_free((void*)channel->scale.times);
+            r3d_free((void*)channel->scale.values);
         }
 
-        MemFree(anim->channels);
+        r3d_free(anim->channels);
     }
 
-    MemFree(animLib.animations);
+    r3d_free(animLib.animations);
 }
 
 int R3D_GetAnimationIndex(R3D_AnimationLib animLib, const char* name)

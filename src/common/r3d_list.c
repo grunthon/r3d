@@ -28,7 +28,7 @@ static void push_all(r3d_list_t* list, void* elems, size_t count);
 
 r3d_list_t* r3d_list_create(size_t elemSize, size_t capacity)
 {
-    r3d_list_t* list = MemAlloc(sizeof(r3d_list_t) + capacity * elemSize);
+    r3d_list_t* list = r3d_malloc(sizeof(r3d_list_t) + capacity * elemSize);
 
     list->elements     = (char*)list + sizeof(r3d_list_t);
     list->elemSize     = elemSize;
@@ -40,7 +40,7 @@ r3d_list_t* r3d_list_create(size_t elemSize, size_t capacity)
 
 void r3d_list_destroy(r3d_list_t* list)
 {
-    MemFree(list);
+    r3d_free(list);
 }
 
 void r3d_list_reserve(r3d_list_t** list, size_t capacity)
@@ -144,7 +144,7 @@ void reserve(r3d_list_t** list, size_t elemNeeded)
     size_t newElemCapacity = R3D_MAX(elemNeeded, (*list)->elemCapacity + (*list)->elemCapacity / 2);
     size_t newSize         = sizeof(r3d_list_t) + newElemCapacity * (*list)->elemSize;
 
-    r3d_list_t* newList = MemRealloc(*list, newSize);
+    r3d_list_t* newList = r3d_realloc(*list, newSize);
     //if (newList == NULL) abort();
     *list = newList;
 

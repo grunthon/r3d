@@ -83,7 +83,7 @@ static void build_skeleton_recursive(
 
 static void upload_skeleton_bind_pose(R3D_Skeleton* skeleton)
 {
-    Matrix* skinBuffer = MemAlloc(skeleton->boneCount * sizeof(Matrix));
+    Matrix* skinBuffer = r3d_malloc(skeleton->boneCount * sizeof(Matrix));
     for (int i = 0; i < skeleton->boneCount; i++)
     {
         skinBuffer[i] = MatrixMultiply(skeleton->invBind[i], skeleton->modelBind[i]);
@@ -97,7 +97,7 @@ static void upload_skeleton_bind_pose(R3D_Skeleton* skeleton)
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glBindTexture(GL_TEXTURE_1D, 0);
 
-    MemFree(skinBuffer);
+    r3d_free(skinBuffer);
 }
 
 // ========================================
@@ -119,20 +119,20 @@ bool r3d_importer_load_skeleton(const R3D_Importer* importer, R3D_Skeleton* skel
     }
 
     // Allocate bone arrays
-    skeleton->bones = MemAlloc(boneCount * sizeof(R3D_BoneInfo));
-    skeleton->invBind = MemAlloc(boneCount * sizeof(Matrix));
-    skeleton->localBind = MemAlloc(boneCount * sizeof(Matrix));
-    skeleton->modelBind = MemAlloc(boneCount * sizeof(Matrix));
+    skeleton->bones = r3d_malloc(boneCount * sizeof(R3D_BoneInfo));
+    skeleton->invBind = r3d_malloc(boneCount * sizeof(Matrix));
+    skeleton->localBind = r3d_malloc(boneCount * sizeof(Matrix));
+    skeleton->modelBind = r3d_malloc(boneCount * sizeof(Matrix));
     skeleton->boneCount = boneCount;
 
     if (!skeleton->bones || !skeleton->invBind || !skeleton->localBind || !skeleton->modelBind)
     {
         R3D_TRACELOG(LOG_ERROR, "Failed to allocate memory for skeleton bones");
-        MemFree(skeleton->bones);
-        MemFree(skeleton->invBind);
-        MemFree(skeleton->localBind);
-        MemFree(skeleton->modelBind);
-        MemFree(skeleton);
+        r3d_free(skeleton->bones);
+        r3d_free(skeleton->invBind);
+        r3d_free(skeleton->localBind);
+        r3d_free(skeleton->modelBind);
+        r3d_free(skeleton);
         return false;
     }
 

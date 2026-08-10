@@ -420,7 +420,7 @@ r3d_importer_texture_cache_t* r3d_importer_load_texture_cache(
 
     // Persistent output buffer (outlives the scratch scope below)
     int maxSlots = materialCount * R3D_MAP_COUNT;
-    Texture2D* finalTextures = MemAlloc(maxSlots * sizeof(Texture2D));
+    Texture2D* finalTextures = r3d_malloc(maxSlots * sizeof(Texture2D));
     if (!finalTextures)
     {
         R3D_TRACELOG(LOG_WARNING, "Failed to allocate texture cache: out of memory");
@@ -567,19 +567,19 @@ r3d_importer_texture_cache_t* r3d_importer_load_texture_cache(
         {
             if (finalTextures[i].id != 0) UnloadTexture(finalTextures[i]);
         }
-        MemFree(finalTextures);
+        r3d_free(finalTextures);
         R3D_TRACELOG(LOG_WARNING, "Failed to load texture cache: out of memory");
         return NULL;
     }
 
-    r3d_importer_texture_cache_t* cache = MemAlloc(sizeof(*cache));
+    r3d_importer_texture_cache_t* cache = r3d_malloc(sizeof(*cache));
     if (!cache)
     {
         for (int i = 0; i < maxSlots; i++)
         {
             if (finalTextures[i].id != 0) UnloadTexture(finalTextures[i]);
         }
-        MemFree(finalTextures);
+        r3d_free(finalTextures);
         R3D_TRACELOG(LOG_WARNING, "Failed to allocate texture cache handle: out of memory");
         return NULL;
     }
@@ -619,8 +619,8 @@ void r3d_importer_unload_texture_cache(r3d_importer_texture_cache_t* cache, bool
         }
     }
 
-    MemFree(cache->textures);
-    MemFree(cache);
+    r3d_free(cache->textures);
+    r3d_free(cache);
 }
 
 Texture2D* r3d_importer_get_loaded_texture(r3d_importer_texture_cache_t* cache, int materialIndex, r3d_importer_texture_map_t map)

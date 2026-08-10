@@ -280,7 +280,7 @@ static bool free_list_push_range(r3d_render_range_t** list, int* count, int* cap
     if (*count >= *capacity)
     {
         int newCapacity = (*capacity) * 2;
-        r3d_render_range_t* p = MemRealloc(*list, newCapacity * sizeof(r3d_render_range_t));
+        r3d_render_range_t* p = r3d_realloc(*list, newCapacity * sizeof(r3d_render_range_t));
         if (!p) return false;
         *list = p;
         *capacity = newCapacity;
@@ -573,7 +573,7 @@ static inline r3d_render_group_t* array_get_last_group(void)
 static bool array_grow(void)
 {
     #define GROW_AND_ASSIGN(field) do { \
-        void* _p = MemRealloc(R3D_MOD_RENDER.field, newCapacity * sizeof(*R3D_MOD_RENDER.field)); \
+        void* _p = r3d_realloc(R3D_MOD_RENDER.field, newCapacity * sizeof(*R3D_MOD_RENDER.field)); \
         if (_p == NULL) return false; \
         R3D_MOD_RENDER.field = _p; \
     } while (0)
@@ -920,7 +920,7 @@ bool r3d_render_init(void)
     /* --- CPU array allocation (draw calls, groups, etc) --- */
 
     #define ALLOC_AND_ASSIGN(field, logfmt, ...) do { \
-        void* _p = MemAlloc(R3D_HINT(R3D_HINT_DRAW_CALL_CAPACITY) * sizeof(*R3D_MOD_RENDER.field)); \
+        void* _p = r3d_malloc(R3D_HINT(R3D_HINT_DRAW_CALL_CAPACITY) * sizeof(*R3D_MOD_RENDER.field)); \
         if (_p == NULL) { \
             R3D_TRACELOG(LOG_FATAL, "Failed to init render module; " logfmt, ##__VA_ARGS__); \
             goto fail; \
@@ -949,7 +949,7 @@ bool r3d_render_init(void)
     /* --- CPU free list allocation --- */
 
     #define ALLOC_FREELIST(field, cap_field, logmsg) do { \
-        R3D_MOD_RENDER.field = MemAlloc(R3D_HINT(R3D_HINT_MESH_STREAMING_CAPACITY) * sizeof(*R3D_MOD_RENDER.field)); \
+        R3D_MOD_RENDER.field = r3d_malloc(R3D_HINT(R3D_HINT_MESH_STREAMING_CAPACITY) * sizeof(*R3D_MOD_RENDER.field)); \
         if (!R3D_MOD_RENDER.field) { \
             R3D_TRACELOG(LOG_FATAL, "Failed to init render module; " logmsg); \
             goto fail; \
@@ -1006,21 +1006,21 @@ void r3d_render_quit(void)
 
     for (int i = 0; i < R3D_RENDER_LIST_COUNT; i++)
     {
-        MemFree(R3D_MOD_RENDER.list[i].calls);
+        r3d_free(R3D_MOD_RENDER.list[i].calls);
     }
 
-    MemFree(R3D_MOD_RENDER.groupVisibility);
-    MemFree(R3D_MOD_RENDER.groupIndices);
-    MemFree(R3D_MOD_RENDER.callIndices);
-    MemFree(R3D_MOD_RENDER.sortCache);
-    MemFree(R3D_MOD_RENDER.clusters);
-    MemFree(R3D_MOD_RENDER.groups);
-    MemFree(R3D_MOD_RENDER.calls);
+    r3d_free(R3D_MOD_RENDER.groupVisibility);
+    r3d_free(R3D_MOD_RENDER.groupIndices);
+    r3d_free(R3D_MOD_RENDER.callIndices);
+    r3d_free(R3D_MOD_RENDER.sortCache);
+    r3d_free(R3D_MOD_RENDER.clusters);
+    r3d_free(R3D_MOD_RENDER.groups);
+    r3d_free(R3D_MOD_RENDER.calls);
 
     /* --- Realease free lists --- */
 
-    MemFree(R3D_MOD_RENDER.freeVertices);
-    MemFree(R3D_MOD_RENDER.freeElements);
+    r3d_free(R3D_MOD_RENDER.freeVertices);
+    r3d_free(R3D_MOD_RENDER.freeElements);
 }
 
 bool r3d_render_alloc_vertices(int count, int* outOffset)

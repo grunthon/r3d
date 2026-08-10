@@ -177,10 +177,10 @@ void R3D_UnloadModel(R3D_Model model, bool unloadMaterials)
         }
     }
 
-    MemFree(model.meshMaterials);
-    MemFree(model.materials);
-    MemFree(model.meshData);
-    MemFree(model.meshes);
+    r3d_free(model.meshMaterials);
+    r3d_free(model.materials);
+    r3d_free(model.meshData);
+    r3d_free(model.meshes);
 }
 
 int R3D_GetModelMeshIndex(R3D_Model model, const char* meshName)

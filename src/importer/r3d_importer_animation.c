@@ -13,6 +13,8 @@
 #include <raylib.h>
 #include <string.h>
 
+#include "../common/r3d_helper.h"
+
 // ========================================
 // CHANNEL LOADING (INTERNAL)
 // ========================================
@@ -25,13 +27,13 @@ static bool load_vector3_track(R3D_AnimationTrack* track, unsigned int count, co
 
     if (track->count == 0) return true;
 
-    float* times    = MemAlloc(sizeof(float) * track->count);
-    Vector3* values = MemAlloc(sizeof(Vector3) * track->count);
+    float* times    = r3d_malloc(sizeof(float) * track->count);
+    Vector3* values = r3d_malloc(sizeof(Vector3) * track->count);
 
     if (!times || !values)
     {
-        MemFree(times);
-        MemFree(values);
+        r3d_free(times);
+        r3d_free(values);
         return false;
     }
 
@@ -54,13 +56,13 @@ static bool load_quaternion_track(R3D_AnimationTrack* track, unsigned int count,
 
     if (track->count == 0) return true;
 
-    float* times       = MemAlloc(sizeof(float) * track->count);
-    Quaternion* values = MemAlloc(sizeof(Quaternion) * track->count);
+    float* times       = r3d_malloc(sizeof(float) * track->count);
+    Quaternion* values = r3d_malloc(sizeof(Quaternion) * track->count);
 
     if (!times || !values)
     {
-        MemFree(times);
-        MemFree(values);
+        r3d_free(times);
+        r3d_free(values);
         return false;
     }
 
@@ -110,12 +112,12 @@ static bool load_channel(R3D_AnimationChannel* channel, const R3D_Importer* impo
     return true;
 
 fail:
-    MemFree((void*)channel->translation.times);
-    MemFree((void*)channel->translation.values);
-    MemFree((void*)channel->rotation.times);
-    MemFree((void*)channel->rotation.values);
-    MemFree((void*)channel->scale.times);
-    MemFree((void*)channel->scale.values);
+    r3d_free((void*)channel->translation.times);
+    r3d_free((void*)channel->translation.values);
+    r3d_free((void*)channel->rotation.times);
+    r3d_free((void*)channel->rotation.values);
+    r3d_free((void*)channel->scale.times);
+    r3d_free((void*)channel->scale.values);
     return false;
 }
 
@@ -159,7 +161,7 @@ static bool load_animation(R3D_Animation* animation, const R3D_Importer* importe
 
     // Allocate channels
     animation->channelCount = aiAnim->mNumChannels;
-    animation->channels = MemAlloc(animation->channelCount * sizeof(R3D_AnimationChannel));
+    animation->channels = r3d_malloc(animation->channelCount * sizeof(R3D_AnimationChannel));
     if (!animation->channels)
     {
         R3D_TRACELOG(LOG_ERROR, "Failed to allocate animation channels");
@@ -183,7 +185,7 @@ static bool load_animation(R3D_Animation* animation, const R3D_Importer* importe
     if (successChannels == 0)
     {
         R3D_TRACELOG(LOG_ERROR, "No channels were successfully loaded");
-        MemFree(animation->channels);
+        r3d_free(animation->channels);
         return false;
     }
 
@@ -191,7 +193,7 @@ static bool load_animation(R3D_Animation* animation, const R3D_Importer* importe
     if (successChannels < animation->channelCount)
     {
         animation->channelCount = successChannels;
-        R3D_AnimationChannel* resized = MemRealloc(
+        R3D_AnimationChannel* resized = r3d_realloc(
             animation->channels,
             successChannels * sizeof(R3D_AnimationChannel)
         );
@@ -227,7 +229,7 @@ bool r3d_importer_load_animations(const R3D_Importer* importer, R3D_AnimationLib
     }
 
     // Allocate temporary animations array
-    R3D_Animation* animations = MemAlloc(animCount * sizeof(R3D_Animation));
+    R3D_Animation* animations = r3d_malloc(animCount * sizeof(R3D_Animation));
     if (!animations)
     {
         R3D_TRACELOG(LOG_ERROR, "Unable to allocate memory for animations");
@@ -252,7 +254,7 @@ bool r3d_importer_load_animations(const R3D_Importer* importer, R3D_AnimationLib
     if (successCount == 0)
     {
         R3D_TRACELOG(LOG_ERROR, "No animations were successfully loaded");
-        MemFree(animations);
+        r3d_free(animations);
         return false;
     }
 
@@ -260,7 +262,7 @@ bool r3d_importer_load_animations(const R3D_Importer* importer, R3D_AnimationLib
     if (successCount < animCount)
     {
         R3D_TRACELOG(LOG_WARNING, "Only %d out of %d animations were successfully loaded", successCount, animCount);
-        R3D_Animation* resized = MemRealloc(animations, successCount * sizeof(R3D_Animation));
+        R3D_Animation* resized = r3d_realloc(animations, successCount * sizeof(R3D_Animation));
         if (resized)
         {
             animations = resized;

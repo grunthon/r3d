@@ -106,7 +106,7 @@ static void build_bone_mapping(R3D_Importer* importer)
         return;
     }
 
-    importer->bones.array = MemAlloc(totalBones * sizeof(r3d_importer_bone_entry_t));
+    importer->bones.array = r3d_malloc(totalBones * sizeof(r3d_importer_bone_entry_t));
     importer->bones.head = NULL;
     importer->bones.count = 0;
 
@@ -160,7 +160,7 @@ R3D_Importer* R3D_LoadImporter(const char* filePath, R3D_ImportFlags flags)
         return NULL;
     }
 
-    R3D_Importer* importer = MemAlloc(sizeof(*importer));
+    R3D_Importer* importer = r3d_malloc(sizeof(*importer));
     importer->scene = scene;
     importer->flags = flags;
 
@@ -198,7 +198,7 @@ R3D_Importer* R3D_LoadImporterFromMemory(const void* data, unsigned int size, co
         return NULL;
     }
 
-    R3D_Importer* importer = MemAlloc(sizeof(*importer));
+    R3D_Importer* importer = r3d_malloc(sizeof(*importer));
     importer->scene = scene;
     importer->flags = flags;
 
@@ -240,11 +240,11 @@ void R3D_UnloadImporter(R3D_Importer* importer)
 
     if (importer->bones.array)
     {
-        MemFree(importer->bones.array);
+        r3d_free(importer->bones.array);
     }
 
     aiReleaseImport(importer->scene);
-    MemFree(importer);
+    r3d_free(importer);
 
 #else
     (void)importer;

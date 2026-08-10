@@ -191,7 +191,7 @@ R3D_SurfaceShader* R3D_LoadSurfaceShaderFromMemory(const char* code)
     if (writer.overflow)
     {
         R3D_TRACELOG(LOG_ERROR, "Failed to load surface shader; Transformed code too long");
-        MemFree(shader);
+        r3d_free(shader);
         return NULL;
     }
 

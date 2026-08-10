@@ -313,7 +313,7 @@ Image alloc_work_faces_image(Image source, int size)
     
     int faceSize = GetPixelDataSize(size, size, source.format);
 
-    image.data = MemAlloc(6 * faceSize);
+    image.data = r3d_malloc(6 * faceSize);
     image.width = size;
     image.height = 6 * size;
     image.format = source.format;

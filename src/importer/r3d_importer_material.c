@@ -7,7 +7,6 @@
  */
 
 #include "./r3d_importer_internal.h"
-#include "r3d/r3d_material.h"
 
 #include <assimp/GltfMaterial.h>
 #include <assimp/material.h>
@@ -15,6 +14,8 @@
 #include <raylib.h>
 #include <string.h>
 #include <math.h>
+
+#include "../common/r3d_helper.h"
 
 // ========================================
 // MATERIAL MAP LOADERS
@@ -264,7 +265,7 @@ bool r3d_importer_load_materials(const R3D_Importer* importer, R3D_Material** ma
     }
 
     *materialCount = r3d_importer_get_material_count(importer);
-    *materials = MemAlloc(*materialCount * sizeof(R3D_Material));
+    *materials = r3d_malloc(*materialCount * sizeof(R3D_Material));
 
     if (*materials == NULL)
     {
