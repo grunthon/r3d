@@ -34,7 +34,7 @@ int main(void)
 
     // Create light
     R3D_Light light = R3D_CreateSpotLight((Vector3) {0, 10, 5}, (Vector3) {0, -1, -0.5f}, 16.0f, WHITE, 1.0f);
-    R3D_ShadowMap map = R3D_LoadShadowMap(R3D_LIGHT_SPOT);
+    R3D_ShadowMap shadow = R3D_LoadShadowMap(R3D_LIGHT_SPOT);
 
     // Create probe
     R3D_Probe rfProbe = R3D_LoadProbe(R3D_PROBE_REFLECTION, false, true);
@@ -60,7 +60,7 @@ int main(void)
 
             R3D_Begin(camera);
                 R3D_PushProbe(rfProbe, false);
-                R3D_PushLightEx(light, map, false);
+                R3D_PushLightEx(light, shadow, false);
 
                 material.orm.roughness = 0.5f;
                 material.orm.metalness = 0.0f;

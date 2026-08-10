@@ -45,8 +45,9 @@ int main(void)
     R3D_ENVIRONMENT_SET(ambient.color, (Color){10, 10, 10, 255});
 
     // Create light
-    R3D_Light light = R3D_CreateSpotLight((Vector3) {0, 10, 5}, (Vector3) {0, -1, -0.5f}, 16.0f, WHITE, 1.0f);
-    R3D_ShadowMap map = R3D_LoadShadowMap(R3D_LIGHT_SPOT);
+    R3D_Light light = R3D_CreateSpotLight((Vector3) {0, 10, 5}, (Vector3) {0, -1, -0.5f}, 50.0f, WHITE, 1.0f);
+    R3D_ShadowMap shadow = R3D_LoadShadowMap(R3D_LIGHT_SPOT);
+    shadow.softness = 4.0f;
 
     // Main loop
     while (!WindowShouldClose())
@@ -57,7 +58,7 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             R3D_Begin(camera);
-                R3D_PushLightEx(light, map, false);
+                R3D_PushLightEx(light, shadow, false);
                 R3D_DrawMesh(plane, matPlane, (Vector3){0, -0.5f, 0}, 1.0f);
                 R3D_DrawMesh(sphere, matSphere, Vector3Zero(), 1.0f);
                 R3D_DrawMesh(cube, matCube, Vector3Zero(), 1.0f);

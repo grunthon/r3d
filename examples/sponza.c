@@ -30,11 +30,11 @@ int main(void)
 
     // Setup lights
     R3D_Light lights[2];
-    R3D_ShadowMap maps[2];
+    R3D_ShadowMap shadows[2];
     for (int i = 0; i < 2; i++)
     {
         lights[i] = R3D_CreateOmniLight((Vector3) {i ? -5.0f : 5.0f, 5.0f, 0.0f}, 16.0f, WHITE, 8.0f);
-        maps[i] = R3D_LoadShadowMap(R3D_LIGHT_OMNI);
+        shadows[i] = R3D_LoadShadowMap(R3D_LIGHT_OMNI);
     }
 
     // Setup camera
@@ -114,8 +114,8 @@ int main(void)
 
             // Draw Sponza model
             R3D_Begin(camera);
-                R3D_PushLightEx(lights[0], maps[0], false);
-                R3D_PushLightEx(lights[1], maps[1], false);
+                R3D_PushLightEx(lights[0], shadows[0], false);
+                R3D_PushLightEx(lights[1], shadows[1], false);
                 R3D_DrawModel(sponza, Vector3Zero(), 1.0f);
             R3D_End();
 

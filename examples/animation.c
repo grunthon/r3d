@@ -54,7 +54,10 @@ int main(void)
 
     // Setup lights with shadows
     R3D_Light light = R3D_CreateDirLight((Vector3) {-1, -1, -1}, WHITE, 1.0f);
-    R3D_ShadowMap map = R3D_LoadShadowMap(R3D_LIGHT_DIR);
+    light.range = 20.0f;
+
+    R3D_ShadowMap shadow = R3D_LoadShadowMap(R3D_LIGHT_DIR);
+    shadow.softness = 2.0f;
 
     // Setup camera
     Camera3D camera = {
@@ -75,7 +78,7 @@ int main(void)
         BeginDrawing();
             ClearBackground(RAYWHITE);
             R3D_Begin(camera);
-                R3D_PushLightEx(light, map, true);
+                R3D_PushLightEx(light, shadow, true);
                 R3D_DrawMesh(plane, R3D_MATERIAL_BASE, Vector3Zero(), 1.0f);
                 R3D_DrawAnimatedModel(model, modelPlayer, Vector3Zero(), 1.25f);
                 R3D_DrawAnimatedModelInstanced(model, modelPlayer, instances, 4);

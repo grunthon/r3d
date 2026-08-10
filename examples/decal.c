@@ -32,24 +32,24 @@ int main(void)
     // Create data for instanced drawing
     R3D_InstanceBuffer instances = R3D_LoadInstanceBuffer(3, R3D_INSTANCE_POSITION);
     Vector3* positions = R3D_MapInstances(instances, R3D_INSTANCE_POSITION, false);
-    positions[0] = (Vector3){ -1.25f, 0, 1 };
-    positions[1] = (Vector3){ 0, 0, 1 };
-    positions[2] = (Vector3){ 1.25f, 0, 1 };
+    positions[0] = (Vector3) {-1.25f, 0, 1};
+    positions[1] = (Vector3) { 0,     0, 1};
+    positions[2] = (Vector3) { 1.25f, 0, 1};
     R3D_UnmapInstances(instances, R3D_INSTANCE_POSITION);
 
     // Setup environment
-    R3D_ENVIRONMENT_SET(ambient.color, (Color){ 10, 10, 10, 255 });
+    R3D_ENVIRONMENT_SET(ambient.color, (Color) {10, 10, 10, 255});
 
     // Create light
     R3D_Light light = R3D_CreateDirLight((Vector3) {0.5f, -1, -0.5f}, WHITE, 1.0f);
-    R3D_ShadowMap map = R3D_LoadShadowMap(R3D_LIGHT_DIR);
+    R3D_ShadowMap shadow = R3D_LoadShadowMap(R3D_LIGHT_DIR);
 
     // Setup camera
-    Camera3D camera = (Camera3D){
-        .position = (Vector3){0, 3, 3},
-        .target = (Vector3){0, 0, 0},
-        .up = (Vector3){0, 1, 0},
-        .fovy = 60,
+    Camera3D camera = (Camera3D) {
+        .position = {0, 3, 3},
+        .target   = {0, 0, 0},
+        .up       = {0, 1, 0},
+        .fovy     = 60,
     };
 
     // Capture mouse
@@ -64,7 +64,7 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             R3D_Begin(camera);
-                R3D_PushLightEx(light, map, false);
+                R3D_PushLightEx(light, shadow, false);
 
                 R3D_DrawMesh(plane, material, (Vector3){ 0, 0, 0 }, 1.0f);
                 R3D_DrawMesh(sphere, material, (Vector3){ -1, 0.5f, -1 }, 1.0f);

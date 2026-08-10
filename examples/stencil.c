@@ -64,8 +64,8 @@ int main(void)
 
     // Setup directional light with shadows
     R3D_Light light = R3D_CreateSpotLight((Vector3) {4, 8, 5}, (Vector3) {-4, -8, -5}, 16.0f, WHITE, 1.0f);
-    R3D_ShadowMap map = R3D_LoadShadowMap(R3D_LIGHT_SPOT);
-    map.softness = 8.0f;
+    R3D_ShadowMap shadow = R3D_LoadShadowMap(R3D_LIGHT_SPOT);
+    shadow.softness = 8.0f;
 
     Camera3D camera = {
         .position = {0, 3, 5},
@@ -82,7 +82,7 @@ int main(void)
             ClearBackground(BLACK);
 
             R3D_Begin(camera);
-                R3D_PushLightEx(light, map, false);
+                R3D_PushLightEx(light, shadow, false);
 
                 // Base scene geometry
                 R3D_DrawMesh(plane, matGround, (Vector3){  0.0f, -0.5f,  0.0f }, 1.0f);

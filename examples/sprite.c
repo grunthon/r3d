@@ -38,7 +38,7 @@ int main(void)
 
     // Create light
     R3D_Light light = R3D_CreateSpotLight((Vector3) {0, 10,10}, (Vector3) {0, -1, -1}, 32.0f, WHITE, 1.0f);
-    R3D_ShadowMap map = R3D_LoadShadowMap(R3D_LIGHT_SPOT);
+    R3D_ShadowMap shadow = R3D_LoadShadowMap(R3D_LIGHT_SPOT);
 
     // Setup camera
     Camera3D camera = {
@@ -71,7 +71,7 @@ int main(void)
 
             // Draw scene
             R3D_Begin(camera);
-                R3D_PushLightEx(light, map, true);
+                R3D_PushLightEx(light, shadow, true);
                 R3D_DrawMesh(meshGround, matGround, (Vector3) {0, -0.5f, 0}, 1.0f);
                 R3D_DrawMesh(meshSprite, matSprite, (Vector3) {birdPos.x, birdPos.y, 0}, 1.0f);
             R3D_End();
