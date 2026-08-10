@@ -147,7 +147,7 @@ Image r3d_image_compose_rgb(const Image* sources[3], Color defaultColor)
 // TEXTURE FUNCTIONS
 // ========================================
 
-static void get_texture_format(int format, bool srgb, GLenum* glInternalFormat, GLenum* glFormat, GLenum* glType)
+static void get_texture_format(int format, bool isColor, GLenum* glInternalFormat, GLenum* glFormat, GLenum* glType)
 {
     // TODO: Add checks for support of compressed formats (consider WebGL 2 for later)
 
@@ -177,7 +177,7 @@ static void get_texture_format(int format, bool srgb, GLenum* glInternalFormat, 
     default: R3D_TRACELOG(RL_LOG_WARNING, "Current format not supported (%i)", format); break;
     }
 
-    if (srgb)
+    if (isColor)
     {
         switch (*glInternalFormat)
         {
@@ -206,10 +206,10 @@ static void get_texture_format(int format, bool srgb, GLenum* glInternalFormat, 
     }
 }
 
-static void upload_texture_mipmap(const uint8_t *data, int width, int height, int level, int format, bool srgb)
+static void upload_texture_mipmap(const uint8_t *data, int width, int height, int level, int format, bool isColor)
 {
     GLenum glInternalFormat, glFormat, glType;
-    get_texture_format(format, srgb, &glInternalFormat, &glFormat, &glType);
+    get_texture_format(format, isColor, &glInternalFormat, &glFormat, &glType);
     
     if (glInternalFormat == 0) return;
     
@@ -293,7 +293,7 @@ static void set_texture_filter(TextureFilter filter)
     }
 }
 
-Texture2D r3d_image_upload(const Image* image, TextureWrap wrap, TextureFilter filter, bool srgb)
+Texture2D r3d_image_upload(const Image* image, TextureWrap wrap, TextureFilter filter, bool isColor)
 {
     GLuint id = 0;
     glGenTextures(1, &id);
@@ -305,7 +305,7 @@ Texture2D r3d_image_upload(const Image* image, TextureWrap wrap, TextureFilter f
 
     for (int i = 0; i < image->mipmaps; i++)
     {
-        upload_texture_mipmap(dataPtr, mipW, mipH, i, image->format, srgb);
+        upload_texture_mipmap(dataPtr, mipW, mipH, i, image->format, isColor);
         if (i == 0) set_texture_swizzle(image->format);
 
         int mipSize = GetPixelDataSize(mipW, mipH, image->format);

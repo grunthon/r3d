@@ -155,7 +155,6 @@ bool R3D_Init(int resWidth, int resHeight)
 
     R3D.textureFilter = TEXTURE_FILTER_TRILINEAR;
     R3D.textureWrap   = TEXTURE_WRAP_CLAMP;
-    R3D.colorSpace    = R3D_COLORSPACE_SRGB;
 
     for (int i = 0; i < R3D_HINT_COUNT; i++)
     {
@@ -320,9 +319,4 @@ void R3D_SetTextureFilter(TextureFilter filter)
 void R3D_SetTextureWrap(TextureWrap wrap)
 {
     R3D.textureWrap = wrap;
-}
-
-void R3D_SetColorSpace(R3D_ColorSpace space)
-{
-    R3D.colorSpace = space;
 }

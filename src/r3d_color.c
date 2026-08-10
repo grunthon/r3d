@@ -30,16 +30,6 @@ Color R3D_ColorLinearToSrgb(Vector4 color)
     return r3d_color_linear_to_srgb_vec4(color);
 }
 
-Vector4 R3D_ColorFromCurrentSpace(Color color)
-{
-    return r3d_color_to_linear_vec4(color, R3D.colorSpace);
-}
-
-Vector3 R3D_ColorFromCurrentSpaceVector3(Color color)
-{
-    return r3d_color_to_linear_vec3(color, R3D.colorSpace);
-}
-
 Color R3D_ColorFromTemperature(float kelvin)
 {
     // Tanner Helland approximation, valid between 1000K and 40000K

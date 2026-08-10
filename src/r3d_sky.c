@@ -57,16 +57,16 @@ void R3D_UpdateProceduralSky(R3D_Cubemap* cubemap, R3D_ProceduralSky params)
     r3d_render_prepare_drawing();
 
     R3D_SHADER_SET_MAT4(prepare.cubemapProceduralSky, uMatProj, matProj);
-    R3D_SHADER_SET_COL3(prepare.cubemapProceduralSky, uSkyTopColor, R3D.colorSpace, params.skyTopColor);
-    R3D_SHADER_SET_COL3(prepare.cubemapProceduralSky, uSkyHorizonColor, R3D.colorSpace, params.skyHorizonColor);
+    R3D_SHADER_SET_COL3(prepare.cubemapProceduralSky, uSkyTopColor, params.skyTopColor);
+    R3D_SHADER_SET_COL3(prepare.cubemapProceduralSky, uSkyHorizonColor, params.skyHorizonColor);
     R3D_SHADER_SET_FLOAT(prepare.cubemapProceduralSky, uSkyHorizonCurve, params.skyHorizonCurve);
     R3D_SHADER_SET_FLOAT(prepare.cubemapProceduralSky, uSkyEnergy, params.skyEnergy);
-    R3D_SHADER_SET_COL3(prepare.cubemapProceduralSky, uGroundBottomColor, R3D.colorSpace, params.groundBottomColor);
-    R3D_SHADER_SET_COL3(prepare.cubemapProceduralSky, uGroundHorizonColor, R3D.colorSpace, params.groundHorizonColor);
+    R3D_SHADER_SET_COL3(prepare.cubemapProceduralSky, uGroundBottomColor, params.groundBottomColor);
+    R3D_SHADER_SET_COL3(prepare.cubemapProceduralSky, uGroundHorizonColor, params.groundHorizonColor);
     R3D_SHADER_SET_FLOAT(prepare.cubemapProceduralSky, uGroundHorizonCurve, params.groundHorizonCurve);
     R3D_SHADER_SET_FLOAT(prepare.cubemapProceduralSky, uGroundEnergy, params.groundEnergy);
     R3D_SHADER_SET_VEC3(prepare.cubemapProceduralSky, uSunDirection, Vector3Normalize(Vector3Negate(params.sunDirection)));
-    R3D_SHADER_SET_COL3(prepare.cubemapProceduralSky, uSunColor, R3D.colorSpace, params.sunColor);
+    R3D_SHADER_SET_COL3(prepare.cubemapProceduralSky, uSunColor, params.sunColor);
     R3D_SHADER_SET_FLOAT(prepare.cubemapProceduralSky, uSunSize, params.sunSize);
     R3D_SHADER_SET_FLOAT(prepare.cubemapProceduralSky, uSunCurve, params.sunCurve);
     R3D_SHADER_SET_FLOAT(prepare.cubemapProceduralSky, uSunEnergy, params.sunEnergy);

@@ -50,22 +50,6 @@ R3DAPI Vector3 R3D_ColorSrgbToLinearVector3(Color color);
 R3DAPI Color R3D_ColorLinearToSrgb(Vector4 color);
 
 /**
- * @brief Converts a color from the current color space to linear space.
- *
- * @param color The color to convert.
- * @return The converted linear color as a Vector4.
- */
-R3DAPI Vector4 R3D_ColorFromCurrentSpace(Color color);
-
-/**
- * @brief Converts a color from the current color space to linear space.
- *
- * @param color The color to convert.
- * @return The converted linear color as a Vector3.
- */
-R3DAPI Vector3 R3D_ColorFromCurrentSpaceVector3(Color color);
-
-/**
  * @brief Converts a color temperature to an sRGB color.
  *
  * Uses the Tanner Helland approximation, valid between 1000K and 40000K.

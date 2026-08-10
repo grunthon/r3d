@@ -29,8 +29,8 @@ Image r3d_image_compose_rgb(const Image* sources[3], Color defaultColor);
 
 /**
  * Uploads the given image to a 2D texture, setting wrap and filter.
- * The srgb flag tries to load the texture in an sRGB format when supported.
+ * The 'isColor' flag tries to load the texture in an sRGB format when supported.
  */
-Texture2D r3d_image_upload(const Image* image, TextureWrap wrap, TextureFilter filter, bool srgb);
+Texture2D r3d_image_upload(const Image* image, TextureWrap wrap, TextureFilter filter, bool isColor);
 
 #endif // R3D_COMMON_IMAGE_H

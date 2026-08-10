@@ -98,9 +98,9 @@ typedef struct {
 // HELPER FUNCTIONS
 // ========================================
 
-static inline bool is_srgb(r3d_importer_texture_map_t map, R3D_ColorSpace space)
+static inline bool is_color(r3d_importer_texture_map_t map)
 {
-    return (space == R3D_COLORSPACE_SRGB && (map == R3D_MAP_ALBEDO || map == R3D_MAP_EMISSION));
+    return (map == R3D_MAP_ALBEDO || map == R3D_MAP_EMISSION);
 }
 
 static inline TextureWrap get_wrap_mode(enum aiTextureMapMode wrap)
@@ -390,9 +390,7 @@ static int worker_thread(void* arg)
 // ========================================
 
 r3d_importer_texture_cache_t* r3d_importer_load_texture_cache(
-    const R3D_Importer* importer, 
-    R3D_ColorSpace colorSpace, 
-    TextureFilter filter)
+    const R3D_Importer* importer, TextureFilter filter)
 {
     if (!importer || !r3d_importer_is_valid(importer))
     {
@@ -530,7 +528,7 @@ r3d_importer_texture_cache_t* r3d_importer_load_texture_cache(
                 texture_slot_t* slot = &slots[slotIdx];
                 if (slot->image.data)
                 {
-                    slot->texture = r3d_image_upload(&slot->image, slot->wrapMode, filter, is_srgb(slot->map, colorSpace));
+                    slot->texture = r3d_image_upload(&slot->image, slot->wrapMode, filter, is_color(slot->map));
                     if (slot->ownsImageData)
                     {
                         UnloadImage(slot->image);

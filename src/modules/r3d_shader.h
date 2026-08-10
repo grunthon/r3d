@@ -206,78 +206,56 @@
     }                                                                           \
 } while(0)
 
-#define R3D_SHADER_SET_COL3(shader_name, uniform, space, ...) do {              \
+#define R3D_SHADER_SET_COL3(shader_name, uniform, ...) do {                     \
     const Color tmp = (__VA_ARGS__);                                            \
-    if (R3D_MOD_SHADER.shader_name.uniform.colorSpace != (space) ||             \
-        memcmp(&R3D_MOD_SHADER.shader_name.uniform.val, &tmp,                   \
-               sizeof(Color)) != 0) {                                           \
-        Vector3 v = r3d_color_to_linear_vec3(tmp, (space));                     \
+    if (!ColorIsEqual(R3D_MOD_SHADER.shader_name.uniform.val, tmp)) {           \
+        Vector3 v = r3d_color_srgb_to_linear_vec3(tmp);                         \
         R3D_MOD_SHADER.shader_name.uniform.val = tmp;                           \
-        R3D_MOD_SHADER.shader_name.uniform.colorSpace = (space);                \
-        glUniform3fv(                                                           \
-            R3D_MOD_SHADER.shader_name.uniform.loc,                             \
-            1,                                                                  \
-            (float*)(&v)                                                        \
-        );                                                                      \
+        glUniform3fv(R3D_MOD_SHADER.shader_name.uniform.loc, 1, (float*)(&v));  \
     }                                                                           \
 } while(0)
 
-#define R3D_SHADER_SET_COL3_CUSTOM(custom, shader_name, uniform, space, ...) do { \
+#define R3D_SHADER_SET_COL3_CUSTOM(custom, shader_name, uniform, ...) do {      \
     const Color tmp = (__VA_ARGS__);                                            \
-    if ((custom)->program->shader_name.uniform.colorSpace != (space) ||         \
-        memcmp(&(custom)->program->shader_name.uniform.val, &tmp, sizeof(Color)) != 0) { \
-        Vector3 v = r3d_color_to_linear_vec3(tmp, (space));                     \
+    if (!ColorIsEqual((custom)->program->shader_name.uniform.val, tmp)) {       \
+        Vector3 v = r3d_color_srgb_to_linear_vec3(tmp);                         \
         (custom)->program->shader_name.uniform.val = tmp;                       \
-        (custom)->program->shader_name.uniform.colorSpace = (space);            \
         glUniform3fv((custom)->program->shader_name.uniform.loc, 1, (float*)(&v)); \
     }                                                                           \
 } while(0)
 
-#define R3D_SHADER_SET_COL3_SELECT(shader_name, custom, uniform, space, ...) do { \
+#define R3D_SHADER_SET_COL3_SELECT(shader_name, custom, uniform, ...) do {      \
     const Color tmp = (__VA_ARGS__);                                            \
-    if (R3D_SHADER_GET(shader_name, custom)->uniform.colorSpace != (space) ||   \
-        memcmp(&R3D_SHADER_GET(shader_name, custom)->uniform.val, &tmp, sizeof(Color)) != 0) { \
-        Vector3 v = r3d_color_to_linear_vec3(tmp, (space));                     \
+    if (!ColorIsEqual(R3D_SHADER_GET(shader_name, custom)->uniform.val, tmp)) { \
+        Vector3 v = r3d_color_srgb_to_linear_vec3(tmp);                         \
         R3D_SHADER_GET(shader_name, custom)->uniform.val = tmp;                 \
-        R3D_SHADER_GET(shader_name, custom)->uniform.colorSpace = (space);      \
         glUniform3fv(R3D_SHADER_GET(shader_name, custom)->uniform.loc, 1, (float*)(&v)); \
     }                                                                           \
 } while(0)
 
-#define R3D_SHADER_SET_COL4(shader_name, uniform, space, ...) do {              \
+#define R3D_SHADER_SET_COL4(shader_name, uniform, ...) do {                     \
     const Color tmp = (__VA_ARGS__);                                            \
-    if (R3D_MOD_SHADER.shader_name.uniform.colorSpace != (space) ||             \
-        memcmp(&R3D_MOD_SHADER.shader_name.uniform.val, &tmp,                   \
-               sizeof(Color)) != 0) {                                           \
-        Vector4 v = r3d_color_to_linear_vec4(tmp, (space));                     \
+    if (!ColorIsEqual(R3D_MOD_SHADER.shader_name.uniform.val, tmp)) {           \
+        Vector4 v = r3d_color_srgb_to_linear_vec4(tmp);                         \
         R3D_MOD_SHADER.shader_name.uniform.val = tmp;                           \
-        R3D_MOD_SHADER.shader_name.uniform.colorSpace = (space);                \
-        glUniform4fv(                                                           \
-            R3D_MOD_SHADER.shader_name.uniform.loc,                             \
-            1,                                                                  \
-            (float*)(&v)                                                        \
-        );                                                                      \
+        glUniform4fv(R3D_MOD_SHADER.shader_name.uniform.loc, 1, (float*)(&v));  \
     }                                                                           \
 } while(0)
 
-#define R3D_SHADER_SET_COL4_CUSTOM(custom, shader_name, uniform, space, ...) do { \
+#define R3D_SHADER_SET_COL4_CUSTOM(custom, shader_name, uniform, ...) do {      \
     const Color tmp = (__VA_ARGS__);                                            \
-    if ((custom)->program->shader_name.uniform.colorSpace != (space) ||         \
-        memcmp(&(custom)->program->shader_name.uniform.val, &tmp, sizeof(Color)) != 0) { \
-        Vector4 v = r3d_color_to_linear_vec4(tmp, (space));                     \
+    if (!ColorIsEqual((custom)->program->shader_name.uniform.val, tmp)) {       \
+        Vector4 v = r3d_color_srgb_to_linear_vec4(tmp);                         \
         (custom)->program->shader_name.uniform.val = tmp;                       \
-        (custom)->program->shader_name.uniform.colorSpace = (space);            \
         glUniform4fv((custom)->program->shader_name.uniform.loc, 1, (float*)(&v)); \
     }                                                                           \
 } while(0)
 
-#define R3D_SHADER_SET_COL4_SELECT(shader_name, custom, uniform, space, ...) do { \
+#define R3D_SHADER_SET_COL4_SELECT(shader_name, custom, uniform, ...) do {      \
     const Color tmp = (__VA_ARGS__);                                            \
-    if (R3D_SHADER_GET(shader_name, custom)->uniform.colorSpace != (space) ||   \
-        memcmp(&R3D_SHADER_GET(shader_name, custom)->uniform.val, &tmp, sizeof(Color)) != 0) { \
-        Vector4 v = r3d_color_to_linear_vec4(tmp, (space));                     \
+    if (!ColorIsEqual(R3D_SHADER_GET(shader_name, custom)->uniform.val, tmp)) { \
+        Vector4 v = r3d_color_srgb_to_linear_vec4(tmp);                         \
         R3D_SHADER_GET(shader_name, custom)->uniform.val = tmp;                 \
-        R3D_SHADER_GET(shader_name, custom)->uniform.colorSpace = (space);      \
         glUniform4fv(R3D_SHADER_GET(shader_name, custom)->uniform.loc, 1, (float*)(&v)); \
     }                                                                           \
 } while(0)
@@ -441,9 +419,9 @@ typedef struct { Vector2 val; int loc; } r3d_shader_uniform_vec2_t;
 typedef struct { Vector3 val; int loc; } r3d_shader_uniform_vec3_t;
 typedef struct { Vector4 val; int loc; } r3d_shader_uniform_vec4_t;
 
-/* Represents SDR color vectors plus the color space they should be interpreted in */
-typedef struct { Color val; R3D_ColorSpace colorSpace; int loc; } r3d_shader_uniform_col3_t;
-typedef struct { Color val; R3D_ColorSpace colorSpace; int loc; } r3d_shader_uniform_col4_t;
+/* Represents sRGB color vectors that needs to be converted to linear space */
+typedef struct { Color val; int loc; } r3d_shader_uniform_col3_t;
+typedef struct { Color val; int loc; } r3d_shader_uniform_col4_t;
 
 /* Represents matrices, stores only the uniform location for efficiency */
 typedef struct { int loc; } r3d_shader_uniform_mat4_t;

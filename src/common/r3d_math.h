@@ -142,46 +142,6 @@ static inline Color r3d_color_linear_to_srgb_vec4(Vector4 linear)
     };
 }
 
-static inline Vector3 r3d_color_to_linear_vec3(Color color, R3D_ColorSpace space)
-{
-    switch (space)
-    {
-    case R3D_COLORSPACE_SRGB: return r3d_color_srgb_to_linear_vec3(color);
-    default: break;
-    }
-
-    return r3d_color_to_vec3(color);
-}
-
-static inline Vector4 r3d_color_to_linear_vec4(Color color, R3D_ColorSpace space)
-{
-    switch (space)
-    {
-    case R3D_COLORSPACE_SRGB: return r3d_color_srgb_to_linear_vec4(color);
-    default: break;
-    }
-
-    return r3d_color_to_vec4(color);
-}
-
-static inline Vector3 r3d_color_to_linear_scaled_vec3(Color color, R3D_ColorSpace space, float scale)
-{
-    Vector3 result = r3d_color_to_linear_vec3(color, space);
-    result.x *= scale;
-    result.y *= scale;
-    result.z *= scale;
-    return result;
-}
-
-static inline Vector4 r3d_color_to_linear_scaled_vec4(Color color, R3D_ColorSpace space, float scale)
-{
-    Vector4 result = r3d_color_to_linear_vec4(color, space);
-    result.x *= scale;
-    result.y *= scale;
-    result.z *= scale;
-    return result;
-}
-
 // ========================================
 // VECTOR FUNCTIONS
 // ========================================
