@@ -99,7 +99,7 @@ R3D_ShadowMap R3D_LoadShadowMap(R3D_LightType type)
     }
 
     shadowMap.handle   = (uint32_t)(1 + layer);
-    shadowMap.softness = 2.0f;
+    shadowMap.softness = 1.0f;
     shadowMap.opacity  = 1.0f;
     shadowMap.cullMask = R3D_LAYER_ALL;
     shadowMap.type     = type;
@@ -107,13 +107,13 @@ R3D_ShadowMap R3D_LoadShadowMap(R3D_LightType type)
     switch (type)
     {
     case R3D_LIGHT_DIR:
-        shadowMap.depthBias = 0.001f;
+        shadowMap.depthBias = 0.0001f;
         shadowMap.slopeBias = 0.0015f;
         break;
 
     case R3D_LIGHT_SPOT:
         shadowMap.depthBias = 0.0001f;
-        shadowMap.slopeBias = 0.0005f;
+        shadowMap.slopeBias = 0.0003f;
         break;
 
     case R3D_LIGHT_OMNI:
