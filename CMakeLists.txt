@@ -461,6 +461,7 @@ set(R3D_WARNING_FLAGS_MSVC
     /wd4245     # remove: signed/unsigned conversion
     /wd4018     # remove: signed/unsigned comparison
     /wd4389     # remove: signed/unsigned equality
+    /wd4702     # remove: unreachable code
 )
 
 target_compile_options(${PROJECT_NAME} PRIVATE
