@@ -83,9 +83,7 @@ int main(void)
     R3D_Material material = R3D_GetDefaultMaterial();
 
     // Setup lighting
-    R3D_Light light = R3D_CreateLight(R3D_LIGHT_DIR);
-    R3D_SetLightDirection(light, (Vector3){-1, -1, -1});
-    R3D_EnableLight(light);
+    R3D_Light light = R3D_CreateDirLight((Vector3) {-1, -1, -1}, WHITE, 1.0f);
 
     // Camera setup
     Camera3D camera = {
@@ -100,9 +98,10 @@ int main(void)
     while (!WindowShouldClose()) {
         UpdateCamera(&camera, CAMERA_ORBITAL);
         BeginDrawing();
-        R3D_Begin(camera);
-        R3D_DrawMesh(mesh, material, Vector3Zero(), 1.0f);
-        R3D_End();
+          R3D_Begin(camera);
+            R3D_PushLight(light);
+            R3D_DrawMesh(mesh, material, Vector3Zero(), 1.0f);
+          R3D_End();
         EndDrawing();
     }
 
