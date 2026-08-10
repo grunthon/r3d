@@ -15,7 +15,6 @@
 #include <math.h>
 
 #include "./r3d_helper.h"
-#include "raylib.h"
 
 // ========================================
 // DEFINITIONS AND CONSTANTS
