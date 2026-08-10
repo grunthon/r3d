@@ -1974,7 +1974,9 @@ r3d_shader_custom_t* r3d_shader_custom_alloc(void)
     r3d_shader_custom_t* shader = r3d_malloc(size);
     if (shader == NULL) return NULL;
 
-    shader->program = (r3d_shader_custom_program_t*)((uint8_t*)shader + programOffset);
+    uintptr_t programAddress = (uintptr_t)shader + programOffset;
+
+    shader->program = (r3d_shader_custom_program_t*)programAddress;
     shader->programOwner = true;
 
     return shader;

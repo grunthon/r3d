@@ -564,11 +564,11 @@ static inline int array_get_last_group_index(void)
     return groupIndex;
 }
 
-static inline r3d_render_group_t* array_get_last_group(void)
-{
-    int groupIndex = array_get_last_group_index();
-    return &R3D_MOD_RENDER.groups[groupIndex];
-}
+//static inline r3d_render_group_t* array_get_last_group(void)
+//{
+//    int groupIndex = array_get_last_group_index();
+//    return &R3D_MOD_RENDER.groups[groupIndex];
+//}
 
 static bool array_grow(void)
 {
