@@ -1124,7 +1124,6 @@ R3D_MeshData R3D_GenMeshDataCapsule(float radius, float height, int rings, int s
     float invSlices = 1.0f / slices;
     
     R3D_Vertex* vertex = meshData.vertices;
-    int vertIndex = 0;
 
     for (int ring = 0; ring <= rings; ring++)
     {
@@ -1135,7 +1134,7 @@ R3D_MeshData R3D_GenMeshDataCapsule(float radius, float height, int rings, int s
         float ringRadius = radius * cosPhi;
         float vTop = (float)ring / (rings * 2 + 2);
 
-        for (int slice = 0; slice <= slices; slice++, vertex++, vertIndex++)
+        for (int slice = 0; slice <= slices; slice++, vertex++)
         {
             float theta = slice * sliceStep;
             float sinTheta = sinf(theta);
@@ -1155,7 +1154,7 @@ R3D_MeshData R3D_GenMeshDataCapsule(float radius, float height, int rings, int s
     }
 
     float vMid = (float)(rings + 1) / (rings * 2 + 2);
-    for (int slice = 0; slice <= slices; slice++, vertex++, vertIndex++)
+    for (int slice = 0; slice <= slices; slice++, vertex++)
     {
         float theta = slice * sliceStep;
         float sinTheta = sinf(theta);
@@ -1182,7 +1181,7 @@ R3D_MeshData R3D_GenMeshDataCapsule(float radius, float height, int rings, int s
         float ringRadius = radius * cosPhi;
         float vBot = (float)(rings + 1 + ring) / (rings * 2 + 2);
 
-        for (int slice = 0; slice <= slices; slice++, vertex++, vertIndex++)
+        for (int slice = 0; slice <= slices; slice++, vertex++)
         {
             float theta = slice * sliceStep;
             float sinTheta = sinf(theta);
