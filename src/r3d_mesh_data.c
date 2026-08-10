@@ -544,10 +544,11 @@ R3D_MeshData R3D_GenMeshDataSlope(float width, float height, float length, Vecto
         return meshData;
     }
 
-    R3D_Vertex* v = meshData.vertices;
-    uint32_t* idx = meshData.indices;
+    R3D_Vertex* verts = meshData.vertices;
+    uint32_t* idx     = meshData.indices;
+
     int vertexCount = 0;
-    int indexCount = 0;
+    int indexCount  = 0;
 
     static const Vector2 uvs[4] = {{0,0},{1,0},{1,1},{0,1}};
     static const int faces[6][4] = {{3,2,1,0}, {4,5,6,7}, {0,1,5,4}, {2,3,7,6}, {1,2,6,5}, {3,0,4,7}};
@@ -567,7 +568,7 @@ R3D_MeshData R3D_GenMeshDataSlope(float width, float height, float length, Vecto
             int baseV = vertexCount;
             for (int i = 0; i < 4; i++)
             {
-                v[vertexCount++] = R3D_MakeVertex(
+                verts[vertexCount++] = R3D_MakeVertex(
                     corners[ci[i]], uvs[i], faceNormals[f],
                     (Vector4){faceTangents[f].x, faceTangents[f].y, faceTangents[f].z, 1.0f},
                     WHITE
@@ -636,7 +637,7 @@ R3D_MeshData R3D_GenMeshDataSlope(float width, float height, float length, Vecto
             int baseV = vertexCount;
             for (int i = 0; i < polyCount; i++)
             {
-                v[vertexCount++] = R3D_MakeVertex(
+                verts[vertexCount++] = R3D_MakeVertex(
                     polygon[i], polyUVs[i], faceNormals[f],
                     (Vector4){faceTangents[f].x, faceTangents[f].y, faceTangents[f].z, 1.0f},
                     WHITE
@@ -721,7 +722,7 @@ R3D_MeshData R3D_GenMeshDataSlope(float width, float height, float length, Vecto
                 (projV - uvMin.y) / rangeV
             };
             
-            v[vertexCount++] = R3D_MakeVertex(
+            verts[vertexCount++] = R3D_MakeVertex(
                 cutPolygon[i], uv, cutNormal,
                 (Vector4){u.x, u.y, u.z, 1.0f},
                 WHITE
@@ -1132,7 +1133,7 @@ R3D_MeshData R3D_GenMeshDataCapsule(float radius, float height, int rings, int s
         float cosPhi = cosf(phi);
         float y = radius * sinPhi + halfHeight;
         float ringRadius = radius * cosPhi;
-        float v = (float)ring / (rings * 2 + 2);
+        float vTop = (float)ring / (rings * 2 + 2);
 
         for (int slice = 0; slice <= slices; slice++, vertex++, vertIndex++)
         {
@@ -1145,7 +1146,7 @@ R3D_MeshData R3D_GenMeshDataCapsule(float radius, float height, int rings, int s
 
             *vertex = R3D_MakeVertex(
                 (Vector3){x, y, z},
-                (Vector2){slice * invSlices, v},
+                (Vector2){slice * invSlices, vTop},
                 (Vector3){cosPhi * cosTheta, sinPhi, cosPhi * sinTheta},
                 (Vector4){-sinTheta, 0.0f, cosTheta, 1.0f},
                 WHITE
@@ -1153,7 +1154,7 @@ R3D_MeshData R3D_GenMeshDataCapsule(float radius, float height, int rings, int s
         }
     }
 
-    float v = (float)(rings + 1) / (rings * 2 + 2);
+    float vMid = (float)(rings + 1) / (rings * 2 + 2);
     for (int slice = 0; slice <= slices; slice++, vertex++, vertIndex++)
     {
         float theta = slice * sliceStep;
@@ -1165,7 +1166,7 @@ R3D_MeshData R3D_GenMeshDataCapsule(float radius, float height, int rings, int s
 
         *vertex = R3D_MakeVertex(
             (Vector3){x, -halfHeight, z},
-            (Vector2){slice * invSlices, v},
+            (Vector2){slice * invSlices, vMid},
             (Vector3){cosTheta, 0.0f, sinTheta},
             (Vector4){-sinTheta, 0.0f, cosTheta, 1.0f},
             WHITE
@@ -1179,7 +1180,7 @@ R3D_MeshData R3D_GenMeshDataCapsule(float radius, float height, int rings, int s
         float cosPhi = cosf(phi);
         float y = radius * sinPhi - halfHeight;
         float ringRadius = radius * cosPhi;
-        float v = (float)(rings + 1 + ring) / (rings * 2 + 2);
+        float vBot = (float)(rings + 1 + ring) / (rings * 2 + 2);
 
         for (int slice = 0; slice <= slices; slice++, vertex++, vertIndex++)
         {
@@ -1192,7 +1193,7 @@ R3D_MeshData R3D_GenMeshDataCapsule(float radius, float height, int rings, int s
 
             *vertex = R3D_MakeVertex(
                 (Vector3){x, y, z},
-                (Vector2){slice * invSlices, v},
+                (Vector2){slice * invSlices, vBot},
                 (Vector3){cosPhi * cosTheta, sinPhi, cosPhi * sinTheta},
                 (Vector4){-sinTheta, 0.0f, cosTheta, 1.0f},
                 WHITE

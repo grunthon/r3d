@@ -334,17 +334,17 @@ static inline Matrix r3d_matrix_srt_axis(Vector3 scale, Vector4 axis, Vector3 tr
 static inline Matrix r3d_matrix_srt_euler(Vector3 scale, Vector3 euler, Vector3 translate)
 {
     float cx = cosf(euler.x), sx = sinf(euler.x);
-    float cy = cosf(euler.y), sy = sinf(euler.y); 
+    float cy = cosf(euler.y), sy = sinf(euler.y);
     float cz = cosf(euler.z), sz = sinf(euler.z);
 
-    float czcx = cz * cx, czsx = cz * sx;
-    float szcx = sz * cx, szsx = sz * sx;
+    float sycz = sy * cz;
+    float sysz = sy * sz;
 
     return (Matrix) {
-        scale.x * (cy*cz),               scale.x * (-cy*sz),             scale.x * sy,      translate.x,
-        scale.y * (sx*sy*cz + cx*sz),    scale.y * (-sx*sy*sz + cx*cz),  scale.y * (-sx*cy), translate.y,
-        scale.z * (-cx*sy*cz + sx*sz),   scale.z * (cx*sy*sz + sx*cz),   scale.z * (cx*cy),  translate.z,
-        0,0,0,1
+        scale.x * (cy * cz),              scale.x * (-cy * sz),             scale.x * sy,       translate.x,
+        scale.y * (sx * sycz + cx * sz),  scale.y * (-sx * sysz + cx * cz), scale.y * (-sx*cy), translate.y,
+        scale.z * (-cx * sycz + sx * sz), scale.z * (cx * sysz + sx * cz),  scale.z * (cx*cy), translate.z,
+        0, 0, 0, 1
     };
 }
 

@@ -74,7 +74,7 @@ static void cubemap_array_allocate_texture(GLuint texture, int size, int mipLeve
     glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, 0);
 }
 
-r3d_env_cubemap_array_t cubemap_array_create(int size, bool mipmapped)
+static r3d_env_cubemap_array_t cubemap_array_create(int size, bool mipmapped)
 {
     r3d_env_cubemap_array_t arr = {0};
 
@@ -88,7 +88,7 @@ r3d_env_cubemap_array_t cubemap_array_create(int size, bool mipmapped)
     return arr;
 }
 
-void cubemap_array_destroy(r3d_env_cubemap_array_t* arr)
+static void cubemap_array_destroy(r3d_env_cubemap_array_t* arr)
 {
     if (arr->texture != 0)     glDeleteTextures(1, &arr->texture);
     if (arr->framebuffer != 0) glDeleteFramebuffers(1, &arr->framebuffer);
@@ -99,7 +99,7 @@ void cubemap_array_destroy(r3d_env_cubemap_array_t* arr)
     *arr = (r3d_env_cubemap_array_t){0};
 }
 
-bool cubemap_array_expand(r3d_env_cubemap_array_t* arr, uint32_t growth)
+static bool cubemap_array_expand(r3d_env_cubemap_array_t* arr, uint32_t growth)
 {
     uint32_t newLayerCount = arr->layerCount + growth;
 
@@ -154,7 +154,7 @@ bool cubemap_array_expand(r3d_env_cubemap_array_t* arr, uint32_t growth)
     return true;
 }
 
-int cubemap_array_acquire_layer(r3d_env_cubemap_array_t* arr)
+static int cubemap_array_acquire_layer(r3d_env_cubemap_array_t* arr)
 {
     if (R3D_LIST_EMPTY(arr->freeList))
     {
@@ -174,7 +174,7 @@ int cubemap_array_acquire_layer(r3d_env_cubemap_array_t* arr)
     return layer;
 }
 
-void cubemap_array_release_layer(r3d_env_cubemap_array_t* arr, int layer)
+static void cubemap_array_release_layer(r3d_env_cubemap_array_t* arr, int layer)
 {
     r3d_env_cubemap_layer_state_t* state = &R3D_LIST_GET(arr->layerStates, r3d_env_cubemap_layer_state_t, layer);
     state->acquired = false;

@@ -22,6 +22,8 @@
 // HELPER MACROS
 // ========================================
 
+#define R3D_UNUSED(x) ((void)(x))
+
 #define R3D_MIN(x, y) ((x) < (y) ? (x) : (y))
 #define R3D_MAX(x, y) ((x) > (y) ? (x) : (y))
 

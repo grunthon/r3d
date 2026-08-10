@@ -6,6 +6,7 @@ project(r3d VERSION 0.11.0 LANGUAGES C CXX)
 # ========================================
 
 set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 if(POLICY CMP0141)
@@ -28,6 +29,7 @@ endif()
 
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${R3D_ROOT_PATH}/cmake")
 
+option(R3D_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" ON)
 option(R3D_RAYLIB_VENDORED "Use vendored raylib from submodule" OFF)
 option(R3D_ASSIMP_VENDORED "Use vendored assimp from submodule" OFF)
 option(R3D_SUPPORT_ASSIMP "Build with Assimp importer support" ON)
@@ -432,6 +434,36 @@ endif()
 if(MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /experimental:c11atomics)
     target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS)
+endif()
+
+# ========================================
+# Compiler Warnings
+# ========================================
+
+set(R3D_WARNING_FLAGS_GNU_CLANG
+    -Wall
+    -Wextra
+    -Wshadow
+    -Wcast-align
+    -Wstrict-prototypes
+    -Wmissing-prototypes
+)
+
+set(R3D_WARNING_FLAGS_MSVC
+    /W4
+    /permissive-
+)
+
+target_compile_options(${PROJECT_NAME} PRIVATE
+    $<$<OR:$<C_COMPILER_ID:GNU>,$<C_COMPILER_ID:Clang>,$<C_COMPILER_ID:AppleClang>>:${R3D_WARNING_FLAGS_GNU_CLANG}>
+    $<$<C_COMPILER_ID:MSVC>:${R3D_WARNING_FLAGS_MSVC}>
+)
+
+if(R3D_WARNINGS_AS_ERRORS)
+    target_compile_options(${PROJECT_NAME} PRIVATE
+        $<$<OR:$<C_COMPILER_ID:GNU>,$<C_COMPILER_ID:Clang>,$<C_COMPILER_ID:AppleClang>>:-Werror>
+        $<$<C_COMPILER_ID:MSVC>:/WX>
+    )
 endif()
 
 # ========================================

@@ -873,6 +873,8 @@ void upload_env_block(void)
 
         r3d_shader_set_uniform_block(R3D_SHADER_BLOCK_ENV, env, false);
     }
+
+    R3D_UNUSED(ok);
 }
 
 void upload_fx_block(void)
@@ -1166,7 +1168,6 @@ void raster_probe_forward(const r3d_render_call_t* call, const r3d_env_probe_job
 
     const r3d_render_group_t* group = r3d_render_get_call_group(call);
     const R3D_Material* material = &call->mesh.material;
-    const R3D_Mesh* mesh = &call->mesh.instance;
 
     /* --- Use shader --- */
 
@@ -1257,7 +1258,6 @@ void raster_probe_unlit(const r3d_render_call_t* call, const r3d_env_probe_job_t
 
     const r3d_render_group_t* group = r3d_render_get_call_group(call);
     const R3D_Material* material = &call->mesh.material;
-    const R3D_Mesh* mesh = &call->mesh.instance;
 
     /* --- Use shader --- */
 
@@ -1334,7 +1334,6 @@ void raster_geometry(const r3d_render_call_t* call, bool matchPrepass)
 
     const r3d_render_group_t* group = r3d_render_get_call_group(call);
     const R3D_Material* material = &call->mesh.material;
-    const R3D_Mesh* mesh = &call->mesh.instance;
 
     /* --- Use shader --- */
 
@@ -1503,7 +1502,6 @@ void raster_forward(const r3d_render_call_t* call)
 
     const r3d_render_group_t* group = r3d_render_get_call_group(call);
     const R3D_Material* material = &call->mesh.material;
-    const R3D_Mesh* mesh = &call->mesh.instance;
 
     /* --- Use shader --- */
 
@@ -1591,7 +1589,6 @@ void raster_unlit(const r3d_render_call_t* call)
 
     const r3d_render_group_t* group = r3d_render_get_call_group(call);
     const R3D_Material* material = &call->mesh.material;
-    const R3D_Mesh* mesh = &call->mesh.instance;
 
     /* --- Use shader --- */
 
@@ -1773,17 +1770,25 @@ void pass_scene_probes(void)
         }
 
         // Generate irradiance/prefilter map
-        GLuint captureTex = r3d_env_probe_capture_get(job->probeType);
-        int captureSize   = r3d_env_probe_capture_size(job->probeType);
+
         switch (job->probeType)
         {
         case R3D_PROBE_ILLUMINATION:
-            r3d_pass_prepare_irradiance(job->layer, captureTex, captureSize);
+            {
+                GLuint captureTex = r3d_env_probe_capture_get(job->probeType);
+                r3d_pass_prepare_irradiance(job->layer, captureTex);
+            }
             break;
+
         case R3D_PROBE_REFLECTION:
-            r3d_env_probe_capture_gen_mipmaps(job->probeType);
-            r3d_pass_prepare_prefilter(job->layer, captureTex, captureSize);
+            {
+                r3d_env_probe_capture_gen_mipmaps(job->probeType);
+                GLuint captureTex = r3d_env_probe_capture_get(job->probeType);
+                int captureSize   = r3d_env_probe_capture_size(job->probeType);
+                r3d_pass_prepare_prefilter(job->layer, captureTex, captureSize);
+            }
             break;
+
         default:
             assert(false);
             break;
@@ -2086,7 +2091,7 @@ r3d_target_t pass_prepare_ssgi(void)
         R3D_SHADER_SET_FLOAT(prepare.denoiserAtrous, uDepthSharpness, 100.0f);
 
         int stepWidth[] = {16, 8, 4, 2, 1};
-        steps = R3D_MIN(steps, R3D_ARRAY_SIZE(stepWidth));
+        steps = R3D_MIN(steps, (int)R3D_ARRAY_SIZE(stepWidth));
 
         for (int i = 0; i < steps; i++)
         {
@@ -2690,7 +2695,7 @@ r3d_target_t pass_post_auto_exposure(r3d_target_t sceneTarget)
 
 r3d_target_t pass_post_screen(R3D_ScreenShaderStage stage, r3d_target_t sceneTarget)
 {
-    for (int i = 0; i < R3D_ARRAY_SIZE(R3D.screenShaders[stage]); i++)
+    for (int i = 0; i < (int)R3D_ARRAY_SIZE(R3D.screenShaders[stage]); i++)
     {
         R3D_ScreenShader* shader = R3D.screenShaders[stage][i];
         if (shader == NULL) continue;

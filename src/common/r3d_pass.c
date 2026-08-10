@@ -24,7 +24,7 @@
 // COMMON ENVIRONMENT GENERATION
 // ========================================
 
-void r3d_pass_prepare_irradiance(int layerMap, GLuint srcCubemap, int srcSize)
+void r3d_pass_prepare_irradiance(int layerMap, GLuint srcCubemap)
 {
     Matrix matProj = MatrixPerspective(90.0 * DEG2RAD, 1.0, 0.1, 10.0);
 

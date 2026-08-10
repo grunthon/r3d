@@ -375,9 +375,9 @@ bool R3D_CheckCollisionCapsuleMesh(R3D_Capsule capsule, R3D_MeshData mesh, Matri
             v2 = mesh.vertices[i*3 + 2].position;
         }
 
-        Vector3 a = r3d_vector3_transform(mesh.vertices[mesh.indices[i]].position, &transform);
-        Vector3 b = r3d_vector3_transform(mesh.vertices[mesh.indices[i+1]].position, &transform);
-        Vector3 c = r3d_vector3_transform(mesh.vertices[mesh.indices[i+2]].position, &transform);
+        v0 = r3d_vector3_transform(v0, &transform);
+        v1 = r3d_vector3_transform(v1, &transform);
+        v2 = r3d_vector3_transform(v2, &transform);
 
         const int samples = 5;
         for (int s = 0; s < samples; s++)
@@ -385,7 +385,7 @@ bool R3D_CheckCollisionCapsuleMesh(R3D_Capsule capsule, R3D_MeshData mesh, Matri
             float t = (float)s / (samples - 1);
             Vector3 p = Vector3Add(capsule.start, Vector3Scale(axis, t));
 
-            Vector3 closest = R3D_ClosestPointOnTriangle(p, a, b, c);
+            Vector3 closest = R3D_ClosestPointOnTriangle(p, v0, v1, v2);
             if (Vector3LengthSqr(Vector3Subtract(closest, p)) <= radiusSq)
             {
                 return true;

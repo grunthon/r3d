@@ -209,7 +209,7 @@ void r3d_target_quit(void);
  * Performs a reallocation of all targets already allocated.
  * Ignore the operation if the new resolution is identical to the one already defined.
  */
-void r3d_target_resize(int resW, int resH);
+void r3d_target_resize(uint32_t resW, uint32_t resH);
 
 /*
  * Returns the total number of mip levels of the internal buffers

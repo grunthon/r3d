@@ -159,7 +159,7 @@ struct r3d_mod_shader R3D_MOD_SHADER;
 } while(0)
 
 #define UNLOAD_SHADERS(shader_name) do {                                        \
-    for (int i = 0; i < R3D_ARRAY_SIZE(R3D_MOD_SHADER.shader_name); i++) {          \
+    for (int i = 0; i < (int)R3D_ARRAY_SIZE(R3D_MOD_SHADER.shader_name); i++) { \
         if (R3D_MOD_SHADER.shader_name[i].id != 0) {                            \
             glDeleteProgram(R3D_MOD_SHADER.shader_name[i].id);                  \
         }                                                                       \
@@ -289,6 +289,8 @@ static GLuint load_shader(const char* vsCode, const char* fsCode)
 
 bool r3d_shader_load_prepare_denoiser_atrous(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_prepare_denoiser_atrous_t, prepare, denoiserAtrous);
     LOAD_SHADER(denoiserAtrous, SCREEN_VERT, DENOISER_ATROUS_FRAG);
 
@@ -309,6 +311,8 @@ bool r3d_shader_load_prepare_denoiser_atrous(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_prepare_denoiser_sparse(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_prepare_denoiser_sparse_t, prepare, denoiserSparse);
     LOAD_SHADER(denoiserSparse, SCREEN_VERT, DENOISER_SPARSE_FRAG);
 
@@ -329,6 +333,8 @@ bool r3d_shader_load_prepare_denoiser_sparse(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_prepare_blur_down(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_prepare_blur_down_t, prepare, blurDown);
     LOAD_SHADER(blurDown, SCREEN_VERT, BLUR_DOWN_FRAG);
 
@@ -342,6 +348,8 @@ bool r3d_shader_load_prepare_blur_down(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_prepare_blur_up(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_prepare_blur_up_t, prepare, blurUp);
     LOAD_SHADER(blurUp, SCREEN_VERT, BLUR_UP_FRAG);
 
@@ -355,6 +363,8 @@ bool r3d_shader_load_prepare_blur_up(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_prepare_depth_pyramid(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_prepare_depth_pyramid_t, prepare, depthPyramid);
     LOAD_SHADER(depthPyramid, SCREEN_VERT, DEPTH_PYRAMID_FRAG);
 
@@ -366,6 +376,8 @@ bool r3d_shader_load_prepare_depth_pyramid(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_prepare_ssao_in_down(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_prepare_ssao_in_down_t, prepare, ssaoInDown);
     LOAD_SHADER(ssaoInDown, SCREEN_VERT, SSAO_IN_DOWN_FRAG);
 
@@ -378,6 +390,8 @@ bool r3d_shader_load_prepare_ssao_in_down(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_prepare_ssao(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_prepare_ssao_t, prepare, ssao);
     LOAD_SHADER(ssao, SCREEN_VERT, SSAO_FRAG);
 
@@ -393,6 +407,8 @@ bool r3d_shader_load_prepare_ssao(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_prepare_ssil_in_down(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_prepare_ssil_in_down_t, prepare, ssilInDown);
     LOAD_SHADER(ssilInDown, SCREEN_VERT, SSIL_IN_DOWN_FRAG);
 
@@ -406,6 +422,8 @@ bool r3d_shader_load_prepare_ssil_in_down(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_prepare_ssil(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_prepare_ssil_t, prepare, ssil);
     LOAD_SHADER(ssil, SCREEN_VERT, SSIL_FRAG);
 
@@ -422,6 +440,8 @@ bool r3d_shader_load_prepare_ssil(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_prepare_ssgi_in_down(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_prepare_ssgi_in_down_t, prepare, ssgiInDown);
     LOAD_SHADER(ssgiInDown, SCREEN_VERT, SSGI_IN_DOWN_FRAG);
 
@@ -435,6 +455,8 @@ bool r3d_shader_load_prepare_ssgi_in_down(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_prepare_ssgi(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_prepare_ssgi_t, prepare, ssgi);
     LOAD_SHADER(ssgi, SCREEN_VERT, SSGI_FRAG);
 
@@ -451,6 +473,8 @@ bool r3d_shader_load_prepare_ssgi(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_prepare_ssr_in_down(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_prepare_ssr_in_down_t, prepare, ssrInDown);
     LOAD_SHADER(ssrInDown, SCREEN_VERT, SSR_IN_DOWN_FRAG);
 
@@ -465,6 +489,8 @@ bool r3d_shader_load_prepare_ssr_in_down(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_prepare_ssr(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_prepare_ssr_t, prepare, ssr);
     LOAD_SHADER(ssr, SCREEN_VERT, SSR_FRAG);
 
@@ -483,6 +509,8 @@ bool r3d_shader_load_prepare_ssr(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_prepare_dof_coc(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_prepare_dof_coc_t, prepare, dofCoc);
     LOAD_SHADER(dofCoc, SCREEN_VERT, DOF_COC_FRAG);
 
@@ -496,6 +524,8 @@ bool r3d_shader_load_prepare_dof_coc(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_prepare_dof_down(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_prepare_dof_down_t, prepare, dofDown);
     LOAD_SHADER(dofDown, SCREEN_VERT, DOF_DOWN_FRAG);
 
@@ -508,6 +538,8 @@ bool r3d_shader_load_prepare_dof_down(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_prepare_dof_blur(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_prepare_dof_blur_t, prepare, dofBlur);
     LOAD_SHADER(dofBlur, SCREEN_VERT, DOF_BLUR_FRAG);
 
@@ -522,6 +554,8 @@ bool r3d_shader_load_prepare_dof_blur(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_prepare_bloom_down(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_prepare_bloom_down_t, prepare, bloomDown);
     LOAD_SHADER(bloomDown, SCREEN_VERT, BLOOM_DOWN_FRAG);
 
@@ -538,6 +572,8 @@ bool r3d_shader_load_prepare_bloom_down(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_prepare_bloom_up(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_prepare_bloom_up_t, prepare, bloomUp);
     LOAD_SHADER(bloomUp, SCREEN_VERT, BLOOM_UP_FRAG);
 
@@ -552,6 +588,8 @@ bool r3d_shader_load_prepare_bloom_up(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_prepare_luminance(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_prepare_luminance_t, prepare, luminance);
     LOAD_SHADER(luminance, SCREEN_VERT, LUMINANCE_FRAG);
 
@@ -563,6 +601,8 @@ bool r3d_shader_load_prepare_luminance(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_prepare_exposure_adapt(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_prepare_exposure_adapt_t, prepare, exposureAdapt);
 
     LOAD_SHADER(exposureAdapt, SCREEN_VERT, EXPOSURE_ADAPT_FRAG);
@@ -583,6 +623,8 @@ bool r3d_shader_load_prepare_exposure_adapt(r3d_shader_custom_t* custom)
 
 static bool load_prepare_smaa_edge_detection(r3d_shader_custom_t* custom, int index)
 {
+    R3D_UNUSED(custom);
+
     char defQualityPreset[32] = {0};
     r3d_string_format(defQualityPreset, sizeof(defQualityPreset), "QUALITY_PRESET %i", index);
 
@@ -632,6 +674,8 @@ bool r3d_shader_load_prepare_smaa_edge_detection_ultra(r3d_shader_custom_t* cust
 
 static bool load_prepare_smaa_blending_weights(r3d_shader_custom_t* custom, int index)
 {
+    R3D_UNUSED(custom);
+
     char defQualityPreset[32] = {0};
     r3d_string_format(defQualityPreset, sizeof(defQualityPreset), "QUALITY_PRESET %i", index);
 
@@ -683,6 +727,8 @@ bool r3d_shader_load_prepare_smaa_blending_weights_ultra(r3d_shader_custom_t* cu
 
 bool r3d_shader_load_prepare_cubemap_from_equirectangular(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_prepare_cubemap_from_equirectangular_t, prepare, cubemapFromEquirectangular);
     LOAD_SHADER(cubemapFromEquirectangular, CUBEMAP_VERT, CUBEMAP_FROM_EQUIRECTANGULAR_FRAG);
 
@@ -697,6 +743,8 @@ bool r3d_shader_load_prepare_cubemap_from_equirectangular(r3d_shader_custom_t* c
 
 bool r3d_shader_load_prepare_cubemap_irradiance(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_prepare_cubemap_irradiance_t, prepare, cubemapIrradiance);
     LOAD_SHADER(cubemapIrradiance, CUBEMAP_VERT, CUBEMAP_IRRADIANCE_FRAG);
 
@@ -711,6 +759,8 @@ bool r3d_shader_load_prepare_cubemap_irradiance(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_prepare_cubemap_prefilter(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_prepare_cubemap_prefilter_t, prepare, cubemapPrefilter);
     LOAD_SHADER(cubemapPrefilter, CUBEMAP_VERT, CUBEMAP_PREFILTER_FRAG);
 
@@ -728,6 +778,8 @@ bool r3d_shader_load_prepare_cubemap_prefilter(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_prepare_cubemap_procedural_sky(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_prepare_cubemap_procedural_sky_t, prepare, cubemapProceduralSky);
     LOAD_SHADER(cubemapProceduralSky, CUBEMAP_VERT, CUBEMAP_PROCEDURAL_SKY_FRAG);
 
@@ -979,6 +1031,8 @@ bool r3d_shader_load_scene_unlit(r3d_shader_custom_t *custom)
 
 bool r3d_shader_load_scene_background(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_scene_background_t, scene, background);
     LOAD_SHADER(background, SCREEN_VERT, COLOR_FRAG);
     GET_LOCATION(background, uColor);
@@ -988,6 +1042,8 @@ bool r3d_shader_load_scene_background(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_scene_skybox(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_scene_skybox_t, scene, skybox);
     LOAD_SHADER(skybox, SKYBOX_VERT, SKYBOX_FRAG);
 
@@ -1309,6 +1365,8 @@ bool r3d_shader_load_scene_decal(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_deferred_ambient(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     char defNumIlluminationProbes[32] = {0};
     char defNumReflectionProbes[32]   = {0};
 
@@ -1350,6 +1408,8 @@ bool r3d_shader_load_deferred_ambient(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_deferred_lighting(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_deferred_lighting_t, deferred, lighting);
     LOAD_SHADER(lighting, SCREEN_VERT, LIGHTING_FRAG);
 
@@ -1372,6 +1432,8 @@ bool r3d_shader_load_deferred_lighting(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_deferred_compose(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_deferred_compose_t, deferred, compose);
     LOAD_SHADER(compose, SCREEN_VERT, COMPOSE_FRAG);
 
@@ -1390,6 +1452,8 @@ bool r3d_shader_load_deferred_compose(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_deferred_fog(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_deferred_fog_t, deferred, fog);
     LOAD_SHADER(fog, SCREEN_VERT, FOG_FRAG);
 
@@ -1404,6 +1468,8 @@ bool r3d_shader_load_deferred_fog(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_deferred_vfog_transmittance(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_deferred_vfog_transmittance_t, deferred, vfogTransmittance);
     LOAD_SHADER(vfogTransmittance, SCREEN_VERT, VFOG_TRANSMITTANCE_FRAG);
 
@@ -1418,6 +1484,8 @@ bool r3d_shader_load_deferred_vfog_transmittance(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_deferred_vfog_radiance(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_deferred_vfog_radiance_t, deferred, vfogRadiance);
     LOAD_SHADER(vfogRadiance, SCREEN_VERT, VFOG_RADIANCE_FRAG);
 
@@ -1436,6 +1504,8 @@ bool r3d_shader_load_deferred_vfog_radiance(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_deferred_vfog_compose(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_deferred_vfog_compose_t, deferred, vfogCompose);
     LOAD_SHADER(vfogCompose, SCREEN_VERT, VFOG_COMPOSE_FRAG);
 
@@ -1448,6 +1518,8 @@ bool r3d_shader_load_deferred_vfog_compose(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_post_dof(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_post_dof_t, post, dof);
     LOAD_SHADER(dof, SCREEN_VERT, DOF_FRAG);
 
@@ -1460,6 +1532,8 @@ bool r3d_shader_load_post_dof(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_post_bloom(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_post_bloom_t, post, bloom);
     LOAD_SHADER(bloom, SCREEN_VERT, BLOOM_FRAG);
 
@@ -1475,6 +1549,8 @@ bool r3d_shader_load_post_bloom(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_post_auto_exposure(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_post_auto_exposure_t, post, autoExposure);
     LOAD_SHADER(autoExposure, SCREEN_VERT, AUTO_EXPOSURE_FRAG);
 
@@ -1523,6 +1599,8 @@ bool r3d_shader_load_post_screen(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_post_output(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_post_output_t, post, output);
     LOAD_SHADER(output, SCREEN_VERT, OUTPUT_FRAG);
 
@@ -1536,6 +1614,8 @@ bool r3d_shader_load_post_output(r3d_shader_custom_t* custom)
 
 static bool load_post_fxaa(r3d_shader_custom_t* custom, int index)
 {
+    R3D_UNUSED(custom);
+
     char defQualityPreset[32] = {0};
     r3d_string_format(defQualityPreset, sizeof(defQualityPreset), "QUALITY_PRESET %i", index);
 
@@ -1581,6 +1661,8 @@ bool r3d_shader_load_post_fxaa_ultra(r3d_shader_custom_t* custom)
 
 static bool load_post_smaa(r3d_shader_custom_t* custom, int index)
 {
+    R3D_UNUSED(custom);
+
     char defQualityPreset[32] = {0};
     r3d_string_format(defQualityPreset, sizeof(defQualityPreset), "QUALITY_PRESET %i", index);
 
@@ -1630,6 +1712,8 @@ bool r3d_shader_load_post_smaa_ultra(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_post_visualizer(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_post_visualizer_t, post, visualizer);
     LOAD_SHADER(visualizer, SCREEN_VERT, VISUALIZER_FRAG);
 
@@ -1643,6 +1727,8 @@ bool r3d_shader_load_post_visualizer(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_blit_common_copy(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_blit_common_copy_t, blit, commonCopy);
     LOAD_SHADER(commonCopy, SCREEN_VERT, COMMON_COPY_FRAG);
 
@@ -1655,6 +1741,8 @@ bool r3d_shader_load_blit_common_copy(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_blit_common_nearest(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_blit_common_nearest_t, blit, commonNearest);
     LOAD_SHADER(commonNearest, SCREEN_VERT, COMMON_NEAREST_FRAG);
 
@@ -1667,6 +1755,8 @@ bool r3d_shader_load_blit_common_nearest(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_blit_common_linear(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_blit_common_linear_t, blit, commonLinear);
     LOAD_SHADER(commonLinear, SCREEN_VERT, COMMON_LINEAR_FRAG);
 
@@ -1679,6 +1769,8 @@ bool r3d_shader_load_blit_common_linear(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_blit_up_bicubic(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_blit_up_bicubic_t, blit, upBicubic);
     LOAD_SHADER(upBicubic, SCREEN_VERT, UP_BICUBIC_FRAG);
 
@@ -1691,6 +1783,8 @@ bool r3d_shader_load_blit_up_bicubic(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_blit_up_lanczos(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_blit_up_lanczos_t, blit, upLanczos);
     LOAD_SHADER(upLanczos, SCREEN_VERT, UP_LANCZOS_FRAG);
 
@@ -1703,6 +1797,8 @@ bool r3d_shader_load_blit_up_lanczos(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_blit_down_rgss(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_blit_down_rgss_t, blit, downRgss);
     LOAD_SHADER(downRgss, SCREEN_VERT, DOWN_RGSS_FRAG);
 
@@ -1717,6 +1813,8 @@ bool r3d_shader_load_blit_down_rgss(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_blit_down_pdss(r3d_shader_custom_t* custom)
 {
+    R3D_UNUSED(custom);
+
     DECL_SHADER(r3d_shader_blit_down_pdss_t, blit, downPdss);
     LOAD_SHADER(downPdss, SCREEN_VERT, DOWN_PDSS_FRAG);
 
@@ -1733,14 +1831,13 @@ bool r3d_shader_load_blit_down_pdss(r3d_shader_custom_t* custom)
 // MODULE FUNCTIONS
 // ========================================
 
-bool r3d_shader_init()
+bool r3d_shader_init(void)
 {
     memset(&R3D_MOD_SHADER, 0, sizeof(R3D_MOD_SHADER));
 
     glGenBuffers(R3D_SHADER_BLOCK_COUNT, R3D_MOD_SHADER.uniformBuffers);
     for (int i = 0; i < R3D_SHADER_BLOCK_COUNT; i++)
     {
-        GLuint buffer = R3D_MOD_SHADER.uniformBuffers[i];
         glBindBuffer(GL_UNIFORM_BUFFER, R3D_MOD_SHADER.uniformBuffers[i]);
         glBufferData(GL_UNIFORM_BUFFER, R3D_SHADER_BLOCK_SIZES[i], NULL, GL_DYNAMIC_DRAW);
     }
@@ -1757,7 +1854,7 @@ bool r3d_shader_init()
     return true;
 }
 
-void r3d_shader_quit()
+void r3d_shader_quit(void)
 {
     glDeleteBuffers(R3D_SHADER_BLOCK_COUNT, R3D_MOD_SHADER.uniformBuffers);
 

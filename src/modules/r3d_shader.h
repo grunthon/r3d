@@ -75,8 +75,8 @@
 } while(0)
 
 #define R3D_SHADER_SET_INT(shader_name, uniform, value) do {                    \
-    if (R3D_MOD_SHADER.shader_name.uniform.val != (value)) {                    \
-        R3D_MOD_SHADER.shader_name.uniform.val = (value);                       \
+    if (R3D_MOD_SHADER.shader_name.uniform.val != (int)(value)) {               \
+        R3D_MOD_SHADER.shader_name.uniform.val = (int)(value);                  \
         glUniform1i(                                                            \
             R3D_MOD_SHADER.shader_name.uniform.loc,                             \
             (value)                                                             \
@@ -85,15 +85,15 @@
 } while(0)
 
 #define R3D_SHADER_SET_INT_CUSTOM(custom, shader_name, uniform, value) do {     \
-    if ((custom)->program->shader_name.uniform.val != (value)) {                \
-        (custom)->program->shader_name.uniform.val = (value);                   \
+    if ((custom)->program->shader_name.uniform.val != (int)(value)) {           \
+        (custom)->program->shader_name.uniform.val = (int)(value);              \
         glUniform1i((custom)->program->shader_name.uniform.loc, (value));       \
     }                                                                           \
 } while(0)
 
 #define R3D_SHADER_SET_INT_SELECT(shader_name, custom, uniform, value) do {     \
-    if (R3D_SHADER_GET(shader_name, custom)->uniform.val != (value)) {          \
-        R3D_SHADER_GET(shader_name, custom)->uniform.val = (value);             \
+    if (R3D_SHADER_GET(shader_name, custom)->uniform.val != (int)(value)) {     \
+        R3D_SHADER_GET(shader_name, custom)->uniform.val = (int)(value);        \
         glUniform1i(R3D_SHADER_GET(shader_name, custom)->uniform.loc, (value)); \
     }                                                                           \
 } while(0)
@@ -1622,13 +1622,13 @@ static const struct r3d_shader_loader {
  * Module initialization function.
  * Called once during `R3D_Init()`
  */
-bool r3d_shader_init();
+bool r3d_shader_init(void);
 
 /*
  * Module deinitialization function.
  * Called once during `R3D_Close()`
  */
-void r3d_shader_quit();
+void r3d_shader_quit(void);
 
 /*
  * Binds the texture to the specified sampler.

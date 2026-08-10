@@ -515,6 +515,7 @@ static void instances_enable(const GLuint buffers[R3D_INSTANCE_ATTRIBUTE_COUNT],
     }
 }
 
+/*
 static void instances_disable(R3D_InstanceFlags flags)
 {
     memset(&R3D_MOD_RENDER.instanceState, 0, sizeof(R3D_MOD_RENDER.instanceState));
@@ -544,6 +545,7 @@ static void instances_disable(R3D_InstanceFlags flags)
         glDisableVertexAttribArray(14);
     }
 }
+*/
 
 // ========================================
 // INTERNAL ARRAY FUNCTIONS

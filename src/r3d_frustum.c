@@ -123,7 +123,7 @@ BoundingBox R3D_ComputeFrustumBoundingBox(Matrix invViewProj)
     return bbox;
 }
 
-void R3D_ComputeFrustumCorners(Matrix invViewProj, Vector3* corners)
+void R3D_ComputeFrustumCorners(Matrix invViewProj, Vector3 corners[8])
 {
     Vector4 clipCorners[8] = {
         {-1, -1, -1, 1}, {1, -1, -1, 1}, {1, 1, -1, 1}, {-1, 1, -1, 1}, // Near

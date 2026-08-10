@@ -136,12 +136,15 @@ static void alloc_target_texture(r3d_target_t target)
     R3D_MOD_TARGET.targetLoaded[target] = true;
 }
 
-static void alloc_depth_stencil_texture(int resW, int resH)
+static void alloc_depth_stencil_texture(uint32_t resW, uint32_t resH)
 {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, R3D_MOD_TARGET.depthTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, resW, resH, 0,
-                 GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
+    glTexImage2D(
+        GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8,
+        (GLsizei)resW, (GLsizei)resH, 0,
+        GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL
+    );
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -269,10 +272,8 @@ void r3d_target_quit(void)
     }
 }
 
-void r3d_target_resize(int resW, int resH)
+void r3d_target_resize(uint32_t resW, uint32_t resH)
 {
-    assert(resW > 0 && resH > 0);
-
     if (R3D_MOD_TARGET.resW == resW && R3D_MOD_TARGET.resH == resH)
     {
         return;
@@ -280,8 +281,8 @@ void r3d_target_resize(int resW, int resH)
 
     R3D_MOD_TARGET.resW = resW;
     R3D_MOD_TARGET.resH = resH;
-    R3D_MOD_TARGET.txlW = 1.0f / resW;
-    R3D_MOD_TARGET.txlH = 1.0f / resH;
+    R3D_MOD_TARGET.txlW = 1.0f / (float)resW;
+    R3D_MOD_TARGET.txlH = 1.0f / (float)resH;
 
     alloc_depth_stencil_texture(resW, resH);
 

@@ -249,7 +249,7 @@ void R3D_SetResolution(int width, int height)
         return;
     }
 
-    r3d_target_resize(width, height);
+    r3d_target_resize((uint32_t)width, (uint32_t)height);
 }
 
 R3D_AntiAliasingMode R3D_GetAntiAliasingMode(void)
