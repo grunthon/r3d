@@ -30,8 +30,10 @@ int main(void)
     // Allocate transforms for all spheres
     R3D_InstanceBuffer instances = R3D_LoadInstanceBuffer(GRID_SIZE * GRID_SIZE, R3D_INSTANCE_POSITION);
     Vector3* positions = R3D_MapInstances(instances, R3D_INSTANCE_POSITION, false);
-    for (int x = -50; x < 50; x++) {
-        for (int z = -50; z < 50; z++) {
+    for (int x = -50; x < 50; x++)
+    {
+        for (int z = -50; z < 50; z++)
+        {
             positions[(z+50)*GRID_SIZE + (x+50)] = (Vector3) {x + 0.5f, 0, z + 0.5f};
         }
     }
@@ -39,7 +41,8 @@ int main(void)
 
     // Create lights
     R3D_Light lights[NUM_LIGHTS];
-    for (int i = 0; i < NUM_LIGHTS; i++) {
+    for (int i = 0; i < NUM_LIGHTS; i++)
+    {
         lights[i] = R3D_CreateOmniLight((Vector3){0}, 0.0f, WHITE, 1.0f);
         lights[i].position = (Vector3) {randf(-50.0f, 50.0f), randf(1.0f, 5.0f), randf(-50.0f, 50.0f)};
         lights[i].color    = ColorFromHSV(randf(0.0f, 360.0f), 1.0f, 1.0f);
@@ -75,7 +78,8 @@ int main(void)
         // Optionally show lights shapes
         if (IsKeyDown(KEY_F)) {
             BeginMode3D(camera);
-            for (int i = 0; i < NUM_LIGHTS; i++) {
+            for (int i = 0; i < NUM_LIGHTS; i++)
+            {
                 R3D_DrawLightDebug(lights[i]);
             }
             EndMode3D();

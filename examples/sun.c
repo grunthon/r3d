@@ -27,8 +27,10 @@ int main(void)
     float offsetX = (X_INSTANCES * spacing) / 2.0f;
     float offsetZ = (Y_INSTANCES * spacing) / 2.0f;
     int idx = 0;
-    for (int x = 0; x < X_INSTANCES; x++) {
-        for (int y = 0; y < Y_INSTANCES; y++) {
+    for (int x = 0; x < X_INSTANCES; x++)
+    {
+        for (int y = 0; y < Y_INSTANCES; y++)
+        {
             positions[idx] = (Vector3) {x * spacing - offsetX, 0, y * spacing - offsetZ};
             idx++;
         }

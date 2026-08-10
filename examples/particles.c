@@ -62,8 +62,10 @@ int main(void)
         UpdateCamera(&camera, CAMERA_ORBITAL);
 
         // Spawn particles
-        for (int i = 0; i < 10; i++) {
-            if (particleCount < MAX_PARTICLES) {
+        for (int i = 0; i < 10; i++)
+        {
+            if (particleCount < MAX_PARTICLES)
+            {
                 float angle = GetRandomValue(0, 360) * DEG2RAD;
                 particles[particleCount].pos = (Vector3){0, 0, 0};
                 particles[particleCount].vel = (Vector3){
@@ -78,13 +80,15 @@ int main(void)
 
         // Update particles
         int alive = 0;
-        for (int i = 0; i < particleCount; i++) {
+        for (int i = 0; i < particleCount; i++)
+        {
             particles[i].vel.y -= 9.81f * dt;
             particles[i].pos.x += particles[i].vel.x * dt;
             particles[i].pos.y += particles[i].vel.y * dt;
             particles[i].pos.z += particles[i].vel.z * dt;
             particles[i].life -= dt * 0.5f;
-            if (particles[i].life > 0) {
+            if (particles[i].life > 0)
+            {
                 positions[alive] = particles[i].pos;
                 particles[alive] = particles[i];
                 alive++;

@@ -66,7 +66,8 @@ int main(void)
                 material.orm.metalness = 0.0f;
                 R3D_DrawMesh(plane, material, Vector3Zero(), 1.0f);
 
-                for (int i = -1; i <= 1; i++) {
+                for (int i = -1; i <= 1; i++)
+                {
                     material.orm.roughness = fabsf((float)i) * 0.4f;
                     material.orm.metalness = 1.0f - fabsf((float)i);
                     R3D_DrawMesh(sphere, material, (Vector3) {(float)i * 3.0f, 1.0f, 0}, 2.0f);

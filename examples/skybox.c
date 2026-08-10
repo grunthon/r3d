@@ -44,7 +44,8 @@ int main(void)
     R3D_EnvAmbient ambients[3] = {0};
     int currentSky = 0;
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++)
+    {
         backgrounds[i].energy = 1.0f;
         ambients[i].energy = 1.0f;
     }
@@ -91,8 +92,10 @@ int main(void)
 
         // Draw sphere grid
         R3D_Begin(camera);
-            for (int x = 0; x <= 8; x++) {
-                for (int y = 0; y <= 8; y++) {
+            for (int x = 0; x <= 8; x++)
+            {
+                for (int y = 0; y <= 8; y++)
+                {
                     R3D_Material material = R3D_MATERIAL_BASE;
                     material.orm.roughness = Remap((float)y, 0.0f, 8.0f, 0.0f, 1.0f);
                     material.orm.metalness = Remap((float)x, 0.0f, 8.0f, 0.0f, 1.0f);

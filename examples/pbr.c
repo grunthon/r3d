@@ -54,7 +54,8 @@ int main(void)
         modelScale = Clamp(modelScale + GetMouseWheelMove() * 0.1f, 0.25f, 2.5f);
 
         // Rotate model with left mouse button
-        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+        {
             float pitch = (GetMouseDelta().y * 0.005f) / modelScale;
             float yaw   = (GetMouseDelta().x * 0.005f) / modelScale;
             Matrix rotate = MatrixRotateXYZ((Vector3){pitch, yaw, 0.0f});

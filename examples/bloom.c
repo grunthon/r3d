@@ -46,7 +46,8 @@ int main(void)
         UpdateCamera(&camera, CAMERA_ORBITAL);
 
         // Change cube color
-        if (IsKeyDown(KEY_C)) {
+        if (IsKeyDown(KEY_C))
+        {
             hueCube = Wrap(hueCube + 45.0f * delta, 0, 360);
             material.emission.color = ColorFromHSV(hueCube, 1.0f, 1.0f);
         }
@@ -68,7 +69,8 @@ int main(void)
         R3D_ENVIRONMENT_SET(bloom.levels, levels);
 
         // Draw scene
-        if (IsKeyPressed(KEY_SPACE)) {
+        if (IsKeyPressed(KEY_SPACE))
+        {
             R3D_ENVIRONMENT_SET(bloom.mode, (R3D_ENVIRONMENT_GET(bloom.mode) + 1) % (R3D_BLOOM_SCREEN + 1));
         }
 

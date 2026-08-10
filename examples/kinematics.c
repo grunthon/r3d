@@ -82,7 +82,8 @@ int main(void)
         int dz = IsKeyDown(KEY_W) - IsKeyDown(KEY_S);
         
         Vector3 moveInput = {0};
-        if (dx != 0 || dz != 0) {
+        if (dx != 0 || dz != 0)
+        {
             float angleRad = cameraAngle * DEG2RAD;
             Vector3 right = {cosf(angleRad), 0, -sinf(angleRad)};
             Vector3 forward = {sinf(angleRad), 0, cosf(angleRad)};
@@ -108,7 +109,8 @@ int main(void)
         capsule.end = Vector3Add(capsule.end, movement);
 
         // Ground clamp
-        if (capsule.start.y < 0.5f) {
+        if (capsule.start.y < 0.5f)
+        {
             float correction = 0.5f - capsule.start.y;
             capsule.start.y += correction;
             capsule.end.y += correction;

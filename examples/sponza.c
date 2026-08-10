@@ -130,12 +130,12 @@ int main(void)
             const char* tonemapText = "";
             switch (tonemap)
             {
-                case R3D_TONEMAP_LINEAR:    tonemapText = "< TONEMAP LINEAR >"; break;
-                case R3D_TONEMAP_REINHARD:  tonemapText = "< TONEMAP REINHARD >"; break;
-                case R3D_TONEMAP_FILMIC:    tonemapText = "< TONEMAP FILMIC >"; break;
-                case R3D_TONEMAP_ACES:      tonemapText = "< TONEMAP ACES >"; break;
-                case R3D_TONEMAP_AGX:       tonemapText = "< TONEMAP AGX >"; break;
-                default: break;
+            case R3D_TONEMAP_LINEAR:    tonemapText = "< TONEMAP LINEAR >"; break;
+            case R3D_TONEMAP_REINHARD:  tonemapText = "< TONEMAP REINHARD >"; break;
+            case R3D_TONEMAP_FILMIC:    tonemapText = "< TONEMAP FILMIC >"; break;
+            case R3D_TONEMAP_ACES:      tonemapText = "< TONEMAP ACES >"; break;
+            case R3D_TONEMAP_AGX:       tonemapText = "< TONEMAP AGX >"; break;
+            default: break;
             }
             DrawText(tonemapText, GetScreenWidth() - MeasureText(tonemapText, 20) - 10, 10, 20, LIME);
 
@@ -144,10 +144,10 @@ int main(void)
             const char* aaModeText = "";
             switch (aaMode)
             {
-                case R3D_ANTI_ALIASING_MODE_NONE: aaModeText = "AA: NONE"; break;
-                case R3D_ANTI_ALIASING_MODE_FXAA: aaModeText = "AA: FXAA"; break;
-                case R3D_ANTI_ALIASING_MODE_SMAA: aaModeText = "AA: SMAA"; break;
-                default: break;
+            case R3D_ANTI_ALIASING_MODE_NONE: aaModeText = "AA: NONE"; break;
+            case R3D_ANTI_ALIASING_MODE_FXAA: aaModeText = "AA: FXAA"; break;
+            case R3D_ANTI_ALIASING_MODE_SMAA: aaModeText = "AA: SMAA"; break;
+            default: break;
             }
             DrawText(aaModeText, 10, GetScreenHeight() - 30, 20, LIME);
 
@@ -156,11 +156,11 @@ int main(void)
             const char* aaPresetText = "";
             switch (aaPreset)
             {
-                case R3D_ANTI_ALIASING_PRESET_LOW:    aaPresetText = "- Low"; break;
-                case R3D_ANTI_ALIASING_PRESET_MEDIUM: aaPresetText = "- Medium"; break;
-                case R3D_ANTI_ALIASING_PRESET_HIGH:   aaPresetText = "- High"; break;
-                case R3D_ANTI_ALIASING_PRESET_ULTRA:  aaPresetText = "- Ultra"; break;
-                default: break;
+            case R3D_ANTI_ALIASING_PRESET_LOW:    aaPresetText = "- Low"; break;
+            case R3D_ANTI_ALIASING_PRESET_MEDIUM: aaPresetText = "- Medium"; break;
+            case R3D_ANTI_ALIASING_PRESET_HIGH:   aaPresetText = "- High"; break;
+            case R3D_ANTI_ALIASING_PRESET_ULTRA:  aaPresetText = "- Ultra"; break;
+            default: break;
             }
             DrawText(aaPresetText, MeasureText(aaModeText, 20) + 20, GetScreenHeight() - 30, 20, LIME);
 

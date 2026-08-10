@@ -45,13 +45,15 @@ int main(void)
         UpdateCamera(&camera, CAMERA_ORBITAL);
 
         // Toggle aspect keep
-        if (IsKeyPressed(KEY_R)) {
+        if (IsKeyPressed(KEY_R))
+        {
             aspect = (aspect + 1) % 2;
             R3D_SetAspectMode(aspect);
         }
 
         // Toggle linear filtering
-        if (IsKeyPressed(KEY_F)) {
+        if (IsKeyPressed(KEY_F))
+        {
             upscale = (upscale + 1) % 4;
             R3D_SetUpscaleMode(upscale);
         }
@@ -62,7 +64,8 @@ int main(void)
             // Draw spheres
             R3D_Begin(camera);
                 R3D_PushLight(light);
-                for (int i = 0; i < 5; i++) {
+                for (int i = 0; i < 5; i++)
+                {
                     R3D_DrawMesh(sphere, materials[i], (Vector3) {(float)i - 2, 0, 0}, 1.0f);
                 }
             R3D_End();
@@ -85,7 +88,8 @@ int main(void)
 
 const char* GetAspectModeName(R3D_AspectMode mode)
 {
-    switch (mode) {
+    switch (mode)
+    {
     case R3D_ASPECT_EXPAND: return "EXPAND";
     case R3D_ASPECT_KEEP: return "KEEP";
     }
@@ -94,7 +98,8 @@ const char* GetAspectModeName(R3D_AspectMode mode)
 
 const char* GetUpscaleModeName(R3D_UpscaleMode mode)
 {
-    switch (mode) {
+    switch (mode)
+    {
     case R3D_UPSCALE_NEAREST: return "NEAREST";
     case R3D_UPSCALE_LINEAR: return "LINEAR";
     case R3D_UPSCALE_BICUBIC: return "BICUBIC";
