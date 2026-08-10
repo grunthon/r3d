@@ -15,6 +15,7 @@
 #include <math.h>
 
 #include "./r3d_helper.h"
+#include "raylib.h"
 
 // ========================================
 // DEFINITIONS AND CONSTANTS
@@ -30,14 +31,6 @@
 
 #define R3D_LOG2     0.6931471805599453f
 #define R3D_LOG018  -1.7147984280919266f
-
-#define R3D_SRGB_ALPHA                  (0.055f)
-#define R3D_SRGB_INV_ALPHA              (1.0f / 1.055f)
-#define R3D_SRGB_GAMMA                  (2.4f)
-#define R3D_SRGB_INV_GAMMA              (1.0f / 2.4f)
-#define R3D_SRGB_LINEAR_THRESHOLD       (0.04045f)
-#define R3D_SRGB_NONLINEAR_THRESHOLD    (0.0031308f)
-#define R3D_SRGB_LINEAR_FACTOR          (1.0f / 12.92f)
 
 #define R3D_MATRIX_IDENTITY             \
     (Matrix) {                          \
@@ -66,80 +59,44 @@ typedef struct {
 // COLOR FUNCTIONS
 // ========================================
 
-static inline Vector3 r3d_color_to_vec3(Color color)
-{
-    return (Vector3) {
-        color.r * (1.0f / 255.0f),
-        color.g * (1.0f / 255.0f),
-        color.b * (1.0f / 255.0f)
-    };
-}
-
-static inline Vector4 r3d_color_to_vec4(Color color)
-{
-    return (Vector4) {
-        color.r * (1.0f / 255.0f),
-        color.g * (1.0f / 255.0f),
-        color.b * (1.0f / 255.0f),
-        color.a * (1.0f / 255.0f)
-    };
-}
-
-static inline float r3d_srgb8_to_linear(uint8_t srgb8)
-{
-    float srgb = srgb8 * (1.0f / 255.0f);
-    
-    return (srgb <= R3D_SRGB_LINEAR_THRESHOLD) 
-        ? srgb * R3D_SRGB_LINEAR_FACTOR
-        : powf((srgb + R3D_SRGB_ALPHA) * R3D_SRGB_INV_ALPHA, R3D_SRGB_GAMMA);
-}
-
-static inline uint8_t r3d_linear_to_srgb8(float linear)
-{
-    float srgb = (linear <= R3D_SRGB_NONLINEAR_THRESHOLD)
-        ? 12.92f * linear
-        : (1.0f + R3D_SRGB_ALPHA) * powf(linear, R3D_SRGB_INV_GAMMA) - R3D_SRGB_ALPHA;
-    
-    return (uint8_t)(R3D_SATURATE(srgb) * 255.0f + 0.5f);
-}
-
 static inline Vector3 r3d_color_srgb_to_linear_vec3(Color color)
 {
-    return (Vector3) {
-        r3d_srgb8_to_linear(color.r),
-        r3d_srgb8_to_linear(color.g),
-        r3d_srgb8_to_linear(color.b)
-    };
+    Vector4 linear = ColorNormalize(color);
+
+    linear.x = (linear.x < 0.04045f) ? linear.x * (1.0f / 12.92f) : powf((float)((linear.x + 0.055) * (1.0 / (1.0 + 0.055))), 2.4f);
+    linear.y = (linear.y < 0.04045f) ? linear.y * (1.0f / 12.92f) : powf((float)((linear.y + 0.055) * (1.0 / (1.0 + 0.055))), 2.4f);
+    linear.z = (linear.z < 0.04045f) ? linear.z * (1.0f / 12.92f) : powf((float)((linear.z + 0.055) * (1.0 / (1.0 + 0.055))), 2.4f);
+
+    return (Vector3) {linear.x, linear.y, linear.z};
 }
 
 static inline Vector4 r3d_color_srgb_to_linear_vec4(Color color)
 {
-    return (Vector4) {
-        r3d_srgb8_to_linear(color.r),
-        r3d_srgb8_to_linear(color.g),
-        r3d_srgb8_to_linear(color.b),
-        color.a * (1.0f / 255.0f)
-    };
+    Vector4 linear = ColorNormalize(color);
+
+    linear.x = (linear.x < 0.04045f) ? linear.x * (1.0f / 12.92f) : powf((float)((linear.x + 0.055) * (1.0 / (1.0 + 0.055))), 2.4f);
+    linear.y = (linear.y < 0.04045f) ? linear.y * (1.0f / 12.92f) : powf((float)((linear.y + 0.055) * (1.0 / (1.0 + 0.055))), 2.4f);
+    linear.z = (linear.z < 0.04045f) ? linear.z * (1.0f / 12.92f) : powf((float)((linear.z + 0.055) * (1.0 / (1.0 + 0.055))), 2.4f);
+
+    return linear;
 }
 
 static inline Color r3d_color_linear_to_srgb_vec3(Vector3 linear)
 {
-    return (Color) {
-        r3d_linear_to_srgb8(linear.x),
-        r3d_linear_to_srgb8(linear.y),
-        r3d_linear_to_srgb8(linear.z),
-        255
-    };
+    linear.x = (linear.x < 0.0031308f) ? 12.92f * linear.x : (1.0 + 0.055) * powf(linear.x, 1.0f / 2.4f) - 0.055;
+    linear.y = (linear.y < 0.0031308f) ? 12.92f * linear.y : (1.0 + 0.055) * powf(linear.y, 1.0f / 2.4f) - 0.055;
+    linear.z = (linear.z < 0.0031308f) ? 12.92f * linear.z : (1.0 + 0.055) * powf(linear.z, 1.0f / 2.4f) - 0.055;
+
+    return ColorFromNormalized((Vector4) {linear.x, linear.y, linear.z, 1.0f});
 }
 
 static inline Color r3d_color_linear_to_srgb_vec4(Vector4 linear)
 {
-    return (Color) {
-        r3d_linear_to_srgb8(linear.x),
-        r3d_linear_to_srgb8(linear.y),
-        r3d_linear_to_srgb8(linear.z),
-        (uint8_t)(R3D_SATURATE(linear.w) * 255.0f + 0.5f)
-    };
+    linear.x = (linear.x < 0.0031308f) ? 12.92f * linear.x : (1.0 + 0.055) * powf(linear.x, 1.0f / 2.4f) - 0.055;
+    linear.y = (linear.y < 0.0031308f) ? 12.92f * linear.y : (1.0 + 0.055) * powf(linear.y, 1.0f / 2.4f) - 0.055;
+    linear.z = (linear.z < 0.0031308f) ? 12.92f * linear.z : (1.0 + 0.055) * powf(linear.z, 1.0f / 2.4f) - 0.055;
+
+    return ColorFromNormalized(linear);
 }
 
 // ========================================
