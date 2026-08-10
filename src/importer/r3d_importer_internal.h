@@ -91,7 +91,7 @@ typedef struct r3d_importer_texture_cache r3d_importer_texture_cache_t;
  * This will spawn worker threads to load images in parallel, then
  * progressively upload them to GPU as they become ready
  */
-r3d_importer_texture_cache_t* r3d_importer_load_texture_cache(const R3D_Importer* importer, R3D_ColorSpace colorSpace, TextureFilter filter);
+r3d_importer_texture_cache_t* r3d_importer_load_texture_cache(const R3D_Importer* importer, TextureFilter filter);
 
 /**
  * Frees the memory space allocated to store textures.

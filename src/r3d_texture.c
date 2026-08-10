@@ -32,8 +32,7 @@ Texture2D R3D_LoadTextureEx(const char* fileName, TextureWrap wrap, TextureFilte
         return texture;
     }
 
-    bool srgb = isColor ? (R3D.colorSpace == R3D_COLORSPACE_SRGB) : false;
-    texture = r3d_image_upload(&image, wrap, filter, srgb);
+    texture = r3d_image_upload(&image, wrap, filter, isColor);
 
     if (texture.id != 0)
     {
@@ -56,8 +55,7 @@ Texture2D R3D_LoadTextureFromImage(Image image, bool isColor)
 
 Texture2D R3D_LoadTextureFromImageEx(Image image, TextureWrap wrap, TextureFilter filter, bool isColor)
 {
-    bool srgb = isColor ? (R3D.colorSpace == R3D_COLORSPACE_SRGB) : false;
-    Texture2D texture = r3d_image_upload(&image, wrap, filter, srgb);
+    Texture2D texture = r3d_image_upload(&image, wrap, filter, isColor);
 
     if (texture.id != 0)
     {
@@ -89,8 +87,7 @@ Texture2D R3D_LoadTextureFromMemoryEx(const char* fileType, const void* fileData
         return texture;
     }
 
-    bool srgb = isColor ? (R3D.colorSpace == R3D_COLORSPACE_SRGB) : false;
-    texture = r3d_image_upload(&image, wrap, filter, srgb);
+    texture = r3d_image_upload(&image, wrap, filter, isColor);
 
     if (texture.id != 0)
     {

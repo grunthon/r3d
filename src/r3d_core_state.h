@@ -70,7 +70,6 @@ extern struct r3d_core_state {
     R3D_OutputMode outputMode;          //< Defines which buffer we should output in R3D_End()
     TextureFilter textureFilter;        //< Default texture filter for model loading
     TextureWrap textureWrap;            //< Default texture wrap for material map loading
-    R3D_ColorSpace colorSpace;          //< Color space that must be considered for supplied colors or surface colors
     Matrix matCubeViews[6];             //< Pre-computed view matrices for cubemap faces
     r3d_hint_t hints[R3D_HINT_COUNT];   //< User-configurable hints, resolved at R3D_Init()
     r3d_stack_t* stack;                 //< Main thread stack allocator
