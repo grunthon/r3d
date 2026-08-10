@@ -861,7 +861,7 @@ void upload_env_block(void)
         }
 
         env->uAmbient.rotation   = background->rotation;
-        env->uAmbient.color      = r3d_color_to_vec4(ambient->color);
+        env->uAmbient.color      = r3d_color_srgb_to_linear_vec4(ambient->color);
         env->uAmbient.energy     = ambient->energy;
         env->uAmbient.irradiance = (int)ambient->map.irradiance - 1;
         env->uAmbient.prefilter  = (int)ambient->map.prefilter - 1;
