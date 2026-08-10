@@ -34,7 +34,7 @@ vec3 IBL_SamplePrefilter(samplerCubeArray prefilter, int index, vec3 V, vec3 N, 
     return textureLod(prefilter, vec4(M_Rotate3D(reflect(-V, N), rotation), float(index)), mipLevel).rgb;
 }
 
-void IBL_MultiScattering(inout vec3 irradiance, inout vec3 radiance, vec3 diffuse, vec3 F0, vec2 brdf, float NoV, float roughness)
+void IBL_MultiScattering(inout vec3 diff, inout vec3 spec, vec3 diffuse, vec3 F0, vec2 brdf, float NoV)
 {
     // Adapted from Fdez-Aguera method without the roughness-dependent Fresnel
     // See: https://jcgt.org/published/0008/01/03/paper.pdf
@@ -50,7 +50,7 @@ void IBL_MultiScattering(inout vec3 irradiance, inout vec3 radiance, vec3 diffus
     vec3 Fms = FssEss * Favg / FmsD;
     vec3 kD = diffuse * (1.0 - FssEss);
 
-    // Compute final irradiance / radiance
-    irradiance *= (Fms * Ems + kD);
-    radiance *= FssEss;
+    // Compute final diffuse / specular
+    diff *= (Fms * Ems + kD);
+    spec *= FssEss;
 }

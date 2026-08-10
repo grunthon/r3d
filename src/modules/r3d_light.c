@@ -8,13 +8,17 @@
 
 #include "./r3d_light.h"
 
+#include <r3d/r3d_frustum.h>
+#include <r3d/r3d_color.h>
 #include <r3d_config.h>
 #include <raymath.h>
+#include <stdint.h>
 #include <string.h>
 #include <assert.h>
 #include <float.h>
 
 #include "../r3d_core_state.h"
+#include "r3d/r3d_lighting.h"
 
 // ========================================
 // CONSTANTS
@@ -31,92 +35,12 @@
 struct r3d_light R3D_MOD_LIGHT;
 
 // ========================================
-// CONSTANTS
+// SHADOW ARRAY FUNCTIONS
 // ========================================
 
-static const GLenum SHADOW_TEXTURE_TARGET[] = {
-    [R3D_LIGHT_DIR]  = GL_TEXTURE_2D_ARRAY,
-    [R3D_LIGHT_SPOT] = GL_TEXTURE_2D_ARRAY,
-    [R3D_LIGHT_OMNI] = GL_TEXTURE_CUBE_MAP_ARRAY,
-};
-
-static const int SHADOW_LAYER_GROWTH[] = {
-    [R3D_LIGHT_DIR]  = SHADOW_DIR_LAYER_GROWTH,
-    [R3D_LIGHT_SPOT] = SHADOW_SPOT_LAYER_GROWTH,
-    [R3D_LIGHT_OMNI] = SHADOW_OMNI_LAYER_GROWTH,
-};
-
-// ========================================
-// SHADOW LAYER POOL FUNCTIONS
-// ========================================
-
-static bool shadow_pool_init(r3d_light_shadow_pool_t* pool, int initialCapacity)
+static void shadow_array_allocate_texture(GLuint texture, GLenum target, int size, uint32_t layers)
 {
-    pool->freeLayers = MemAlloc(initialCapacity * sizeof(int));
-    if (!pool->freeLayers) return false;
-
-    pool->freeCapacity = initialCapacity;
-    pool->freeCount = 0;
-    pool->totalLayers = 0;
-
-    return true;
-}
-
-static void shadow_pool_quit(r3d_light_shadow_pool_t* pool)
-{
-    MemFree(pool->freeLayers);
-}
-
-static int shadow_pool_reserve(r3d_light_shadow_pool_t* pool)
-{
-    if (pool->freeCount > 0)
-    {
-        return pool->freeLayers[--pool->freeCount];
-    }
-    return -1;  // Needs expansion
-}
-
-static void shadow_pool_release(r3d_light_shadow_pool_t* pool, int layer)
-{
-    if (layer < 0 || layer >= pool->totalLayers) return;
-
-    if (pool->freeCount < pool->freeCapacity)
-    {
-        pool->freeLayers[pool->freeCount++] = layer;
-    }
-}
-
-static bool shadow_pool_expand(r3d_light_shadow_pool_t* pool, int addCount)
-{
-    int oldTotal = pool->totalLayers;
-    int newTotal = oldTotal + addCount;
-    
-    // Reallocate free layers array if needed
-    if (pool->freeCount + addCount > pool->freeCapacity)
-    {
-        pool->freeCapacity = newTotal;
-        int* newFree = MemRealloc(pool->freeLayers, pool->freeCapacity * sizeof(int));
-        if (!newFree) return false;
-        pool->freeLayers = newFree;
-    }
-    
-    // Add new layers to free list
-    for (int i = oldTotal; i < newTotal; i++)
-    {
-        pool->freeLayers[pool->freeCount++] = i;
-    }
-    
-    pool->totalLayers = newTotal;
-    return true;
-}
-
-// ========================================
-// SHADOW MAP TEXTURE FUNCTIONS
-// ========================================
-
-static bool shadow_array_allocate(GLuint texture, GLenum target, int size, int layers)
-{
-    int actualLayers = (target == GL_TEXTURE_CUBE_MAP_ARRAY) ? layers * 6 : layers;
+    int actualLayers = (target == GL_TEXTURE_CUBE_MAP_ARRAY) ? (int)layers * 6 : (int)layers;
 
     glBindTexture(target, texture);
     glTexImage3D(
@@ -138,286 +62,622 @@ static bool shadow_array_allocate(GLuint texture, GLenum target, int size, int l
     glTexParameteri(target, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 
     glBindTexture(target, 0);
-    return true;
 }
 
-static bool shadow_array_resize(GLuint* texture, GLenum target, int size, int oldLayers, int newLayers)
+static r3d_light_shadow_array_t shadow_array_create(GLenum target, int size, int growth)
 {
+    r3d_light_shadow_array_t arr = {0};
+
+    arr.target   = target;
+    arr.size     = size;
+    arr.growth   = growth;
+    arr.freeList = R3D_LIST_CREATE(int, 16);
+    arr.cache    = R3D_LIST_CREATE(r3d_light_shadow_cache_t, 16);
+
+    glGenFramebuffers(1, &arr.framebuffer);
+
+    return arr;
+}
+
+static void shadow_array_destroy(r3d_light_shadow_array_t* arr)
+{
+    if (arr->texture != 0)     glDeleteTextures(1, &arr->texture);
+    if (arr->framebuffer != 0) glDeleteFramebuffers(1, &arr->framebuffer);
+
+    R3D_LIST_DESTROY(arr->cache);
+    R3D_LIST_DESTROY(arr->freeList);
+
+    *arr = (r3d_light_shadow_array_t){0};
+}
+
+static bool shadow_array_expand(r3d_light_shadow_array_t* arr, uint32_t growth)
+{
+    uint32_t newLayerCount = arr->layerCount + growth;
+
     GLuint newTexture;
     glGenTextures(1, &newTexture);
+    shadow_array_allocate_texture(newTexture, arr->target, arr->size, newLayerCount);
 
-    if (!shadow_array_allocate(newTexture, target, size, newLayers))
+    // Copy existing content into the new texture if any
+    if (arr->layerCount > 0 && arr->texture != 0)
     {
-        glDeleteTextures(1, &newTexture);
-        return false;
-    }
+        glBindFramebuffer(GL_FRAMEBUFFER, arr->framebuffer);
 
-    // Copy existing data
-    if (oldLayers > 0)
-    {
-        glBindFramebuffer(GL_FRAMEBUFFER, R3D_MOD_LIGHT.workFramebuffer);
-        int facesPerLayer = (target == GL_TEXTURE_CUBE_MAP_ARRAY) ? 6 : 1;
-        for (int layer = 0; layer < oldLayers; layer++)
+        int facesPerLayer = (arr->target == GL_TEXTURE_CUBE_MAP_ARRAY) ? 6 : 1;
+        for (uint32_t layer = 0; layer < arr->layerCount; layer++)
         {
             for (int face = 0; face < facesPerLayer; face++)
             {
-                int layerIndex = layer * facesPerLayer + face;
-                glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, *texture, 0, layerIndex);
-                glBindTexture(target, newTexture);
-                glCopyTexSubImage3D(target, 0, 0, 0, layerIndex, 0, 0, size, size);
+                int layerFace = (int)layer * facesPerLayer + face;
+                glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, arr->texture, 0, layerFace);
+                glBindTexture(arr->target, newTexture);
+                glCopyTexSubImage3D(arr->target, 0, 0, 0, layerFace, 0, 0, arr->size, arr->size);
             }
         }
+
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindTexture(arr->target, 0);
     }
 
-    glDeleteTextures(1, texture);
-    *texture = newTexture;
+    if (arr->texture != 0)
+    {
+        glDeleteTextures(1, &arr->texture);
+    }
+    arr->texture = newTexture;
+
+    // Resize the cache (new entries zero-initialized => valid = false)
+    R3D_LIST_RESIZE(arr->cache, newLayerCount);
+
+    // Newly allocated layers become available
+    for (uint32_t layer = arr->layerCount; layer < newLayerCount; layer++)
+    {
+        int l = (int)layer;
+        R3D_LIST_PUSH(arr->freeList, l);
+    }
+
+    arr->layerCount = newLayerCount;
+
     return true;
 }
 
-static bool shadow_array_expand_capacity(R3D_LightType type)
+static int shadow_array_acquire_layer(r3d_light_shadow_array_t* arr)
 {
-    r3d_light_shadow_pool_t* pool = &R3D_MOD_LIGHT.shadowPools[type];
-    GLuint* shadowArray = &R3D_MOD_LIGHT.shadowArrays[type];
-    GLenum shadowTarget = SHADOW_TEXTURE_TARGET[type];
-    int shadowSize = r3d_light_shadow_get_size(type);
-    int growth = SHADOW_LAYER_GROWTH[type];
-
-    if (!shadow_array_resize(shadowArray, shadowTarget, shadowSize, pool->totalLayers, pool->totalLayers + growth))
+    if (R3D_LIST_EMPTY(arr->freeList))
     {
-        return false;
+        if (!shadow_array_expand(arr, (uint32_t)arr->growth))
+        {
+            return -1;
+        }
     }
 
-    return shadow_pool_expand(pool, growth);
+    int layer = -1;
+    R3D_LIST_POP(arr->freeList, &layer);
+
+    r3d_light_shadow_cache_t* cache = &R3D_LIST_GET(arr->cache, r3d_light_shadow_cache_t, layer);
+    cache->acquired = true;
+    cache->rendered = false;
+
+    return layer;
+}
+
+static void shadow_array_release_layer(r3d_light_shadow_array_t* arr, int layer)
+{
+    r3d_light_shadow_cache_t* cache = &R3D_LIST_GET(arr->cache, r3d_light_shadow_cache_t, layer);
+    cache->acquired = false;
+    cache->rendered = false;
+
+    R3D_LIST_PUSH(arr->freeList, layer);
 }
 
 // ========================================
 // LIGHT FUNCTIONS
 // ========================================
 
-static bool light_init(r3d_light_t* light, R3D_LightType type)
+static Matrix light_dir_view_proj(Vector3 dir, float range, R3D_Camera camera, double aspect)
 {
-    if (type < 0 || type >= R3D_LIGHT_TYPE_COUNT)
-    {
-        return false;
-    }
-
-    memset(light, 0, sizeof(*light));
-
-    light->state = (r3d_light_state_t) {
-        .shadowUpdate = R3D_SHADOW_UPDATE_INTERVAL,
-        .shadowShouldBeUpdated = true,
-        .matrixShouldBeUpdated = true,
-        .shadowUpdateInterval  = 0.016f,
-        .shadowUpdateTimer     = 0.0f
-    };
-
-    light->shadowLayer = -1;
-    
-    light->aabb.min = (Vector3) {-FLT_MAX, -FLT_MAX, -FLT_MAX};
-    light->aabb.max = (Vector3) {+FLT_MAX, +FLT_MAX, +FLT_MAX};
-
-    light->color     = (Vector3) {1, 1, 1};
-    light->position  = (Vector3) {0};
-    light->direction = (Vector3) {0, 0, -1};
-
-    light->energy      = 1.0f;
-    light->specular    = 1.0f;
-    light->range       = 50.0f;
-    light->falloff     = 1.0f;
-    light->innerCutOff = cosf(22.5f * DEG2RAD);
-    light->outerCutOff = cosf(45.0f * DEG2RAD);
-    light->fogEnergy   = 1.0f;
-
-    int shadowMapSize = r3d_light_shadow_get_size(type);
-
-    light->shadowSoftness = 4.0f / shadowMapSize;
-    light->shadowOpacity  = 1.0f;
-    switch (type)
-    {
-    case R3D_LIGHT_DIR:
-        light->shadowDepthBias = 0.001f;
-        light->shadowSlopeBias = 0.0015f;
-        break;
-    case R3D_LIGHT_SPOT:
-        light->shadowDepthBias = 0.0001f;
-        light->shadowSlopeBias = 0.0005f;
-        break;
-    case R3D_LIGHT_OMNI:
-        light->shadowDepthBias = 0.025f;
-        light->shadowSlopeBias = 0.1f;
-        break;
-    default:
-        break;
-    }
-    light->casterMask = R3D_LAYER_ALL;
-
-    light->type    = type;
-    light->enabled = false;
-
-    return true;
-}
-
-static void light_update_shadow_state(r3d_light_t* light)
-{
-    switch (light->state.shadowUpdate)
-    {
-    case R3D_SHADOW_UPDATE_MANUAL:
-        break;
-    case R3D_SHADOW_UPDATE_INTERVAL:
-        if (!light->state.shadowShouldBeUpdated)
-        {
-            light->state.shadowUpdateTimer += GetFrameTime();
-            if (light->state.shadowUpdateTimer >= light->state.shadowUpdateInterval)
-            {
-                light->state.shadowUpdateTimer -= light->state.shadowUpdateInterval;
-                light->state.shadowShouldBeUpdated = true;
-            }
-        }
-        break;
-    case R3D_SHADOW_UPDATE_CONTINUOUS:
-        light->state.shadowShouldBeUpdated = true;
-        break;
-    }
-}
-
-static void light_update_dir_matrix(r3d_light_t* light, R3D_Camera camera, double aspect)
-{
-    assert(light->type == R3D_LIGHT_DIR);
-
-    float camNear = light->range / 1000.0f;
-    float camFar = light->range;
-    float camFovy = (float)camera.fovy;
+    float camNear   = range / 1000.0f;
+    float camFar    = range;
+    float camFovy   = (float)camera.fovy;
     float camAspect = (float)aspect;
 
-    float farH = camFar * tanf(camFovy * (DEG2RAD * 0.5f));
+    float farH      = camFar * tanf(camFovy * (DEG2RAD * 0.5f));
     float halfDepth = (camFar - camNear) * 0.5f;
-    float radius = sqrtf(farH * farH * (1.0f + camAspect * camAspect) + halfDepth * halfDepth);
+    float radius    = sqrtf(farH * farH * (1.0f + camAspect * camAspect) + halfDepth * halfDepth);
 
-    Vector3 forward = R3D_GetCameraForward(camera);
+    Vector3 forward       = R3D_GetCameraForward(camera);
     Vector3 frustumCenter = Vector3Add(camera.position, Vector3Scale(forward, (camNear + camFar) * 0.5f));
 
-    Vector3 lightDir = Vector3Normalize(light->direction);
-    float ax = fabsf(lightDir.x), ay = fabsf(lightDir.y), az = fabsf(lightDir.z);
-    Vector3 up = (ax <= ay && ax <= az) ? (Vector3){1,0,0} : (ay <= az) ? (Vector3){0,1,0} : (Vector3){0,0,1};
-    Vector3 lightRight = Vector3Normalize(Vector3CrossProduct(up, lightDir));
-    Vector3 lightUp = Vector3CrossProduct(lightDir, lightRight);
+    float ax = fabsf(dir.x);
+    float ay = fabsf(dir.y);
+    float az = fabsf(dir.z);
+
+    Vector3 up         = (ax <= ay && ax <= az) ? (Vector3){1,0,0} : (ay <= az) ? (Vector3){0,1,0} : (Vector3){0,0,1};
+    Vector3 lightRight = Vector3Normalize(Vector3CrossProduct(up, dir));
+    Vector3 lightUp    = Vector3CrossProduct(dir, lightRight);
 
     float texelSize = (radius * 2.0f) / (float)R3D_HINT(R3D_HINT_SHADOW_DIR_SIZE);
     float cx = floorf(Vector3DotProduct(frustumCenter, lightRight) / texelSize) * texelSize;
     float cy = floorf(Vector3DotProduct(frustumCenter, lightUp) / texelSize) * texelSize;
-    float cz = Vector3DotProduct(frustumCenter, lightDir);
+    float cz = Vector3DotProduct(frustumCenter, dir);
 
     Vector3 snappedCenter = Vector3Add(
         Vector3Add(
             Vector3Scale(lightRight, cx),
             Vector3Scale(lightUp, cy)
         ),
-        Vector3Scale(lightDir, cz)
+        Vector3Scale(dir, cz)
     );
 
     const float zExtension = 100.0f; // Extent to capture objects behind the camera
-    Vector3 eye = Vector3Subtract(snappedCenter, Vector3Scale(lightDir, radius + zExtension));
+    Vector3 eye = Vector3Subtract(snappedCenter, Vector3Scale(dir, radius + zExtension));
     Matrix view = MatrixLookAt(eye, snappedCenter, lightUp);
 
-    light->near = 0.0f;
-    light->far = zExtension + radius * 2.0f;
-    light->viewProj[0] = MatrixMultiply(view, MatrixOrtho(-radius, radius, -radius, radius, light->near, light->far));
+    float near = 0.0f;
+    float far  = zExtension + radius * 2.0f;
+
+    Matrix proj = MatrixOrtho(-radius, radius, -radius, radius, near, far);
+
+    return MatrixMultiply(view, proj);
 }
 
-static void light_update_spot_matrix(r3d_light_t* light)
+static Matrix light_spot_view_proj(Vector3 pos, Vector3 dir, float range)
 {
-    assert(light->type == R3D_LIGHT_SPOT);
+    float near = 0.05f;
+    float far  = range;
 
-    light->near = 0.05f;
-    light->far = light->range;
-
-    Vector3 up = {0, 1, 0};
-    float upDot = fabsf(Vector3DotProduct(light->direction, up));
+    Vector3 up  = {0, 1, 0};
+    float upDot = fabsf(Vector3DotProduct(dir, up));
     if (upDot > 0.99f) up = (Vector3){1, 0, 0};
 
-    Matrix view = MatrixLookAt(light->position, Vector3Add(light->position, light->direction), up);
-    Matrix proj = MatrixPerspective(90 * DEG2RAD, 1.0, light->near, light->far);
-    light->viewProj[0] = MatrixMultiply(view, proj);
+    Matrix view = MatrixLookAt(pos, Vector3Add(pos, dir), up);
+    Matrix proj = MatrixPerspective(90 * DEG2RAD, 1.0, near, far);
+
+    return MatrixMultiply(view, proj);
 }
 
-static void light_update_omni_matrix(r3d_light_t* light)
+static void light_omni_view_proj(Vector3 pos, float range, Matrix* outMatrices, float* outFar)
 {
-    assert(light->type == R3D_LIGHT_OMNI);
-
-    static const Vector3 dirs[6] = {
+    static const Vector3 DIRS[6] = {
         {  1.0,  0.0,  0.0 }, { -1.0,  0.0,  0.0 },
         {  0.0,  1.0,  0.0 }, {  0.0, -1.0,  0.0 },
         {  0.0,  0.0,  1.0 }, {  0.0,  0.0, -1.0 }
     };
 
-    static const Vector3 ups[6] = {
+    static const Vector3 UPS[6] = {
         {  0.0, -1.0,  0.0 }, {  0.0, -1.0,  0.0 },
         {  0.0,  0.0,  1.0 }, {  0.0,  0.0, -1.0 },
         {  0.0, -1.0,  0.0 }, {  0.0, -1.0,  0.0 }
     };
 
-    light->near = 0.05f;
-    light->far = light->range;
+    float near = 0.05f;
+    float far  = range;
 
-    Matrix proj = MatrixPerspective(90 * DEG2RAD, 1.0, light->near, light->far);
+    Matrix proj = MatrixPerspective(90 * DEG2RAD, 1.0, near, far);
 
     for (int face = 0; face < 6; face++)
     {
-        Vector3 target = Vector3Add(light->position, dirs[face]);
-        Matrix view = MatrixLookAt(light->position, target, ups[face]);
-        light->viewProj[face] = MatrixMultiply(view, proj);
+        Vector3 target = Vector3Add(pos, DIRS[face]);
+        Matrix view = MatrixLookAt(pos, target, UPS[face]);
+        outMatrices[face] = MatrixMultiply(view, proj);
     }
+
+    *outFar = far;
 }
 
-static void light_update_matrix(r3d_light_t* light, R3D_Camera camera, double aspect)
+static r3d_light_volume_t light_spot_volume(Vector3 pos, Vector3 dir, float range, float outerCos)
 {
-    switch (light->type) {
-    case R3D_LIGHT_DIR:
-        light_update_dir_matrix(light, camera, aspect);
-        break;
-    case R3D_LIGHT_SPOT:
-        light_update_spot_matrix(light);
-        break;
-    case R3D_LIGHT_OMNI:
-        light_update_omni_matrix(light);
-        break;
-    default:
-        break;
-    }
-}
+    r3d_light_volume_t volume = {0};
 
-static void light_update_frustum(r3d_light_t* light)
-{
-    int faceCount = (light->type == R3D_LIGHT_OMNI) ? 6 : 1;
+    float tanTheta2 = (1.0f - outerCos * outerCos) / (outerCos * outerCos);
 
-    for (int i = 0; i < faceCount; i++)
+    if (outerCos >= 0.70710678f)
     {
-        light->frustum[i] = R3D_ComputeFrustum(light->viewProj[i]);
+        volume.radius = range * (1.0f + tanTheta2) * 0.5f;
+        volume.center = Vector3Add(pos, Vector3Scale(dir, volume.radius));
+    }
+    else
+    {
+        volume.radius = range * sqrtf(tanTheta2);
+        volume.center = Vector3Add(pos, Vector3Scale(dir, range));
+    }
+
+    return volume;
+}
+
+static void light_volume_sphere_axis_extent(float centerAxis, float f, float radius, float projTerm, float* ndcMin, float* ndcMax)
+{
+    float L2 = centerAxis * centerAxis + f * f;
+    float r2 = radius * radius;
+
+    // Origin inside the circle -> spans the full angular range on this axis
+    if (L2 <= r2)
+    {
+        *ndcMin = -1.0f;
+        *ndcMax = +1.0f;
+        return;
+    }
+
+    // Tangent length from origin to the circle
+    float D = sqrtf(L2 - r2);
+
+    // tan(theta +- alpha) via angle-sum identity, trig-free.
+    // Denominator sign = forward/backward side; if non-positive, the tangent
+    // points sideways/behind -> snap to the edge matching the numerator's sign.
+    float numMin = centerAxis * D - f * radius;
+    float denMin = f * D + centerAxis * radius;
+    *ndcMin = (denMin > 0.0f)
+        ? R3D_MAX(projTerm * (numMin / denMin), -1.0f)
+        : ((numMin > 0.0f) ? +1.0f : -1.0f);
+
+    float numMax = centerAxis * D + f * radius;
+    float denMax = f * D - centerAxis * radius;
+    *ndcMax = (denMax > 0.0f)
+        ? R3D_MIN(projTerm * (numMax / denMax), +1.0f)
+        : ((numMax > 0.0f) ? +1.0f : -1.0f);
+}
+
+static bool light_volume_screen_ndc(const r3d_light_volume_t* volume, Vector2* minNdc, Vector2* maxNdc)
+{
+    Vector3 camPos = R3D.viewState.camera.position;
+    Vector3 center = volume->center;
+    float radius = volume->radius;
+
+    // Camera inside sphere -> covers the whole screen
+    float distSq = Vector3DistanceSqr(camPos, center);
+    if (distSq <= radius * radius)
+    {
+        *minNdc = (Vector2){-1, -1};
+        *maxNdc = (Vector2){+1, +1};
+        return true;
+    }
+
+    // Light volume center in view space
+    Vector3 vsCenter = r3d_vector3_transform(center, &R3D.viewState.view);
+    vsCenter.z = -vsCenter.z; // positive distance in front of camera
+
+    // Sphere entirely behind the camera -> not visible
+    if (vsCenter.z + radius <= 0.0f)
+    {
+        return false;
+    }
+
+    float P00 = R3D.viewState.proj.m0;
+    float P11 = R3D.viewState.proj.m5;
+
+    float minX, maxX, minY, maxY;
+    light_volume_sphere_axis_extent(vsCenter.x, vsCenter.z, radius, P00, &minX, &maxX);
+    light_volume_sphere_axis_extent(vsCenter.y, vsCenter.z, radius, P11, &minY, &maxY);
+
+    // Fully off-screen on at least one axis
+    if (minX > 1.0f || maxX < -1.0f || minY > 1.0f || maxY < -1.0f)
+    {
+        return false;
+    }
+
+    minNdc->x = minX;
+    minNdc->y = minY;
+    maxNdc->x = maxX;
+    maxNdc->y = maxY;
+
+    return true;
+}
+
+static void light_dir_push(const R3D_Light* light, const R3D_ShadowMap* map, R3D_Camera camera, double aspect, bool updateShadow)
+{
+    r3d_light_data_t data = {
+        .volume      = {.center = {0}, .radius = FLT_MAX},
+        .minNdc      = {-1, -1},
+        .maxNdc      = {+1, +1},
+        .color       = R3D_ColorSrgbToLinearVector3(light->color),
+        .direction   = Vector3Normalize(light->direction),
+        .energy      = light->energy,
+        .specular    = light->specular,
+        .range       = light->range,
+        .fogEnergy   = light->fogEnergy,
+        .type        = light->type,
+    };
+
+    if (map && light->range > 0.0f)
+    {
+        int mapLayer = (int)map->handle - 1;
+
+        r3d_light_shadow_cache_t* cache = r3d_light_shadow_cache(map->type, mapLayer);
+
+        if (!cache->rendered || updateShadow)
+        {
+            cache->viewProj = light_dir_view_proj(data.direction, data.range, camera, aspect);
+            cache->rendered = true; // Assume it will be rendered in advance
+
+            r3d_light_shadow_job_t job = {
+                .frustum     = R3D_ComputeFrustum(cache->viewProj),
+                .viewProj    = cache->viewProj,
+                .cullMask    = map->cullMask,
+                .type        = light->type,
+                .shadowLayer = mapLayer,
+            };
+
+            R3D_LIST_PUSH(R3D_MOD_LIGHT.listShadowJobs, job);
+        }
+
+        data.viewProj        = cache->viewProj;
+        data.shadowSoftness  = map->softness / (float)R3D_HINT(R3D_HINT_SHADOW_DIR_SIZE);
+        data.shadowOpacity   = map->opacity;
+        data.shadowDepthBias = map->depthBias;
+        data.shadowSlopeBias = map->slopeBias;
+        data.shadowFar       = cache->far;
+        data.shadowLayer     = mapLayer;
+    }
+    else
+    {
+        data.shadowLayer = -1;
+    }
+
+    R3D_LIST_PUSH(R3D_MOD_LIGHT.listLightData, data);
+}
+
+static void light_spot_push(const R3D_Light* light, const R3D_ShadowMap* map, const R3D_Frustum* frustum, bool updateShadow)
+{
+    float range = light->range;
+    if (range <= 0.0f) return;
+
+    Vector3 position  = light->position;
+    Vector3 direction = Vector3Normalize(light->direction);
+    float outerCutOff = cosf(light->outerCutOff * DEG2RAD);
+    r3d_light_volume_t volume = light_spot_volume(position, direction, range, outerCutOff);
+
+    r3d_light_shadow_cache_t* cache = NULL;
+    bool mustRenderShadow = false;
+    int  mapLayer = -1;
+
+    if (map)
+    {
+        mapLayer = (int)map->handle - 1;
+        cache = r3d_light_shadow_cache(map->type, mapLayer);
+        mustRenderShadow = !cache->rendered || updateShadow;
+    }
+
+    if (mustRenderShadow)
+    {
+        cache->viewProj = light_spot_view_proj(position, direction, range);
+        cache->rendered = true; // Assume it will be rendered in advance
+
+        r3d_light_shadow_job_t job = {
+            .frustum     = R3D_ComputeFrustum(cache->viewProj),
+            .viewProj    = cache->viewProj,
+            .cullMask    = map->cullMask,
+            .type        = light->type,
+            .shadowLayer = mapLayer,
+        };
+
+        R3D_LIST_PUSH(R3D_MOD_LIGHT.listShadowJobs, job);
+    }
+
+    if (R3D_FrustumIntersectsSphere(frustum, volume.center, volume.radius))
+    {
+        Vector2 minNdc, maxNdc;
+
+        if (light_volume_screen_ndc(&volume, &minNdc, &maxNdc))
+        {
+            r3d_light_data_t data = {
+                .volume      = volume,
+                .minNdc      = minNdc,
+                .maxNdc      = maxNdc,
+                .color       = R3D_ColorSrgbToLinearVector3(light->color),
+                .position    = position,
+                .direction   = direction,
+                .energy      = light->energy,
+                .specular    = light->specular,
+                .range       = range,
+                .falloff     = R3D_MAX(light->falloff, 1e-4f),
+                .innerCutOff = cosf(light->innerCutOff * DEG2RAD),
+                .outerCutOff = outerCutOff,
+                .fogEnergy   = light->fogEnergy,
+                .type        = light->type,
+            };
+
+            if (map)
+            {
+                data.viewProj        = cache->viewProj;
+                data.shadowSoftness  = map->softness / (float)R3D_HINT(R3D_HINT_SHADOW_SPOT_SIZE);
+                data.shadowOpacity   = map->opacity;
+                data.shadowDepthBias = map->depthBias;
+                data.shadowSlopeBias = map->slopeBias;
+                data.shadowFar       = cache->far;
+                data.shadowLayer     = mapLayer;
+            }
+            else
+            {
+                data.shadowLayer = -1;
+            }
+
+            R3D_LIST_PUSH(R3D_MOD_LIGHT.listLightData, data);
+        }
     }
 }
 
-static void light_update_bounding_box(r3d_light_t* light)
+static void light_omni_push(const R3D_Light* light, const R3D_ShadowMap* map, const R3D_Frustum* frustum, bool updateShadow)
 {
+    if (light->range <= 0.0f) return;
+
+    r3d_light_shadow_cache_t* cache = NULL;
+    bool mustRenderShadow = false;
+    int  mapLayer = -1;
+
+    if (map)
+    {
+        mapLayer = (int)map->handle - 1;
+        cache = r3d_light_shadow_cache(map->type, mapLayer);
+        mustRenderShadow = !cache->rendered || updateShadow;
+    }
+
+    if (mustRenderShadow)
+    {
+        cache->rendered = true; // Assume it will be rendered in advance
+
+        Matrix viewProjs[6];
+        light_omni_view_proj(light->position, light->range, viewProjs, &cache->far);
+
+        for (int i = 0; i < 6; i++)
+        {
+            r3d_light_shadow_job_t job = {
+                .frustum     = R3D_ComputeFrustum(viewProjs[i]),
+                .viewProj    = viewProjs[i],
+                .position    = light->position,
+                .far         = cache->far,
+                .cullMask    = map->cullMask,
+                .type        = light->type,
+                .shadowLayer = mapLayer,
+                .layerFace   = i,
+            };
+
+            R3D_LIST_PUSH(R3D_MOD_LIGHT.listShadowJobs, job);
+        }
+    }
+
+    if (R3D_FrustumIntersectsSphere(frustum, light->position, light->range))
+    {
+        r3d_light_volume_t volume = {
+            .center = light->position,
+            .radius = light->range,
+        };
+
+        Vector2 minNdc, maxNdc;
+
+        if (light_volume_screen_ndc(&volume, &minNdc, &maxNdc))
+        {
+            r3d_light_data_t data = {
+                .volume      = volume,
+                .minNdc      = minNdc,
+                .maxNdc      = maxNdc,
+                .color       = R3D_ColorSrgbToLinearVector3(light->color),
+                .position    = light->position,
+                .energy      = light->energy,
+                .specular    = light->specular,
+                .range       = light->range,
+                .falloff     = R3D_MAX(light->falloff, 1e-4f),
+                .fogEnergy   = light->fogEnergy,
+                .type        = light->type,
+            };
+
+            if (map)
+            {
+                data.shadowSoftness  = map->softness / (float)R3D_HINT(R3D_HINT_SHADOW_OMNI_SIZE);
+                data.shadowOpacity   = map->opacity;
+                data.shadowDepthBias = map->depthBias;
+                data.shadowSlopeBias = map->slopeBias;
+                data.shadowFar       = cache->far;
+                data.shadowLayer     = mapLayer;
+            }
+            else
+            {
+                data.shadowLayer = -1;
+            }
+
+            R3D_LIST_PUSH(R3D_MOD_LIGHT.listLightData, data);
+        }
+    }
+}
+
+static bool light_check_shadow_validity(const R3D_Light* light, const R3D_ShadowMap* map)
+{
+    bool valid = true;
+
+    if (!r3d_light_shadow_layer_is_valid(map->type, (int)map->handle - 1))
+    {
+        const char* mType = r3d_light_type_name(map->type);
+        R3D_TRACELOG(LOG_WARNING, "Invalid pushed shadow map (type: %s | handle: %d)", mType, map->handle);
+
+        valid = false;
+    }
+    else if (map->type != light->type)
+    {
+        const char* mType = r3d_light_type_name(map->type);
+        const char* lType = r3d_light_type_name(light->type);
+        R3D_TRACELOG(LOG_WARNING, "Incompatible pushed shadow map (type: %s) with given light (type: %s)", mType, lType);
+
+        valid = false;
+    }
+
+    return valid;
+}
+
+// ========================================
+// MODULE FUNCTIONS
+// ========================================
+
+bool r3d_light_init(void)
+{
+    memset(&R3D_MOD_LIGHT, 0, sizeof(R3D_MOD_LIGHT));
+
+    R3D_MOD_LIGHT.shadowArrays[R3D_LIGHT_DIR]  = shadow_array_create(GL_TEXTURE_2D_ARRAY, R3D_HINT(R3D_HINT_SHADOW_DIR_SIZE), SHADOW_DIR_LAYER_GROWTH);
+    R3D_MOD_LIGHT.shadowArrays[R3D_LIGHT_SPOT] = shadow_array_create(GL_TEXTURE_2D_ARRAY, R3D_HINT(R3D_HINT_SHADOW_SPOT_SIZE), SHADOW_SPOT_LAYER_GROWTH);
+    R3D_MOD_LIGHT.shadowArrays[R3D_LIGHT_OMNI] = shadow_array_create(GL_TEXTURE_CUBE_MAP_ARRAY, R3D_HINT(R3D_HINT_SHADOW_OMNI_SIZE), SHADOW_OMNI_LAYER_GROWTH);
+
+    R3D_MOD_LIGHT.listShadowJobs = R3D_LIST_CREATE(r3d_light_shadow_job_t, 32);
+    R3D_MOD_LIGHT.listLightData  = R3D_LIST_CREATE(r3d_light_data_t, 256);
+
+    return true;
+}
+
+void r3d_light_quit(void)
+{
+    for (int i = 0; i < R3D_LIGHT_TYPE_COUNT; i++)
+    {
+        shadow_array_destroy(&R3D_MOD_LIGHT.shadowArrays[i]);
+    }
+
+    R3D_LIST_DESTROY(R3D_MOD_LIGHT.listShadowJobs);
+    R3D_LIST_DESTROY(R3D_MOD_LIGHT.listLightData);
+}
+
+void r3d_light_push(const R3D_Light* light, const R3D_ShadowMap* map, bool updateShadow)
+{
+    if (map && !light_check_shadow_validity(light, map))
+    {
+        map = NULL;
+    }
+
     switch (light->type)
     {
-    case R3D_LIGHT_OMNI:
-        light->aabb.min = Vector3AddValue(light->position, -light->range);
-        light->aabb.max = Vector3AddValue(light->position, +light->range);
-        break;
-    case R3D_LIGHT_SPOT:
-        light->aabb = R3D_ComputeFrustumBoundingBox(MatrixInvert(light->viewProj[0]));
-        break;
     case R3D_LIGHT_DIR:
-        light->aabb.min = (Vector3) {-FLT_MAX, -FLT_MAX, -FLT_MAX};
-        light->aabb.max = (Vector3) {+FLT_MAX, +FLT_MAX, +FLT_MAX};
+        light_dir_push(light, map, R3D.viewState.camera, R3D.viewState.aspect, updateShadow);
         break;
+
+    case R3D_LIGHT_SPOT:
+        light_spot_push(light, map, &R3D.viewState.frustum, updateShadow);
+        break;
+
+    case R3D_LIGHT_OMNI:
+        light_omni_push(light, map, &R3D.viewState.frustum, updateShadow);
+        break;
+
     default:
         break;
     }
 }
 
-static const char* light_get_type_name(R3D_LightType type)
+r3d_light_data_t* r3d_light_get(int lightIndex)
+{
+    return &R3D_LIST_GET(R3D_MOD_LIGHT.listLightData, r3d_light_data_t, lightIndex);
+}
+
+void r3d_light_clear(void)
+{
+    R3D_LIST_CLEAR(R3D_MOD_LIGHT.listShadowJobs);
+    R3D_LIST_CLEAR(R3D_MOD_LIGHT.listLightData);
+}
+
+r3d_rect_t r3d_light_screen_rect(const r3d_light_data_t* light, int w, int h)
+{
+    int rectX = (int)((light->minNdc.x * 0.5f + 0.5f) * w);
+    int rectY = (int)((light->minNdc.y * 0.5f + 0.5f) * h);
+    int rectW = (int)((light->maxNdc.x * 0.5f + 0.5f) * w) - rectX;
+    int rectH = (int)((light->maxNdc.y * 0.5f + 0.5f) * h) - rectY;
+
+    return (r3d_rect_t) {rectX, rectY, rectW, rectH};
+}
+
+const char* r3d_light_type_name(R3D_LightType type)
 {
     switch (type)
     {
@@ -429,302 +689,56 @@ static const char* light_get_type_name(R3D_LightType type)
     return NULL;
 }
 
-// ========================================
-// MODULE FUNCTIONS
-// ========================================
-
-bool r3d_light_init(void)
+int r3d_light_acquire_shadow_layer(R3D_LightType type)
 {
-    memset(&R3D_MOD_LIGHT, 0, sizeof(R3D_MOD_LIGHT));
-
-    glGenFramebuffers(1, &R3D_MOD_LIGHT.workFramebuffer);
-    glGenTextures(R3D_LIGHT_TYPE_COUNT, R3D_MOD_LIGHT.shadowArrays);
-
-    // Configure the framebuffer to only consider the depth
-    glBindFramebuffer(GL_FRAMEBUFFER, R3D_MOD_LIGHT.workFramebuffer);
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    // Initialize shadow pools
-    for (int i = 0; i < R3D_LIGHT_TYPE_COUNT; i++)
-    {
-        if (!shadow_pool_init(&R3D_MOD_LIGHT.shadowPools[i], SHADOW_LAYER_GROWTH[i]))
-        {
-            R3D_TRACELOG(LOG_FATAL, "Failed to init shadow pool number %i", i);
-            r3d_light_quit();
-            return false;
-        }
-    }
-
-    // Allocate light arrays
-    R3D_MOD_LIGHT.pool = r3d_pool_create(sizeof(r3d_light_t), 32);
-    if (!R3D_MOD_LIGHT.pool)
-    {
-        R3D_TRACELOG(LOG_FATAL, "Failed to allocate light array");
-        r3d_light_quit();
-        return false;
-    }
-
-    R3D_MOD_LIGHT.visible = MemAlloc(32 * sizeof(R3D_Light));
-    R3D_MOD_LIGHT.visibleCapacity = 32;
-    R3D_MOD_LIGHT.visibleCount = 0;
-
-    return true;
+    return shadow_array_acquire_layer(&R3D_MOD_LIGHT.shadowArrays[type]);
 }
 
-void r3d_light_quit(void)
+void r3d_light_release_shadow_layer(R3D_LightType type, int layer)
 {
-    if (R3D_MOD_LIGHT.workFramebuffer) {
-        glDeleteFramebuffers(1, &R3D_MOD_LIGHT.workFramebuffer);
-    }
-
-    for (int i = 0; i < R3D_LIGHT_TYPE_COUNT; i++) {
-        if (R3D_MOD_LIGHT.shadowArrays[i]) {
-            glDeleteTextures(1, &R3D_MOD_LIGHT.shadowArrays[i]);
-        }
-        shadow_pool_quit(&R3D_MOD_LIGHT.shadowPools[i]);
-    }
-
-    r3d_pool_destroy(R3D_MOD_LIGHT.pool);
-    MemFree(R3D_MOD_LIGHT.visible);
-}
-
-R3D_Light r3d_light_new(R3D_LightType type)
-{
-    R3D_Light id = r3d_pool_insert(&R3D_MOD_LIGHT.pool);
-    if (id == R3D_POOL_ID_NULL)
+    if (r3d_light_shadow_layer_is_valid(type, layer))
     {
-        R3D_TRACELOG(LOG_ERROR, "Failed to insert light into pool");
-        return R3D_POOL_ID_NULL;
-    }
-
-    r3d_light_t* light = r3d_pool_get(R3D_MOD_LIGHT.pool, id);
-    if (!light_init(light, type))
-    {
-        R3D_TRACELOG(LOG_ERROR, "Failed to initialize light");
-        r3d_pool_remove(R3D_MOD_LIGHT.pool, id);
-        return R3D_POOL_ID_NULL;
-    }
-
-    R3D_TRACELOG(LOG_INFO, "[ID %d] Light created successfully (type: %s)", id, light_get_type_name(type));
-
-    return id;
-}
-
-void r3d_light_delete(R3D_Light id)
-{
-    r3d_light_t* light = r3d_pool_get(R3D_MOD_LIGHT.pool, id);
-    if (!light) return;
-
-    if (light->shadowLayer >= 0)
-    {
-        shadow_pool_release(&R3D_MOD_LIGHT.shadowPools[light->type], light->shadowLayer);
-    }
-    r3d_pool_remove(R3D_MOD_LIGHT.pool, id);
-
-    R3D_TRACELOG(LOG_INFO, "[ID %d] Light destroyed", id);
-}
-
-bool r3d_light_is_valid(R3D_Light id)
-{
-    return r3d_pool_valid(R3D_MOD_LIGHT.pool, id);
-}
-
-r3d_light_t* r3d_light_get(R3D_Light id)
-{
-    return r3d_pool_get(R3D_MOD_LIGHT.pool, id);
-}
-
-r3d_rect_t r3d_light_get_screen_rect(const r3d_light_t* light, const Matrix* viewProj, Vector3 camPos, int w, int h)
-{
-    assert(light->type != R3D_LIGHT_DIR);
-
-    Vector3 min = light->aabb.min;
-    Vector3 max = light->aabb.max;
-
-    bool cameraInside =
-        (camPos.x >= min.x && camPos.x <= max.x) &&
-        (camPos.y >= min.y && camPos.y <= max.y) &&
-        (camPos.z >= min.z && camPos.z <= max.z);
-
-    if (cameraInside)
-    {
-        return (r3d_rect_t){0, 0, w, h};
-    }
-
-    Vector2 minNDC = {+FLT_MAX, +FLT_MAX};
-    Vector2 maxNDC = {-FLT_MAX, -FLT_MAX};
-
-    for (int i = 0; i < 8; i++)
-    {
-        Vector4 corner = {
-            (i & 1) ? max.x : min.x,
-            (i & 2) ? max.y : min.y,
-            (i & 4) ? max.z : min.z,
-            1.0f
-        };
-        Vector4 clip = r3d_vector4_transform(corner, viewProj);
-
-        float w = clip.w;
-        if (fabsf(w) < 1e-4f)
-        {
-            w = (w < 0.0f) ? -1e-4f : 1e-4f;
-        }
-
-        Vector2 ndc = Vector2Scale((Vector2){clip.x, clip.y}, 1.0f / w);
-        minNDC = Vector2Min(minNDC, ndc);
-        maxNDC = Vector2Max(maxNDC, ndc);
-    }
-
-    // NDC to screen
-    int x = (int)fmaxf((minNDC.x * 0.5f + 0.5f) * w, 0.0f);
-    int y = (int)fmaxf((minNDC.y * 0.5f + 0.5f) * h, 0.0f);
-    int rectW = (int)fminf((maxNDC.x * 0.5f + 0.5f) * w, (float)w) - x;
-    int rectH = (int)fminf((maxNDC.y * 0.5f + 0.5f) * h, (float)h) - y;
-
-    // Security: Invalid dimensions = skip
-    if (rectW <= 0 || rectH <= 0)
-    {
-        return (r3d_rect_t){0, 0, 0, 0};
-    }
-
-    return (r3d_rect_t){x, y, rectW, rectH};
-}
-
-bool r3d_light_enable_shadows(r3d_light_t* light)
-{
-    if (light->shadowLayer >= 0) return true;
-
-    int layer = shadow_pool_reserve(&R3D_MOD_LIGHT.shadowPools[light->type]);
-    if (layer < 0)
-    {
-        if (!shadow_array_expand_capacity(light->type))
-        {
-            return false;
-        }
-        layer = shadow_pool_reserve(&R3D_MOD_LIGHT.shadowPools[light->type]);
-    }
-
-    light->state.shadowShouldBeUpdated = true;
-    light->shadowLayer = layer;
-
-    return true;
-}
-
-void r3d_light_disable_shadows(r3d_light_t* light)
-{
-    if (light->shadowLayer >= 0)
-    {
-        shadow_pool_release(&R3D_MOD_LIGHT.shadowPools[light->type], light->shadowLayer);
-        light->shadowLayer = -1;
+        shadow_array_release_layer(&R3D_MOD_LIGHT.shadowArrays[type], layer);
     }
 }
 
-void r3d_light_update_and_cull(const R3D_Frustum* viewFrustum, R3D_Camera camera,
-                               double aspect, bool* hasVisibleShadows)
-{
-    R3D_MOD_LIGHT.visibleCount = 0;
-
-    R3D_POOL_FOR_EACH(R3D_MOD_LIGHT.pool, r3d_light_t, light, idx)
-    {
-        if (!light->enabled) continue;
-
-        if (light->shadowLayer >= 0)
-        {
-            light_update_shadow_state(light);
-        }
-
-        bool isDirectional = (light->type == R3D_LIGHT_DIR);
-        bool shouldUpdateMatrix = isDirectional
-            ? light->state.shadowShouldBeUpdated
-            : light->state.matrixShouldBeUpdated;
-
-        if (shouldUpdateMatrix)
-        {
-            light_update_matrix(light, camera, aspect);
-            light_update_frustum(light);
-            if (!isDirectional) light_update_bounding_box(light);
-            light->state.matrixShouldBeUpdated = false;
-        }
-
-        if (!R3D_FrustumIntersectsBoundingBox(viewFrustum, light->aabb)) continue;
-        if (hasVisibleShadows) *hasVisibleShadows |= (light->shadowLayer >= 0);
-
-        // Grow visible array if needed
-        if (R3D_MOD_LIGHT.visibleCount >= R3D_MOD_LIGHT.visibleCapacity)
-        {
-            uint32_t newCap = R3D_MOD_LIGHT.visibleCapacity * 2;
-            R3D_Light* newPtr = MemRealloc(R3D_MOD_LIGHT.visible, newCap * sizeof(R3D_Light));
-            if (!newPtr) continue; // Skip rather than crash
-            R3D_MOD_LIGHT.visible = newPtr;
-            R3D_MOD_LIGHT.visibleCapacity = newCap;
-        }
-
-        R3D_MOD_LIGHT.visible[R3D_MOD_LIGHT.visibleCount++] = R3D_POOL_ID_MAKE(idx);
-    }
-}
-
-bool r3d_light_shadow_should_be_updated(r3d_light_t* light, bool willBeUpdated)
-{
-    // If the light does not have a shadow map assigned, we return
-    if (light->shadowLayer < 0) return false;
-
-    // If the shadow opacity is set to zero, the update is ignored
-    if (light->shadowOpacity == 0.0f) return false;
-
-    bool shouldUpdate = light->state.shadowShouldBeUpdated;
-
-    if (willBeUpdated)
-    {
-        switch (light->state.shadowUpdate)
-        {
-        case R3D_SHADOW_UPDATE_MANUAL:
-        case R3D_SHADOW_UPDATE_INTERVAL:
-            light->state.shadowShouldBeUpdated = false;
-            break;
-        default:
-            break;
-        }
-    }
-
-    return shouldUpdate;
-}
-
-void r3d_light_shadow_bind_fbo(R3D_LightType type, int layer, int face)
+void r3d_light_bind_shadow_fbo(R3D_LightType type, int layer, int face)
 {
     assert((type == R3D_LIGHT_OMNI && face >= 0 && face < 6) || (type != R3D_LIGHT_OMNI && face == 0));
 
-    GLuint shadowArray = R3D_MOD_LIGHT.shadowArrays[type];
-    int shadowSize = r3d_light_shadow_get_size(type);
+    r3d_light_shadow_array_t* arr = &R3D_MOD_LIGHT.shadowArrays[type];
     int stride = (type == R3D_LIGHT_OMNI) ? 6 : 1;
 
-    glBindFramebuffer(GL_FRAMEBUFFER, R3D_MOD_LIGHT.workFramebuffer);
-    glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowArray, 0, layer * stride + face);
-    glViewport(0, 0, shadowSize, shadowSize);
+    glBindFramebuffer(GL_FRAMEBUFFER, arr->framebuffer);
+    glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, arr->texture, 0, layer * stride + face);
+    glViewport(0, 0, arr->size, arr->size);
 }
 
-int r3d_light_shadow_get_size(R3D_LightType type)
+bool r3d_light_shadow_layer_is_valid(R3D_LightType type, int layer)
 {
-    int size = 0;
-    switch (type)
+    r3d_light_shadow_array_t* arr = &R3D_MOD_LIGHT.shadowArrays[type];
+
+    if (layer < 0 || (uint32_t)layer >= arr->layerCount)
     {
-    case R3D_LIGHT_DIR:
-        size = R3D_HINT(R3D_HINT_SHADOW_DIR_SIZE);
-        break;
-    case R3D_LIGHT_SPOT:
-        size = R3D_HINT(R3D_HINT_SHADOW_SPOT_SIZE);
-        break;
-    case R3D_LIGHT_OMNI:
-        size = R3D_HINT(R3D_HINT_SHADOW_OMNI_SIZE);
-        break;
-    case R3D_LIGHT_TYPE_COUNT:
-        break;
+        return false;
     }
-    return size;
+
+    r3d_light_shadow_cache_t* cache = &R3D_LIST_GET(arr->cache, r3d_light_shadow_cache_t, layer);
+    return cache->acquired;
 }
 
-GLuint r3d_light_shadow_get(R3D_LightType type)
+int r3d_light_shadow_map_size(R3D_LightType type)
 {
-    return R3D_MOD_LIGHT.shadowArrays[type];
+    return R3D_MOD_LIGHT.shadowArrays[type].size;
+}
+
+GLuint r3d_light_shadow_map(R3D_LightType type)
+{
+    return R3D_MOD_LIGHT.shadowArrays[type].texture;
+}
+
+r3d_light_shadow_cache_t* r3d_light_shadow_cache(R3D_LightType type, int layer)
+{
+    assert(layer >= 0);
+    return &R3D_LIST_GET(R3D_MOD_LIGHT.shadowArrays[type].cache, r3d_light_shadow_cache_t, layer);
 }

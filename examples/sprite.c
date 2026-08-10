@@ -36,12 +36,9 @@ int main(void)
     matSprite.albedo = R3D_LoadAlbedoMap(RESOURCES_PATH "images/spritesheet.png", WHITE);
     matSprite.billboardMode = R3D_BILLBOARD_Y_AXIS;
 
-    // Setup spotlight
-    R3D_Light light = R3D_CreateLight(R3D_LIGHT_SPOT);
-    R3D_SetLightTarget(light, (Vector3){0,10,10}, (Vector3){0});
-    R3D_SetLightRange(light, 64.0f);
-    R3D_EnableShadow(light);
-    R3D_EnableLight(light);
+    // Create light
+    R3D_Light light = R3D_CreateSpotLight((Vector3) {0, 10,10}, (Vector3) {0, -1, -1}, 32.0f, WHITE, 1.0f);
+    R3D_ShadowMap shadow = R3D_LoadShadowMap(R3D_LIGHT_SPOT);
 
     // Setup camera
     Camera3D camera = {
@@ -74,6 +71,7 @@ int main(void)
 
             // Draw scene
             R3D_Begin(camera);
+                R3D_PushLightEx(light, shadow, true);
                 R3D_DrawMesh(meshGround, matGround, (Vector3) {0, -0.5f, 0}, 1.0f);
                 R3D_DrawMesh(meshSprite, matSprite, (Vector3) {birdPos.x, birdPos.y, 0}, 1.0f);
             R3D_End();

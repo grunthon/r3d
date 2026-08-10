@@ -1,6 +1,7 @@
 #include <r3d/r3d.h>
 #include <raymath.h>
 #include <stdint.h>
+#include <stddef.h>
 
 #define INSTANCE_COUNT 1000
 
@@ -96,9 +97,8 @@ int main(void)
         R3D_INSTANCE_COLOR
     );
 
-    R3D_Light light = R3D_CreateLight(R3D_LIGHT_DIR);
-    R3D_SetLightDirection(light, (Vector3){0, -1, 0});
-    R3D_EnableLight(light);
+    // Create directional light
+    R3D_Light light = R3D_CreateDirLight((Vector3) {0, -1, 0}, WHITE, 1.0f);
 
     // Setup camera
     Camera3D camera = {
@@ -120,6 +120,7 @@ int main(void)
             ClearBackground(RAYWHITE);
 
             R3D_Begin(camera);
+                R3D_PushLight(light);
                 R3D_DrawMeshInstanced(mesh, material, instances, INSTANCE_COUNT);
             R3D_End();
 

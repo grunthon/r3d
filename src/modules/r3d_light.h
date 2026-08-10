@@ -16,45 +16,35 @@
 #include <raylib.h>
 #include <glad.h>
 
-#include "../common/r3d_pool.h"
+#include "../common/r3d_list.h"
 #include "../common/r3d_math.h"
 
 // ========================================
 // HELPER MACROS
 // ========================================
 
-#define R3D_LIGHT_FOR_EACH_VISIBLE(varname)                         \
-    for (uint32_t _i = 0; _i < R3D_MOD_LIGHT.visibleCount; _i++)    \
-        for (r3d_light_t* varname = r3d_pool_get(                   \
-                 R3D_MOD_LIGHT.pool,                                \
-                 R3D_MOD_LIGHT.visible[_i]);                        \
-             varname; varname = NULL)
+#define R3D_LIGHT_FOR_EACH_VISIBLE(light) \
+    R3D_LIST_FOR_EACH(R3D_MOD_LIGHT.listLightData, r3d_light_data_t, light)
+
+#define R3D_LIGHT_FOR_EACH_SHADOW_JOB(job) \
+    R3D_LIST_FOR_EACH(R3D_MOD_LIGHT.listShadowJobs, r3d_light_shadow_job_t, job)
 
 // ========================================
 // TYPES
 // ========================================
 
 typedef struct {
-    R3D_ShadowUpdateMode shadowUpdate;
-    float shadowUpdateInterval;
-    float shadowUpdateTimer;
-    bool shadowShouldBeUpdated;
-    bool matrixShouldBeUpdated;
-} r3d_light_state_t;
+    Vector3 center;
+    float   radius;
+} r3d_light_volume_t;
 
 typedef struct {
-
-    R3D_Frustum frustum[6];     // Frustum (only [0] for dir/spot, 6 for omni)
-    Matrix viewProj[6];         // View/projection matrix (only [0] for dir/spot, 6 for omni)
-    BoundingBox aabb;           // AABB in world space of the light volume
-
-    r3d_light_state_t state;    // Contains the current state useful for the update
-    int shadowLayer;            // Shadow map layer index, -1 if no shadow
-
+    r3d_light_volume_t volume;  // Light volume (sphere) (spot/omni)
+    Vector2 minNdc, maxNdc;     // Light area to the screen in NDC
+    Matrix viewProj;            // Used for shadow projection (dir/spot)
     Vector3 color;
     Vector3 position;           // Light position (spot/omni)
-    Vector3 direction;          // Light direction (spot/dir)
-
+    Vector3 direction;          // Light direction (dir/spot)
     float energy;
     float specular;
     float range;                // Maximum distance (spot/omni)
@@ -62,46 +52,52 @@ typedef struct {
     float innerCutOff;          // Spot light inner cutoff angle
     float outerCutOff;          // Spot light outer cutoff angle
     float fogEnergy;            // Volumetric fog energy multiplier
-    float near;                 // Near plane for shadow projection
-    float far;                  // Far plane for shadow projection
     float shadowSoftness;       // Softness factor for penumbra
     float shadowOpacity;        // Shadow opacity factor
     float shadowDepthBias;      // Constant depth bias
     float shadowSlopeBias;      // Slope-scaled depth bias
-    R3D_Layer casterMask;       // Shadow caster mask
-
+    float shadowFar;            // Far plane for shadow projection
+    int shadowLayer;            // Shadow map layer index, -1 if no shadow
     R3D_LightType type;
-    bool enabled;
+} r3d_light_data_t;
 
-} r3d_light_t;
-
-// Shadow layer pool
 typedef struct {
-    int* freeLayers;
-    int freeCount;
-    int freeCapacity;
-    int totalLayers;
-} r3d_light_shadow_pool_t;
+    R3D_Frustum   frustum;
+    Matrix        viewProj;
+    Vector3       position;
+    float         far;
+    R3D_Layer     cullMask;
+    R3D_LightType type;
+    int           shadowLayer;
+    int           layerFace;
+} r3d_light_shadow_job_t;
+
+typedef struct {
+    Matrix viewProj;            // stored for projection (dir/spot)
+    float  far;                 // stored for projection (omni)
+    bool   acquired;            // true from acquire until release; drives handle validity checks
+    bool   rendered;            // true once shadow content has been rendered at least once since (re)acquired
+} r3d_light_shadow_cache_t;
+
+typedef struct {
+    GLuint      framebuffer;
+    GLuint      texture;        // GL_TEXTURE_2D_ARRAY or GL_TEXTURE_CUBE_MAP_ARRAY handle, 0 until first expand
+    GLenum      target;         // GL_TEXTURE_2D_ARRAY (dir/spot) or GL_TEXTURE_CUBE_MAP_ARRAY (omni)
+    r3d_list_t* freeList;       // list<int> of currently free layer indices
+    r3d_list_t* cache;          // list<r3d_light_shadow_cache_t> indexed by layer
+    uint32_t    layerCount;     // total number of allocated layers (GL side)
+    int         size;           // shadow map resolution
+    int         growth;         // number of layers added per expand
+} r3d_light_shadow_array_t;
 
 // ========================================
 // MODULE STATE
 // ========================================
 
 extern struct r3d_light {
-
-    // Common framebuffer for rendering or copy
-    GLuint workFramebuffer;
-
-    // Shadow map arrays and layer pools
-    GLuint shadowArrays[R3D_LIGHT_TYPE_COUNT];
-    r3d_light_shadow_pool_t shadowPools[R3D_LIGHT_TYPE_COUNT];
-
-    // Light management
-    r3d_pool_t* pool;           // Owns all r3d_light_t objects
-    R3D_Light* visible;         // Handles of lights visible this frame
-    uint32_t visibleCount;
-    uint32_t visibleCapacity;
-
+    r3d_light_shadow_array_t shadowArrays[R3D_LIGHT_TYPE_COUNT];
+    r3d_list_t* listShadowJobs;
+    r3d_list_t* listLightData;
 } R3D_MOD_LIGHT;
 
 // ========================================
@@ -114,41 +110,41 @@ bool r3d_light_init(void);
 /* Deinitialize module (called once during R3D_Close) */
 void r3d_light_quit(void);
 
-/* Create a new light of the given type */
-R3D_Light r3d_light_new(R3D_LightType type);
+/**/
+void r3d_light_push(const R3D_Light* light, const R3D_ShadowMap* map, bool updateShadow);
 
-/* Delete a light and return it to the free list */
-void r3d_light_delete(R3D_Light id);
+/**/
+r3d_light_data_t* r3d_light_get(int lightIndex);
 
-/* Check whether a light handle is valid */
-bool r3d_light_is_valid(R3D_Light id);
-
-/* Get internal light structure (returns NULL if invalid) */
-r3d_light_t* r3d_light_get(R3D_Light id);
+/**/
+void r3d_light_clear(void);
 
 /* Returns the screen-space rectangle covered by the light's influence */
-r3d_rect_t r3d_light_get_screen_rect(const r3d_light_t* light, const Matrix* viewProj, Vector3 camPos, int w, int h);
+r3d_rect_t r3d_light_screen_rect(const r3d_light_data_t* light, int w, int h);
 
-/* Enable shadows for a light */
-bool r3d_light_enable_shadows(r3d_light_t* light);
+/**/
+const char* r3d_light_type_name(R3D_LightType type);
 
-/* Disable shadows for a light */
-void r3d_light_disable_shadows(r3d_light_t* light);
+/**/
+int r3d_light_acquire_shadow_layer(R3D_LightType type);
 
-/* Update light states and collect visible ones (can indicate if shadows are visible) */
-void r3d_light_update_and_cull(const R3D_Frustum* viewFrustum, R3D_Camera camera, double aspect, bool* hasVisibleShadows);
-
-/* Check if shadow map should be rendered (updates state if willBeUpdated is true) */
-bool r3d_light_shadow_should_be_updated(r3d_light_t* light, bool willBeUpdated);
+/**/
+void r3d_light_release_shadow_layer(R3D_LightType type, int layer);
 
 /* Bind shadow framebuffer for a light type */
-void r3d_light_shadow_bind_fbo(R3D_LightType type, int layer, int face);
+void r3d_light_bind_shadow_fbo(R3D_LightType type, int layer, int face);
+
+/* Returns if the shadow map layer is valid */
+bool r3d_light_shadow_layer_is_valid(R3D_LightType type, int layer);
 
 /* Get the shadow map dimensions */
-int r3d_light_shadow_get_size(R3D_LightType type);
+int r3d_light_shadow_map_size(R3D_LightType type);
 
 /* Get a shadow map array texture ID */
-GLuint r3d_light_shadow_get(R3D_LightType type);
+GLuint r3d_light_shadow_map(R3D_LightType type);
+
+/**/
+r3d_light_shadow_cache_t* r3d_light_shadow_cache(R3D_LightType type, int layer);
 
 // ========================================
 // INLINE QUERIES
@@ -156,12 +152,12 @@ GLuint r3d_light_shadow_get(R3D_LightType type);
 
 static inline bool r3d_light_has_visible(void)
 {
-    return R3D_MOD_LIGHT.visibleCount > 0;
+    return !R3D_LIST_EMPTY(R3D_MOD_LIGHT.listLightData);
 }
 
-static inline bool r3d_light_has_any(void)
+static inline bool r3d_light_has_shadow_job(void)
 {
-    return R3D_MOD_LIGHT.pool->count > 0;
+    return !R3D_LIST_EMPTY(R3D_MOD_LIGHT.listShadowJobs);
 }
 
 #endif // R3D_MODULE_LIGHT_H

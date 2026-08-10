@@ -58,10 +58,16 @@
 #define R3D_SHADER_LIGHT_FORWARD_UBO_CAP @R3D_SHADER_LIGHT_FORWARD_UBO_CAP@
 
 /*
- * Defines the maximum number of probes stored in the UBO.
- * Matches the maximum value allowed for `R3D_HINT_PROBE_MAX_ACTIVE`.
+ * Defines the maximum number of illumination probes stored in the UBO.
+ * Matches the maximum value allowed for `R3D_HINT_PROBE_ILLUMINATION_MAX_ACTIVE`.
  */
-#define R3D_SHADER_PROBE_UBO_CAP @R3D_SHADER_PROBE_UBO_CAP@
+#define R3D_SHADER_PROBE_ILLUMINATION_UBO_CAP @R3D_SHADER_PROBE_ILLUMINATION_UBO_CAP@
+
+/*
+ * Defines the maximum number of reflection probes stored in the UBO.
+ * Matches the maximum value allowed for `R3D_HINT_PROBE_REFLECTION_MAX_ACTIVE`.
+ */
+#define R3D_SHADER_PROBE_REFLECTION_UBO_CAP @R3D_SHADER_PROBE_REFLECTION_UBO_CAP@
 
 // ========================================
 // Debug

@@ -71,7 +71,7 @@ R3D_AmbientMap R3D_GenAmbientMap(R3D_Cubemap cubemap, R3D_AmbientFlags flags)
     int irradiance = -1;
     if (R3D_BIT_ANY(flags, R3D_AMBIENT_ILLUMINATION))
     {
-        irradiance = r3d_env_irradiance_reserve_layer();
+        irradiance = r3d_env_irradiance_acquire_layer();
         if (irradiance < 0)
         {
             R3D_TRACELOG(LOG_WARNING, "Failed to reserve irradiance cubemap for ambient map");
@@ -83,7 +83,7 @@ R3D_AmbientMap R3D_GenAmbientMap(R3D_Cubemap cubemap, R3D_AmbientFlags flags)
     int prefilter = -1;
     if (R3D_BIT_ANY(flags, R3D_AMBIENT_REFLECTION))
     {
-        prefilter = r3d_env_prefilter_reserve_layer();
+        prefilter = r3d_env_prefilter_acquire_layer();
         if (prefilter < 0)
         {
             R3D_TRACELOG(LOG_WARNING, "Failed to reserve irradiance cubemap for ambient map");

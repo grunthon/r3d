@@ -40,19 +40,18 @@ int main(void)
     // Create lights
     R3D_Light lights[NUM_LIGHTS];
     for (int i = 0; i < NUM_LIGHTS; i++) {
-        lights[i] = R3D_CreateLight(R3D_LIGHT_OMNI);
-        R3D_SetLightPosition(lights[i], (Vector3){randf(-50.0f, 50.0f), randf(1.0f, 5.0f), randf(-50.0f, 50.0f)});
-        R3D_SetLightColor(lights[i], ColorFromHSV(randf(0.0f, 360.0f), 1.0f, 1.0f));
-        R3D_SetLightRange(lights[i], randf(8.0f, 16.0f));
-        R3D_EnableLight(lights[i]);
+        lights[i] = R3D_CreateOmniLight((Vector3){0}, 0.0f, WHITE, 1.0f);
+        lights[i].position = (Vector3) {randf(-50.0f, 50.0f), randf(1.0f, 5.0f), randf(-50.0f, 50.0f)};
+        lights[i].color    = ColorFromHSV(randf(0.0f, 360.0f), 1.0f, 1.0f);
+        lights[i].range    = randf(8.0f, 16.0f);
     }
 
     // Setup camera
     Camera3D camera = {
         .position = {0, 10, 10},
-        .target = {0, 0, 0},
-        .up = {0, 1, 0},
-        .fovy = 60
+        .target   = {0, 0, 0},
+        .up       = {0, 1, 0},
+        .fovy     = 60
     };
 
     // Main loop
@@ -65,6 +64,10 @@ int main(void)
 
         // Draw scene
         R3D_Begin(camera);
+            for (int i = 0; i < NUM_LIGHTS; i++)
+            {
+                R3D_PushLight(lights[i]);
+            }
             R3D_DrawMesh(plane, material, (Vector3) {0, -0.25f, 0}, 1.0f);
             R3D_DrawMeshInstanced(cube, material, instances, GRID_SIZE*GRID_SIZE);
         R3D_End();

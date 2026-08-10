@@ -22,12 +22,11 @@ struct Light {
     float innerCutOff;
     float outerCutOff;
     float fogEnergy;
-    float near;
-    float far;
     float shadowSoftness;
     float shadowOpacity;
     float shadowDepthBias;
     float shadowSlopeBias;
+    float shadowFar;
     int shadowLayer;        //< less than zero if no shadows
     int type;
 };

@@ -25,9 +25,7 @@ int main(void)
     R3D_ENVIRONMENT_SET(dof.maxBlurSize, 20.0f);
 
     // Create directional light
-    R3D_Light light = R3D_CreateLight(R3D_LIGHT_DIR);
-    R3D_SetLightDirection(light, (Vector3){0, -1, 0});
-    R3D_EnableLight(light);
+    R3D_Light light = R3D_CreateDirLight((Vector3) {0, -1, 0}, WHITE, 1.0f);
 
     // Create sphere mesh and default material
     R3D_Mesh meshSphere = R3D_GenMeshSphere(0.2f, 64, 64);
@@ -91,6 +89,7 @@ int main(void)
 
             // Render scene
             R3D_Begin(camDefault);
+                R3D_PushLight(light);
                 R3D_DrawMeshInstanced(meshSphere, matDefault, instances, INSTANCE_COUNT);
             R3D_End();
 

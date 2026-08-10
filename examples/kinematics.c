@@ -27,11 +27,9 @@ int main(void)
     R3D_ENVIRONMENT_SET(background.sky, sky);
     R3D_ENVIRONMENT_SET(ambient.map, ambient);
 
-    R3D_Light light = R3D_CreateLight(R3D_LIGHT_DIR);
-    R3D_SetLightDirection(light, (Vector3) {-1, -1, -1});
-    R3D_SetLightRange(light, 16.0f);
-    R3D_EnableLight(light);
-    R3D_EnableShadow(light);
+    // Setup directional light with shadows
+    R3D_Light light = R3D_CreateDirLight((Vector3) {-1, -1, -1}, WHITE, 1.0f);
+    R3D_ShadowMap shadow = R3D_LoadShadowMap(R3D_LIGHT_DIR);
 
     // Load materials
     R3D_AlbedoMap baseAlbedo = R3D_LoadAlbedoMap(RESOURCES_PATH "images/placeholder.png", WHITE);
@@ -131,6 +129,7 @@ int main(void)
         BeginDrawing();
             ClearBackground(BLACK);
             R3D_Begin(camera);
+                R3D_PushLightEx(light, shadow, true);
                 R3D_DrawMeshPro(slopeMesh, slopeMat, slopeTransform);
                 R3D_DrawMesh(groundMesh, groundMat, Vector3Zero(), 1.0f);
                 R3D_DrawMesh(capsMesh, R3D_MATERIAL_BASE, CAPSULE_CENTER(capsule), 1.0f);

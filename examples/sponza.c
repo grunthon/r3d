@@ -30,14 +30,11 @@ int main(void)
 
     // Setup lights
     R3D_Light lights[2];
-    for (int i = 0; i < 2; i++) {
-        lights[i] = R3D_CreateLight(R3D_LIGHT_OMNI);
-        R3D_SetLightPosition(lights[i], (Vector3) {i ? -5.0f : 5.0f, 5.0f, 0.0f});
-        R3D_SetShadowUpdateMode(lights[i], R3D_SHADOW_UPDATE_MANUAL);
-        R3D_SetLightEnergy(lights[i], 8.0f);
-        R3D_SetLightRange(lights[i], 16.0f);
-        R3D_EnableShadow(lights[i]);
-        R3D_EnableLight(lights[i]);
+    R3D_ShadowMap shadows[2];
+    for (int i = 0; i < 2; i++)
+    {
+        lights[i] = R3D_CreateOmniLight((Vector3) {i ? -5.0f : 5.0f, 5.0f, 0.0f}, 16.0f, WHITE, 8.0f);
+        shadows[i] = R3D_LoadShadowMap(R3D_LIGHT_OMNI);
     }
 
     // Setup camera
@@ -57,48 +54,57 @@ int main(void)
         UpdateCamera(&camera, CAMERA_FREE);
 
         // Toggle SSAO
-        if (IsKeyPressed(KEY_ONE)) {
+        if (IsKeyPressed(KEY_ONE))
+        {
             R3D_ENVIRONMENT_SET(ssao.enabled, !R3D_ENVIRONMENT_GET(ssao.enabled));
         }
 
         // Toggle SSIL
-        if (IsKeyPressed(KEY_TWO)) {
+        if (IsKeyPressed(KEY_TWO))
+        {
             R3D_ENVIRONMENT_SET(ssil.enabled, !R3D_ENVIRONMENT_GET(ssil.enabled));
         }
 
         // Toggle SSGI
-        if (IsKeyPressed(KEY_THREE)) {
+        if (IsKeyPressed(KEY_THREE))
+        {
             R3D_ENVIRONMENT_SET(ssgi.enabled, !R3D_ENVIRONMENT_GET(ssgi.enabled));
         }
 
         // Toggle SSR
-        if (IsKeyPressed(KEY_FOUR)) {
+        if (IsKeyPressed(KEY_FOUR))
+        {
             R3D_ENVIRONMENT_SET(ssr.enabled, !R3D_ENVIRONMENT_GET(ssr.enabled));
         }
 
         // Toggle fog
-        if (IsKeyPressed(KEY_FIVE)) {
+        if (IsKeyPressed(KEY_FIVE))
+        {
             R3D_ENVIRONMENT_SET(fog.mode, R3D_ENVIRONMENT_GET(fog.mode) == R3D_FOG_DISABLED ? R3D_FOG_EXP : R3D_FOG_DISABLED);
         }
 
         // Swtich anti aliasing mode
-        if (IsKeyPressed(KEY_F)) {
+        if (IsKeyPressed(KEY_F))
+        {
             R3D_AntiAliasingMode aaMode = R3D_GetAntiAliasingMode();
             R3D_SetAntiAliasingMode((aaMode + 1) % 3);
         }
 
         // Swtich anti aliasing preset
-        if (IsKeyPressed(KEY_G)) {
+        if (IsKeyPressed(KEY_G))
+        {
             R3D_AntiAliasingPreset aaPreset = R3D_GetAntiAliasingPreset();
             R3D_SetAntiAliasingPreset((aaPreset + 1) % R3D_ANTI_ALIASING_PRESET_COUNT);
         }
 
         // Swtich tonemapping
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+        {
             R3D_Tonemap mode = R3D_ENVIRONMENT_GET(tonemap.mode);
             R3D_ENVIRONMENT_SET(tonemap.mode, (mode + R3D_TONEMAP_COUNT - 1) % R3D_TONEMAP_COUNT);
         }
-        if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+        if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))
+        {
             R3D_Tonemap mode = R3D_ENVIRONMENT_GET(tonemap.mode);
             R3D_ENVIRONMENT_SET(tonemap.mode, (mode + 1) % R3D_TONEMAP_COUNT);
         }
@@ -108,13 +114,15 @@ int main(void)
 
             // Draw Sponza model
             R3D_Begin(camera);
+                R3D_PushLightEx(lights[0], shadows[0], false);
+                R3D_PushLightEx(lights[1], shadows[1], false);
                 R3D_DrawModel(sponza, Vector3Zero(), 1.0f);
             R3D_End();
 
             // Draw lights
             BeginMode3D(camera);
-                DrawSphere(R3D_GetLightPosition(lights[0]), 0.2f, WHITE);
-                DrawSphere(R3D_GetLightPosition(lights[1]), 0.2f, WHITE);
+                DrawSphere(lights[0].position, 0.2f, WHITE);
+                DrawSphere(lights[1].position, 0.2f, WHITE);
             EndMode3D();
 
             // Display tonemapping
@@ -148,10 +156,10 @@ int main(void)
             const char* aaPresetText = "";
             switch (aaPreset)
             {
-                case R3D_ANTI_ALIASING_PRESET_LOW: aaPresetText = "- Low"; break;
+                case R3D_ANTI_ALIASING_PRESET_LOW:    aaPresetText = "- Low"; break;
                 case R3D_ANTI_ALIASING_PRESET_MEDIUM: aaPresetText = "- Medium"; break;
-                case R3D_ANTI_ALIASING_PRESET_HIGH: aaPresetText = "- High"; break;
-                case R3D_ANTI_ALIASING_PRESET_ULTRA: aaPresetText = "- Ultra"; break;
+                case R3D_ANTI_ALIASING_PRESET_HIGH:   aaPresetText = "- High"; break;
+                case R3D_ANTI_ALIASING_PRESET_ULTRA:  aaPresetText = "- Ultra"; break;
                 default: break;
             }
             DrawText(aaPresetText, MeasureText(aaModeText, 20) + 20, GetScreenHeight() - 30, 20, LIME);

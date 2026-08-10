@@ -498,30 +498,29 @@ typedef struct {
 } r3d_shader_block_view_t;
 
 typedef struct {
+    alignas(16) Vector3 position;
+    alignas(4) float falloff;
+    alignas(4) float range;
+    alignas(4) int32_t layer;
+} r3d_shader_block_env_probe_t;
 
-    struct r3d_shader_block_env_probe
-    {
-        alignas(16) Vector3 position;
-        alignas(4) float falloff;
-        alignas(4) float range;
-        alignas(4) int32_t irradiance;
-        alignas(4) int32_t prefilter;
-    }
-    uProbes[R3D_SHADER_PROBE_UBO_CAP];
+typedef struct {
+    alignas(16) Vector4 rotation;
+    alignas(16) Vector4 color;
+    alignas(4) float energy;
+    alignas(4) int32_t irradiance;
+    alignas(4) int32_t prefilter;
+} r3d_shader_block_env_ambient_t;
 
-    struct r3d_shader_block_env_ambient
-    {
-        alignas(16) Vector4 rotation;
-        alignas(16) Vector4 color;
-        alignas(4) float energy;
-        alignas(4) int32_t irradiance;
-        alignas(4) int32_t prefilter;
-    }
-    uAmbient;
-
+typedef struct {
+    alignas(16) r3d_shader_block_env_probe_t
+        uIlluminationProbes[R3D_SHADER_PROBE_ILLUMINATION_UBO_CAP];
+    alignas(16) r3d_shader_block_env_probe_t
+        uReflectionProbes[R3D_SHADER_PROBE_REFLECTION_UBO_CAP];
+    alignas(16) r3d_shader_block_env_ambient_t uAmbient;
+    alignas(4) int32_t uNumIlluminationProbes;
+    alignas(4) int32_t uNumReflectionProbes;
     alignas(4) int32_t uNumPrefilterLevels;
-    alignas(4) int32_t uNumProbes;
-
 } r3d_shader_block_env_t;
 
 typedef struct {
@@ -624,25 +623,24 @@ typedef struct {
 } r3d_shader_block_fx_t;
 
 typedef struct {
-    alignas(16) Matrix viewProj;
+    alignas(16) Matrix  viewProj;
     alignas(16) Vector3 color;
     alignas(16) Vector3 position;
     alignas(16) Vector3 direction;
-    alignas(4) float energy;
-    alignas(4) float specular;
-    alignas(4) float range;
-    alignas(4) float falloff;
-    alignas(4) float innerCutOff;
-    alignas(4) float outerCutOff;
-    alignas(4) float fogEnergy;
-    alignas(4) float near;
-    alignas(4) float far;
-    alignas(4) float shadowSoftness;
-    alignas(4) float shadowOpacity;
-    alignas(4) float shadowDepthBias;
-    alignas(4) float shadowSlopeBias;
-    alignas(4) int32_t shadowLayer;
-    alignas(4) int32_t type;
+    alignas(4)  float   energy;
+    alignas(4)  float   specular;
+    alignas(4)  float   range;
+    alignas(4)  float   falloff;
+    alignas(4)  float   innerCutOff;
+    alignas(4)  float   outerCutOff;
+    alignas(4)  float   fogEnergy;
+    alignas(4)  float   shadowSoftness;
+    alignas(4)  float   shadowOpacity;
+    alignas(4)  float   shadowDepthBias;
+    alignas(4)  float   shadowSlopeBias;
+    alignas(4)  float   shadowFar;
+    alignas(4)  int32_t shadowLayer;
+    alignas(4)  int32_t type;
 } r3d_shader_block_light_t;
 
 typedef struct {

@@ -9,110 +9,122 @@
 #include "../ubo/env.glsl"
 #include "../lib/ibl.glsl"
 
-void E_SampleProbe(inout vec3 irr, inout vec3 rad, inout float wIrr, inout float wRad, int probeIndex, float roughness, vec3 P, vec3 N, vec3 V)
+vec4 E_SampleIlluminationProbe(E_Probe probe, vec3 P, vec3 N)
 {
-    E_Probe probe = uProbes[probeIndex];
+    float dist   = length(P - probe.position);
+    float weight = pow(clamp(1.0 - dist / probe.range, 0.0, 1.0), probe.falloff);
+
+    if (weight < 1e-4) return vec4(0.0);
+
+    vec3 irradiance = IBL_SampleIrradiance(uIrradianceTex, probe.layer, N);
+
+    return vec4(irradiance * weight, weight);
+}
+
+vec4 E_SampleReflectionProbe(E_Probe probe, float roughness, vec3 P, vec3 N, vec3 V)
+{
     float dist = length(P - probe.position);
     float weight = pow(clamp(1.0 - dist / probe.range, 0.0, 1.0), probe.falloff);
 
-    if (weight < 1e-6) return;
+    if (weight < 1e-4) return vec4(0.0);
 
-    if (probe.irradiance >= 0)
-    {
-        vec3 probeIrr = IBL_SampleIrradiance(uIrradianceTex, probe.irradiance, N);
-        irr += probeIrr.rgb * weight;
-        wIrr += weight;
-    }
+    vec3 prefilter = IBL_SamplePrefilter(uPrefilterTex, probe.layer, V, N, roughness, uNumPrefilterLevels);
 
-    if (probe.prefilter >= 0)
-    {
-        vec3 probeRad = IBL_SamplePrefilter(uPrefilterTex, probe.prefilter, V, N, roughness, uNumPrefilterLevels);
-        rad += probeRad.rgb * weight;
-        wRad += weight;
-    }
+    return vec4(prefilter * weight, weight);
 }
 
-void E_ComputeAmbientAndProbes(inout vec3 diffuse, inout vec3 specular, vec3 kD, vec3 orm, vec3 F0, vec3 P, vec3 N, vec3 V, float NoV)
+void E_ComputeAmbientAndProbes(inout vec3 outDiff, inout vec3 outSpec, vec3 kD, vec3 orm, vec3 F0, vec3 P, vec3 N, vec3 V, float NoV)
 {
     float occlusion = orm.x;
     float roughness = orm.y;
     float metalness = orm.z;
 
-    vec3 irradiance = vec3(0.0);
-    float wIrradiance = 0.0;
+    vec4 diff = vec4(0.0);
+    vec4 spec = vec4(0.0);
 
-    vec3 radiance = vec3(0.0);
-    float wRadiance = 0.0;
-
-    for (int i = 0; i < uNumProbes; ++i)
+    for (int i = 0; i < uNumIlluminationProbes; ++i)
     {
-        E_SampleProbe(irradiance, radiance, wIrradiance, wRadiance, i, roughness, P, N, V);
+        diff += E_SampleIlluminationProbe(uIlluminationProbes[i], P, N);
     }
 
-    if (wIrradiance > 1.0)
+    if (diff.w < 1.0)
     {
-        float invTotalWeight = 1.0 / wIrradiance;
-        irradiance *= invTotalWeight;
-        wIrradiance = 1.0;
+        float weight = 1.0 - diff.w;
+
+        if (uAmbient.irradiance >= 0)
+        {
+            diff.rgb += weight * IBL_SampleIrradiance(uIrradianceTex, uAmbient.irradiance, N, uAmbient.rotation);
+        }
+        else
+        {
+            diff.rgb += weight * uAmbient.color.rgb;
+        }
+    }
+    else
+    {
+        diff.rgb /= diff.w;
     }
 
-    if (wRadiance > 1.0)
+    for (int i = 0; i < uNumReflectionProbes; ++i)
     {
-        float invTotalWeight = 1.0 / wRadiance;
-        radiance *= invTotalWeight;
-        wRadiance = 1.0;
+        spec += E_SampleReflectionProbe(uReflectionProbes[i], roughness, P, N, V);
     }
 
-    if (wIrradiance < 1.0)
+    if (spec.w < 1.0)
     {
-        vec3 ambientIrr = vec3(0.0);
-        if (uAmbient.irradiance < 0) ambientIrr = uAmbient.color.rgb;
-        else ambientIrr = IBL_SampleIrradiance(uIrradianceTex, uAmbient.irradiance, N, uAmbient.rotation);
-        irradiance += ambientIrr * (1.0 - wIrradiance);
+        if (uAmbient.irradiance >= 0)
+        {
+            spec.rgb += (1.0 - spec.w) * IBL_SamplePrefilter(uPrefilterTex, uAmbient.prefilter, V, N, uAmbient.rotation, roughness, uNumPrefilterLevels);
+        }
+    }
+    else
+    {
+        spec.rgb /= spec.w;
     }
 
-    if (wRadiance < 1.0 && uAmbient.prefilter >= 0)
-    {
-        vec3 ambientRad = IBL_SamplePrefilter(uPrefilterTex, uAmbient.prefilter, V, N, uAmbient.rotation, roughness, uNumPrefilterLevels);
-        radiance += ambientRad * (1.0 - wRadiance);
-    }
-
-    irradiance *= occlusion * uAmbient.energy;
-    radiance *= IBL_GetSpecularOcclusion(NoV, occlusion, roughness);
+    diff.rgb *= occlusion * uAmbient.energy;
+    spec.rgb *= IBL_GetSpecularOcclusion(NoV, occlusion, roughness);
 
     vec2 brdf = texture(uBrdfLutTex, vec2(NoV, roughness)).xy;
-    IBL_MultiScattering(irradiance, radiance, kD, F0, brdf, NoV, roughness);
+    IBL_MultiScattering(diff.rgb, spec.rgb, kD, F0, brdf, NoV);
 
-    diffuse += irradiance;
-    specular += radiance;
+    outDiff += diff.rgb;
+    outSpec += spec.rgb;
 }
 
-void E_ComputeAmbientOnly(inout vec3 diffuse, inout vec3 specular, vec3 kD, vec3 orm, vec3 F0, vec3 P, vec3 N, vec3 V, float NoV)
+void E_ComputeAmbientOnly(inout vec3 outDiff, inout vec3 outSpec, vec3 kD, vec3 orm, vec3 F0, vec3 P, vec3 N, vec3 V, float NoV)
 {
     float occlusion = orm.x;
     float roughness = orm.y;
     float metalness = orm.z;
 
-    vec3 irradiance = (uAmbient.irradiance >= 0)
-        ? IBL_SampleIrradiance(uIrradianceTex, uAmbient.irradiance, N, uAmbient.rotation).rgb
-        : uAmbient.color.rgb;
-    irradiance *= occlusion * uAmbient.energy;
+    vec3 diff = vec3(0.0);
+    vec3 spec = vec3(0.0);
 
-    vec3 radiance = vec3(0.0);
+    if (uAmbient.irradiance >= 0)
+    {
+        diff = IBL_SampleIrradiance(uIrradianceTex, uAmbient.irradiance, N, uAmbient.rotation).rgb;
+        diff *= occlusion * uAmbient.energy;
+    }
+    else
+    {
+        diff = uAmbient.color.rgb * uAmbient.energy * occlusion;
+    }
+
     if (uAmbient.prefilter >= 0)
     {
-        radiance = IBL_SamplePrefilter(uPrefilterTex, uAmbient.prefilter, V, N, uAmbient.rotation, roughness, uNumPrefilterLevels).rgb;
-        radiance *= IBL_GetSpecularOcclusion(NoV, occlusion, roughness);
+        spec  = IBL_SamplePrefilter(uPrefilterTex, uAmbient.prefilter, V, N, uAmbient.rotation, roughness, uNumPrefilterLevels).rgb;
+        spec *= IBL_GetSpecularOcclusion(NoV, occlusion, roughness);
     }
 
     vec2 brdf = texture(uBrdfLutTex, vec2(NoV, roughness)).xy;
-    IBL_MultiScattering(irradiance, radiance, kD, F0, brdf, NoV, roughness);
+    IBL_MultiScattering(diff, spec, kD, F0, brdf, NoV);
 
-    diffuse += irradiance;
-    specular += radiance;
+    outDiff += diff;
+    outSpec += spec;
 }
 
-void E_ComputeAmbientColor(inout vec3 diffuse, vec3 kD, float occlusion)
+void E_ComputeAmbientColor(inout vec3 outDiff, vec3 kD, float occlusion)
 {
-    diffuse += kD * uAmbient.color.rgb * uAmbient.energy * occlusion;
+    outDiff += kD * uAmbient.color.rgb * uAmbient.energy * occlusion;
 }

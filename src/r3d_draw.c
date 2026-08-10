@@ -64,16 +64,16 @@ static void upload_view_block(void);
 static void upload_env_block(void);
 static void upload_fx_block(void);
 
-static void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, r3d_light_t* light);
-static void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, r3d_light_t* light);
-static void raster_probe_forward(const r3d_render_call_t* call, const r3d_env_probe_t* probe, int face);
-static void raster_probe_unlit(const r3d_render_call_t* call, const r3d_env_probe_t* probe, int face);
+static void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, const r3d_light_shadow_job_t* shadowJob);
+static void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, const r3d_light_shadow_job_t* shadowJob);
+static void raster_probe_forward(const r3d_render_call_t* call, const r3d_env_probe_job_t* job, int face);
+static void raster_probe_unlit(const r3d_render_call_t* call, const r3d_env_probe_job_t* job, int face);
 static void raster_geometry(const r3d_render_call_t* call, bool matchPrepass);
 static void raster_decal(const r3d_render_call_t* call);
 static void raster_forward(const r3d_render_call_t* call);
 static void raster_unlit(const r3d_render_call_t* call);
 
-static void pass_scene_shadow(void);
+static void pass_scene_shadows(void);
 static void pass_scene_probes(void);
 static void pass_scene_geometry(void);
 static void pass_scene_prepass(void);
@@ -133,7 +133,9 @@ void R3D_BeginPro(R3D_View view)
     rlDrawRenderBatchActive();
     update_view_state(view);
     R3D.screen = view.target;
+    r3d_env_probe_clear();
     r3d_render_clear();
+    r3d_light_clear();
 }
 
 void R3D_End(void)
@@ -152,35 +154,29 @@ void R3D_End(void)
     upload_env_block();
     upload_fx_block();
 
-    /* --- Update all visible lights and render their shadow maps --- */
+    /* --- Render all shadow maps and bind them --- */
 
-    bool hasVisibleShadows = false;
-    r3d_light_update_and_cull(
-        &R3D.viewState.frustum,
-        R3D.viewState.camera,
-        R3D.viewState.aspect,
-        &hasVisibleShadows
-    );
-
-    if (hasVisibleShadows)
+    if (r3d_light_has_shadow_job())
     {
-        pass_scene_shadow();
-        r3d_shader_bind_sampler(R3D_SHADER_SAMPLER_SHADOW_DIR, r3d_light_shadow_get(R3D_LIGHT_DIR));
-        r3d_shader_bind_sampler(R3D_SHADER_SAMPLER_SHADOW_SPOT, r3d_light_shadow_get(R3D_LIGHT_SPOT));
-        r3d_shader_bind_sampler(R3D_SHADER_SAMPLER_SHADOW_OMNI, r3d_light_shadow_get(R3D_LIGHT_OMNI));
+        pass_scene_shadows();
     }
+
+    r3d_shader_bind_sampler(R3D_SHADER_SAMPLER_SHADOW_DIR, r3d_light_shadow_map(R3D_LIGHT_DIR));
+    r3d_shader_bind_sampler(R3D_SHADER_SAMPLER_SHADOW_SPOT, r3d_light_shadow_map(R3D_LIGHT_SPOT));
+    r3d_shader_bind_sampler(R3D_SHADER_SAMPLER_SHADOW_OMNI, r3d_light_shadow_map(R3D_LIGHT_OMNI));
 
     /* --- Update all visible environment probes and render their cubemaps --- */
 
-    bool hasVisibleProbes = false;
-    r3d_env_probe_update_and_cull(&R3D.viewState.frustum, &hasVisibleProbes);
-
-    if (hasVisibleProbes || R3D.environment.ambient.map.flags != 0)
+    if (r3d_env_has_any_probes() || R3D.environment.ambient.map.flags != 0)
     {
         r3d_shader_bind_sampler(R3D_SHADER_SAMPLER_IBL_IRRADIANCE, r3d_env_irradiance_get());
         r3d_shader_bind_sampler(R3D_SHADER_SAMPLER_IBL_PREFILTER, r3d_env_prefilter_get());
         r3d_shader_bind_sampler(R3D_SHADER_SAMPLER_IBL_BRDF_LUT, r3d_texture_get(R3D_TEXTURE_BRDF_LUT));
-        if (hasVisibleProbes) pass_scene_probes(); // Must have the IBL bind in case of ambient map
+
+        if (r3d_env_has_any_probe_jobs())
+        {
+            pass_scene_probes();
+        }
     }
 
     /* --- Cull groups and sort all draw calls before rendering --- */
@@ -338,6 +334,21 @@ void R3D_EndCluster(void)
     {
         R3D_TRACELOG(LOG_WARNING, "Failed to end cluster");
     }
+}
+
+void R3D_PushLight(R3D_Light light)
+{
+    r3d_light_push(&light, NULL, false);
+}
+
+void R3D_PushLightEx(R3D_Light light, R3D_ShadowMap map, bool updateShadow)
+{
+    r3d_light_push(&light, &map, updateShadow);
+}
+
+void R3D_PushProbe(R3D_Probe probe, bool updateProbe)
+{
+    r3d_env_push_probe(&probe, updateProbe);
 }
 
 void R3D_DrawMesh(R3D_Mesh mesh, R3D_Material material, Vector3 position, float scale)
@@ -739,36 +750,34 @@ void upload_light_array_block_for_mesh(const r3d_render_call_t* call, bool shado
 
     R3D_LIGHT_FOR_EACH_VISIBLE(light)
     {
-        // Check if the geometry "touches" the light area
-        // It's not the most accurate possible but hey
+        // Check if the geometry touches the light volume
         if (light->type != R3D_LIGHT_DIR)
         {
-            if (!CheckCollisionBoxes(light->aabb, call->mesh.instance.aabb))
+            if (!CheckCollisionBoxSphere(call->mesh.instance.aabb, light->volume.center, light->volume.radius))
             {
                 continue;
             }
         }
 
         r3d_shader_block_light_t* data = &lights.uLights[lights.uNumLights];
-        data->viewProj = MatrixTranspose(light->viewProj[0]);
-        data->color = light->color;
-        data->position = light->position;
-        data->direction = light->direction;
-        data->energy = light->energy;
-        data->specular = light->specular;
-        data->range = light->range;
-        data->falloff = light->falloff;
-        data->innerCutOff = light->innerCutOff;
-        data->outerCutOff = light->outerCutOff;
-        data->fogEnergy = light->fogEnergy;
-        data->near = light->near;
-        data->far = light->far;
-        data->shadowSoftness = light->shadowSoftness;
-        data->shadowOpacity = light->shadowOpacity;
+        data->viewProj        = MatrixTranspose(light->viewProj);
+        data->color           = light->color;
+        data->position        = light->position;
+        data->direction       = light->direction;
+        data->energy          = light->energy;
+        data->specular        = light->specular;
+        data->range           = light->range;
+        data->falloff         = light->falloff;
+        data->innerCutOff     = light->innerCutOff;
+        data->outerCutOff     = light->outerCutOff;
+        data->fogEnergy       = light->fogEnergy;
+        data->shadowSoftness  = light->shadowSoftness;
+        data->shadowOpacity   = light->shadowOpacity;
         data->shadowDepthBias = light->shadowDepthBias;
         data->shadowSlopeBias = light->shadowSlopeBias;
-        data->shadowLayer = shadow ? light->shadowLayer : -1;
-        data->type = light->type;
+        data->shadowFar       = light->shadowFar;
+        data->shadowLayer     = shadow ? light->shadowLayer : -1;
+        data->type            = light->type;
 
         if (++lights.uNumLights == R3D_HINT(R3D_HINT_FORWARD_LIGHT_PER_MESH))
         {
@@ -813,37 +822,57 @@ void upload_view_block(void)
 
 void upload_env_block(void)
 {
-    const R3D_EnvBackground* background = &R3D.environment.background;
-    const R3D_EnvAmbient* ambient = &R3D.environment.ambient;
+    bool ok;
 
-    r3d_shader_block_env_t env = {0};
-
-    int iProbe = 0;
-    R3D_ENV_PROBE_FOR_EACH_VISIBLE(probe)
+    R3D_STACK_SCOPE(&R3D.stack, sizeof(r3d_shader_block_env_t), ok)
     {
-        env.uProbes[iProbe] = (struct r3d_shader_block_env_probe) {
-            .position = probe->position,
-            .falloff = probe->falloff,
-            .range = probe->range,
-            .irradiance = probe->irradiance,
-            .prefilter = probe->prefilter
-        };
-        if (++iProbe >= R3D_HINT(R3D_HINT_PROBE_MAX_ACTIVE))
+        const R3D_EnvBackground* background = &R3D.environment.background;
+        const R3D_EnvAmbient* ambient = &R3D.environment.ambient;
+
+        r3d_shader_block_env_t* env = r3d_stack_alloc(&R3D.stack, sizeof(r3d_shader_block_env_t));
+
+        int iIlluminationProbe = 0;
+        R3D_ENV_FOR_EACH_ILLUMINATION_PROBE(probe)
         {
-            break;
+            env->uIlluminationProbes[iIlluminationProbe] = (r3d_shader_block_env_probe_t) {
+                .position = probe->position,
+                .falloff  = probe->falloff,
+                .range    = probe->range,
+                .layer    = (int)probe->handle - 1,
+            };
+            if (++iIlluminationProbe >= R3D_HINT(R3D_HINT_PROBE_ILLUMINATION_MAX_ACTIVE))
+            {
+                break;
+            }
         }
+
+        int iReflectionProbe = 0;
+        R3D_ENV_FOR_EACH_REFLECTION_PROBE(probe)
+        {
+            env->uReflectionProbes[iReflectionProbe] = (r3d_shader_block_env_probe_t) {
+                .position = probe->position,
+                .falloff  = probe->falloff,
+                .range    = probe->range,
+                .layer    = (int)probe->handle - 1,
+            };
+            if (++iReflectionProbe >= R3D_HINT(R3D_HINT_PROBE_REFLECTION_MAX_ACTIVE))
+            {
+                break;
+            }
+        }
+
+        env->uAmbient.rotation   = background->rotation;
+        env->uAmbient.color      = r3d_color_to_vec4(ambient->color);
+        env->uAmbient.energy     = ambient->energy;
+        env->uAmbient.irradiance = (int)ambient->map.irradiance - 1;
+        env->uAmbient.prefilter  = (int)ambient->map.prefilter - 1;
+
+        env->uNumIlluminationProbes = iIlluminationProbe;
+        env->uNumReflectionProbes   = iReflectionProbe;
+        env->uNumPrefilterLevels    = r3d_get_mip_levels_1d(R3D_HINT(R3D_HINT_IBL_PREFILTER_SIZE));
+
+        r3d_shader_set_uniform_block(R3D_SHADER_BLOCK_ENV, env, false);
     }
-
-    env.uAmbient.rotation = background->rotation;
-    env.uAmbient.color = r3d_color_to_vec4(ambient->color);
-    env.uAmbient.energy = ambient->energy;
-    env.uAmbient.irradiance = (int)ambient->map.irradiance - 1;
-    env.uAmbient.prefilter = (int)ambient->map.prefilter - 1;
-
-    env.uNumPrefilterLevels = r3d_get_mip_levels_1d(R3D_HINT(R3D_HINT_IBL_PREFILTER_SIZE));
-    env.uNumProbes = iProbe;
-
-    r3d_shader_set_uniform_block(R3D_SHADER_BLOCK_ENV, &env, false);
 }
 
 void upload_fx_block(void)
@@ -955,7 +984,7 @@ void upload_fx_block(void)
     r3d_shader_set_uniform_block(R3D_SHADER_BLOCK_FX, &block, false);
 }
 
-void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, r3d_light_t* light)
+void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, const r3d_light_shadow_job_t* shadowJob)
 {
     assert(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
 
@@ -1005,7 +1034,7 @@ void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, r3d_lig
 
     if (material->transparencyMode == R3D_TRANSPARENCY_PREPASS)
     {
-        R3D_SHADER_SET_FLOAT_SELECT(scene.depth, shader, uAlphaCutoff, (light != NULL) ? 0.1f : 0.99f);
+        R3D_SHADER_SET_FLOAT_SELECT(scene.depth, shader, uAlphaCutoff, (shadowJob != NULL) ? 0.1f : 0.99f);
     }
     else
     {
@@ -1014,7 +1043,7 @@ void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, r3d_lig
 
     /* --- Applying material parameters that are independent of shaders --- */
 
-    if (light != NULL)
+    if (shadowJob != NULL)
     {
         r3d_driver_set_shadow_cast_mode(mesh->shadowCastMode, material->cullMode);
     }
@@ -1039,7 +1068,7 @@ void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, r3d_lig
     }
 }
 
-void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, r3d_light_t* light)
+void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, const r3d_light_shadow_job_t* shadowJob)
 {
     assert(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
 
@@ -1054,10 +1083,10 @@ void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, r3
 
     /* --- Set shadow related data --- */
 
-    if (light != NULL)
+    if (shadowJob != NULL)
     {
-        R3D_SHADER_SET_FLOAT_SELECT(scene.depthCube, shader, uFar, light->far);
-        R3D_SHADER_SET_VEC3_SELECT(scene.depthCube, shader, uViewPosition, light->position);
+        R3D_SHADER_SET_FLOAT_SELECT(scene.depthCube, shader, uFar, shadowJob->far);
+        R3D_SHADER_SET_VEC3_SELECT(scene.depthCube, shader, uViewPosition, shadowJob->position);
     }
 
     /* --- Send matrices --- */
@@ -1097,7 +1126,7 @@ void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, r3
 
     if (material->transparencyMode == R3D_TRANSPARENCY_PREPASS)
     {
-        R3D_SHADER_SET_FLOAT_SELECT(scene.depthCube, shader, uAlphaCutoff, (light != NULL) ? 0.1f : 0.99f);
+        R3D_SHADER_SET_FLOAT_SELECT(scene.depthCube, shader, uAlphaCutoff, (shadowJob != NULL) ? 0.1f : 0.99f);
     }
     else
     {
@@ -1106,7 +1135,7 @@ void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, r3
 
     /* --- Applying material parameters that are independent of shaders --- */
 
-    if (light != NULL)
+    if (shadowJob != NULL)
     {
         r3d_driver_set_shadow_cast_mode(mesh->shadowCastMode, material->cullMode);
     }
@@ -1131,7 +1160,7 @@ void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, r3
     }
 }
 
-void raster_probe_forward(const r3d_render_call_t* call, const r3d_env_probe_t* probe, int face)
+void raster_probe_forward(const r3d_render_call_t* call, const r3d_env_probe_job_t* job, int face)
 {
     assert(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
 
@@ -1146,8 +1175,8 @@ void raster_probe_forward(const r3d_render_call_t* call, const r3d_env_probe_t* 
 
     /* --- Set probe related data --- */
 
-    R3D_SHADER_SET_VEC3_SELECT(scene.probeForward, shader, uViewPosition, probe->position);
-    R3D_SHADER_SET_INT_SELECT(scene.probeForward, shader, uProbeInterior, probe->interior);
+    R3D_SHADER_SET_VEC3_SELECT(scene.probeForward, shader, uViewPosition, job->position);
+    R3D_SHADER_SET_INT_SELECT(scene.probeForward, shader, uProbeInterior, job->interior);
 
     /* --- Send matrices --- */
 
@@ -1155,9 +1184,9 @@ void raster_probe_forward(const r3d_render_call_t* call, const r3d_env_probe_t* 
 
     R3D_SHADER_SET_MAT4_SELECT(scene.probeForward, shader, uMatModel, group->transform);
     R3D_SHADER_SET_MAT4_SELECT(scene.probeForward, shader, uMatNormal, matNormal);
-    R3D_SHADER_SET_MAT4_SELECT(scene.probeForward, shader, uMatView, probe->view[face]);
-    R3D_SHADER_SET_MAT4_SELECT(scene.probeForward, shader, uMatInvView, probe->invView[face]);
-    R3D_SHADER_SET_MAT4_SELECT(scene.probeForward, shader, uMatViewProj, probe->viewProj[face]);
+    R3D_SHADER_SET_MAT4_SELECT(scene.probeForward, shader, uMatView, job->view[face]);
+    R3D_SHADER_SET_MAT4_SELECT(scene.probeForward, shader, uMatInvView, job->invView[face]);
+    R3D_SHADER_SET_MAT4_SELECT(scene.probeForward, shader, uMatViewProj, job->viewProj[face]);
 
     /* --- Send skinning related data --- */
 
@@ -1222,7 +1251,7 @@ void raster_probe_forward(const r3d_render_call_t* call, const r3d_env_probe_t* 
     }
 }
 
-void raster_probe_unlit(const r3d_render_call_t* call, const r3d_env_probe_t* probe, int face)
+void raster_probe_unlit(const r3d_render_call_t* call, const r3d_env_probe_job_t* job, int face)
 {
     assert(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
 
@@ -1241,9 +1270,9 @@ void raster_probe_unlit(const r3d_render_call_t* call, const r3d_env_probe_t* pr
 
     R3D_SHADER_SET_MAT4_SELECT(scene.probeUnlit, shader, uMatModel, group->transform);
     R3D_SHADER_SET_MAT4_SELECT(scene.probeUnlit, shader, uMatNormal, matNormal);
-    R3D_SHADER_SET_MAT4_SELECT(scene.probeUnlit, shader, uMatView, probe->view[face]);
-    R3D_SHADER_SET_MAT4_SELECT(scene.probeUnlit, shader, uMatInvView, probe->invView[face]);
-    R3D_SHADER_SET_MAT4_SELECT(scene.probeUnlit, shader, uMatViewProj, probe->viewProj[face]);
+    R3D_SHADER_SET_MAT4_SELECT(scene.probeUnlit, shader, uMatView, job->view[face]);
+    R3D_SHADER_SET_MAT4_SELECT(scene.probeUnlit, shader, uMatInvView, job->invView[face]);
+    R3D_SHADER_SET_MAT4_SELECT(scene.probeUnlit, shader, uMatViewProj, job->viewProj[face]);
 
     /* --- Send skinning related data --- */
 
@@ -1630,7 +1659,7 @@ void raster_unlit(const r3d_render_call_t* call)
     }
 }
 
-void pass_scene_shadow(void)
+void pass_scene_shadows(void)
 {
     r3d_driver_disable(GL_STENCIL_TEST);
     r3d_driver_enable(GL_DEPTH_TEST);
@@ -1640,48 +1669,28 @@ void pass_scene_shadow(void)
 
     #define COND (                                                          \
         (call->mesh.instance.shadowCastMode != R3D_SHADOW_CAST_DISABLED) && \
-        IS_MESH_VISIBLE(call->mesh.instance, light->casterMask)             \
+        IS_MESH_VISIBLE(call->mesh.instance, job->cullMask)                 \
     )
 
-    R3D_LIGHT_FOR_EACH_VISIBLE(light)
+    R3D_LIGHT_FOR_EACH_SHADOW_JOB(job)
     {
-        if (!r3d_light_shadow_should_be_updated(light, true))
-        {
-            continue;
-        }
+        r3d_light_bind_shadow_fbo(job->type, job->shadowLayer, job->layerFace);
+        glClear(GL_DEPTH_BUFFER_BIT);
 
-        if (light->type == R3D_LIGHT_OMNI)
+        const R3D_Frustum* frustum = &job->frustum;
+        r3d_render_cull_groups(frustum);
+
+        R3D_RENDER_FOR_EACH(call, COND, frustum, R3D_RENDER_PACKLIST_SHADOW)
         {
-            for (int iFace = 0; iFace < 6; iFace++)
+            if (r3d_render_should_cast_shadow(call))
             {
-                r3d_light_shadow_bind_fbo(light->type, light->shadowLayer, iFace);
-                glClear(GL_DEPTH_BUFFER_BIT);
-
-                const R3D_Frustum* frustum = &light->frustum[iFace];
-                r3d_render_cull_groups(frustum);
-
-                R3D_RENDER_FOR_EACH(call, COND, frustum, R3D_RENDER_PACKLIST_SHADOW)
+                if (job->type == R3D_LIGHT_OMNI)
                 {
-                    if (r3d_render_should_cast_shadow(call))
-                    {
-                        raster_depth_cube(call, &light->viewProj[iFace], light);
-                    }
+                    raster_depth_cube(call, &job->viewProj, job);
                 }
-            }
-        }
-        else
-        {
-            r3d_light_shadow_bind_fbo(light->type, light->shadowLayer, 0);
-            glClear(GL_DEPTH_BUFFER_BIT);
-
-            const R3D_Frustum* frustum = &light->frustum[0];
-            r3d_render_cull_groups(frustum);
-
-            R3D_RENDER_FOR_EACH(call, COND, frustum, R3D_RENDER_PACKLIST_SHADOW)
-            {
-                if (r3d_render_should_cast_shadow(call))
+                else
                 {
-                    raster_depth(call, &light->viewProj[0], light);
+                    raster_depth(call, &job->viewProj, job);
                 }
             }
         }
@@ -1695,49 +1704,41 @@ void pass_scene_probes(void)
     const R3D_EnvBackground* bg = &R3D.environment.background;
     const R3D_EnvFog* fog = &R3D.environment.fog;
 
-    R3D_ENV_PROBE_FOR_EACH_VISIBLE(probe)
+    R3D_ENV_FOR_EACH_PROBE_JOB(job)
     {
-        if (!r3d_env_probe_should_be_updated(probe, true))
-        {
-            continue;
-        }
-
         for (int iFace = 0; iFace < 6; iFace++)
         {
-            /* --- Generates the list of visible groups for the current face of the capture --- */
-
-            const R3D_Frustum* frustum = &probe->frustum[iFace];
+            // Generates the list of visible groups for the current face of the capture
+            const R3D_Frustum* frustum = &job->frustum[iFace];
             r3d_render_cull_groups(frustum);
 
-            /* --- Render scene --- */
-
+            // Render scene
             r3d_driver_enable(GL_STENCIL_TEST);
             r3d_driver_enable(GL_DEPTH_TEST);
             r3d_driver_enable(GL_BLEND);
 
             r3d_driver_set_depth_mask(GL_TRUE);
 
-            r3d_env_capture_bind_fbo(iFace, 0);
+            r3d_env_probe_capture_bind_fbo(job->probeType, iFace);
             glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
             R3D_RENDER_FOR_EACH(call, true, frustum, R3D_RENDER_PACKLIST_PROBE)
             {
                 if (call->mesh.material.unlit)
                 {
-                    raster_probe_unlit(call, probe, iFace);
+                    raster_probe_unlit(call, job, iFace);
                 }
                 else
                 {
-                    upload_light_array_block_for_mesh(call, probe->shadows);
-                    raster_probe_forward(call, probe, iFace);
+                    upload_light_array_block_for_mesh(call, job->shadows);
+                    raster_probe_forward(call, job, iFace);
                 }
             }
 
             r3d_driver_set_depth_offset(0.0f, 0.0f);
             r3d_driver_set_depth_range(0.0f, 1.0f);
 
-            /* --- Render background --- */
-
+            // Render background
             r3d_driver_disable(GL_STENCIL_TEST);
             r3d_driver_disable(GL_CULL_FACE);
             r3d_driver_disable(GL_BLEND);
@@ -1753,8 +1754,8 @@ void pass_scene_probes(void)
                 R3D_SHADER_SET_FLOAT(scene.skybox, uEnergy, bg->energy);
                 R3D_SHADER_SET_FLOAT(scene.skybox, uLod, bg->skyBlur * lod);
                 R3D_SHADER_SET_VEC4(scene.skybox, uRotation, bg->rotation);
-                R3D_SHADER_SET_MAT4(scene.skybox, uMatInvView, probe->invView[iFace]);
-                R3D_SHADER_SET_MAT4(scene.skybox, uMatInvProj, probe->invProj);
+                R3D_SHADER_SET_MAT4(scene.skybox, uMatInvView, job->invView[iFace]);
+                R3D_SHADER_SET_MAT4(scene.skybox, uMatInvProj, job->invProj);
             }
             else
             {
@@ -1771,18 +1772,21 @@ void pass_scene_probes(void)
             R3D_RENDER_SCREEN();
         }
 
-        /* --- Generate irradiance and prefilter maps --- */
-
-        r3d_env_capture_gen_mipmaps();
-
-        if (probe->irradiance >= 0)
+        // Generate irradiance/prefilter map
+        GLuint captureTex = r3d_env_probe_capture_get(job->probeType);
+        int captureSize   = r3d_env_probe_capture_size(job->probeType);
+        switch (job->probeType)
         {
-            r3d_pass_prepare_irradiance(probe->irradiance, r3d_env_capture_get(), R3D_HINT(R3D_HINT_PROBE_CAPTURE_SIZE));
-        }
-
-        if (probe->prefilter >= 0)
-        {
-            r3d_pass_prepare_prefilter(probe->prefilter, r3d_env_capture_get(), R3D_HINT(R3D_HINT_PROBE_CAPTURE_SIZE));
+        case R3D_PROBE_ILLUMINATION:
+            r3d_pass_prepare_irradiance(job->layer, captureTex, captureSize);
+            break;
+        case R3D_PROBE_REFLECTION:
+            r3d_env_probe_capture_gen_mipmaps(job->probeType);
+            r3d_pass_prepare_prefilter(job->layer, captureTex, captureSize);
+            break;
+        default:
+            assert(false);
+            break;
         }
 
         r3d_target_invalidate_cache(); //< The IBL gen functions bind framebuffers; resetting them prevents any problems
@@ -2198,35 +2202,29 @@ void pass_deferred_lights(void)
     R3D_LIGHT_FOR_EACH_VISIBLE(light)
     {
         // Set scissors rect
-        r3d_rect_t dst = {0, 0, R3D_TARGET_SIZE_W, R3D_TARGET_SIZE_H};
-        if (light->type != R3D_LIGHT_DIR)
-        {
-            dst = r3d_light_get_screen_rect(light, &R3D.viewState.viewProj, R3D.viewState.camera.position, dst.w, dst.h);
-            if (memcmp(&dst, &(r3d_rect_t){0}, sizeof(r3d_rect_t)) == 0) continue;
-        }
+        r3d_rect_t dst = r3d_light_screen_rect(light, R3D_TARGET_SIZE_W, R3D_TARGET_SIZE_H);
         r3d_driver_set_scissor(dst.x, dst.y, dst.w, dst.h);
 
         // Send light data to the GPU
         r3d_shader_block_light_t data = {
-            .viewProj = MatrixTranspose(light->viewProj[0]),
-            .color = light->color,
-            .position = light->position,
-            .direction = light->direction,
-            .energy = light->energy,
-            .specular = light->specular,
-            .range = light->range,
-            .falloff = light->falloff,
-            .innerCutOff = light->innerCutOff,
-            .outerCutOff = light->outerCutOff,
-            .fogEnergy = light->fogEnergy,
-            .near = light->near,
-            .far = light->far,
-            .shadowSoftness = light->shadowSoftness,
-            .shadowOpacity = light->shadowOpacity,
+            .viewProj        = MatrixTranspose(light->viewProj),
+            .color           = light->color,
+            .position        = light->position,
+            .direction       = light->direction,
+            .energy          = light->energy,
+            .specular        = light->specular,
+            .range           = light->range,
+            .falloff         = light->falloff,
+            .innerCutOff     = light->innerCutOff,
+            .outerCutOff     = light->outerCutOff,
+            .fogEnergy       = light->fogEnergy,
+            .shadowSoftness  = light->shadowSoftness,
+            .shadowOpacity   = light->shadowOpacity,
             .shadowDepthBias = light->shadowDepthBias,
             .shadowSlopeBias = light->shadowSlopeBias,
-            .shadowLayer = light->shadowLayer,
-            .type = light->type,
+            .shadowFar       = light->shadowFar,
+            .shadowLayer     = light->shadowLayer,
+            .type            = light->type,
         };
         r3d_shader_set_uniform_block(R3D_SHADER_BLOCK_LIGHT, &data, true);
 
@@ -2345,34 +2343,28 @@ void pass_deferred_volumetric_fog(r3d_target_t sceneTarget)
     {
         if (light->fogEnergy == 0.0f) continue;
 
-        r3d_rect_t dst = {0, 0, R3D_TARGET_SIZE_W/2, R3D_TARGET_SIZE_H/2};
-        if (light->type != R3D_LIGHT_DIR)
-        {
-            dst = r3d_light_get_screen_rect(light, &R3D.viewState.viewProj, R3D.viewState.camera.position, dst.w, dst.h);
-            if (memcmp(&dst, &(r3d_rect_t){0}, sizeof(r3d_rect_t)) == 0) continue;
-        }
+        r3d_rect_t dst = r3d_light_screen_rect(light, R3D_TARGET_SIZE_W / 2, R3D_TARGET_SIZE_H / 2);
         r3d_driver_set_scissor(dst.x, dst.y, dst.w, dst.h);
 
         r3d_shader_block_light_t data = {
-            .viewProj = MatrixTranspose(light->viewProj[0]),
-            .color = light->color,
-            .position = light->position,
-            .direction = light->direction,
-            .energy = light->energy,
-            .specular = light->specular,
-            .range = light->range,
-            .falloff = light->falloff,
-            .innerCutOff = light->innerCutOff,
-            .outerCutOff = light->outerCutOff,
-            .fogEnergy = light->fogEnergy,
-            .near = light->near,
-            .far = light->far,
-            .shadowSoftness = light->shadowSoftness,
-            .shadowOpacity = light->shadowOpacity,
+            .viewProj        = MatrixTranspose(light->viewProj),
+            .color           = light->color,
+            .position        = light->position,
+            .direction       = light->direction,
+            .energy          = light->energy,
+            .specular        = light->specular,
+            .range           = light->range,
+            .falloff         = light->falloff,
+            .innerCutOff     = light->innerCutOff,
+            .outerCutOff     = light->outerCutOff,
+            .fogEnergy       = light->fogEnergy,
+            .shadowSoftness  = light->shadowSoftness,
+            .shadowOpacity   = light->shadowOpacity,
             .shadowDepthBias = light->shadowDepthBias,
             .shadowSlopeBias = light->shadowSlopeBias,
-            .shadowLayer = light->shadowLayer,
-            .type = light->type,
+            .shadowFar       = light->shadowFar,
+            .shadowLayer     = light->shadowLayer,
+            .type            = light->type,
         };
         r3d_shader_set_uniform_block(R3D_SHADER_BLOCK_LIGHT, &data, true);
 
