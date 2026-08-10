@@ -7,7 +7,6 @@
  */
 
 #include <r3d/r3d_lighting.h>
-#include <r3d/r3d_color.h>
 #include <r3d_config.h>
 #include <raymath.h>
 #include <stddef.h>
@@ -15,8 +14,6 @@
 #include <rlgl.h>
 
 #include "./modules/r3d_light.h"
-#include "./common/r3d_math.h"
-#include "raylib.h"
 
 // ========================================
 // PUBLIC API

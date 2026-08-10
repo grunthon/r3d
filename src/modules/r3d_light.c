@@ -9,7 +9,6 @@
 #include "./r3d_light.h"
 
 #include <r3d/r3d_frustum.h>
-#include <r3d/r3d_color.h>
 #include <r3d_config.h>
 #include <raymath.h>
 #include <stdint.h>
@@ -367,7 +366,7 @@ static void light_dir_push(const R3D_Light* light, const R3D_ShadowMap* map, R3D
         .volume      = {.center = {0}, .radius = FLT_MAX},
         .minNdc      = {-1, -1},
         .maxNdc      = {+1, +1},
-        .color       = R3D_ColorSrgbToLinearVector3(light->color),
+        .color       = r3d_color_srgb_to_linear_vec3(light->color),
         .direction   = Vector3Normalize(light->direction),
         .energy      = light->energy,
         .specular    = light->specular,
@@ -461,7 +460,7 @@ static void light_spot_push(const R3D_Light* light, const R3D_ShadowMap* map, co
                 .volume      = volume,
                 .minNdc      = minNdc,
                 .maxNdc      = maxNdc,
-                .color       = R3D_ColorSrgbToLinearVector3(light->color),
+                .color       = r3d_color_srgb_to_linear_vec3(light->color),
                 .position    = position,
                 .direction   = direction,
                 .energy      = light->energy,
@@ -548,7 +547,7 @@ static void light_omni_push(const R3D_Light* light, const R3D_ShadowMap* map, co
                 .volume      = volume,
                 .minNdc      = minNdc,
                 .maxNdc      = maxNdc,
-                .color       = R3D_ColorSrgbToLinearVector3(light->color),
+                .color       = r3d_color_srgb_to_linear_vec3(light->color),
                 .position    = light->position,
                 .energy      = light->energy,
                 .specular    = light->specular,
