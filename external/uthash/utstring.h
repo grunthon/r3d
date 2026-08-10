@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2008-2025, Troy D. Hanson  https://troydhanson.github.io/uthash/
+Copyright (c) 2008-2026, Troy D. Hanson  https://troydhanson.github.io/uthash/
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef UTSTRING_H
 #define UTSTRING_H
 
-#define UTSTRING_VERSION 2.3.0
+#define UTSTRING_VERSION 2.4.0
 
 #include <stdlib.h>
 #include <string.h>
