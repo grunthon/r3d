@@ -45,9 +45,9 @@ void main()
     float sampleDelta = 0.025;
     float nrSamples = 0.0;
 
-    for (float phi = 0.0; phi < 2.0 * M_PI; phi += sampleDelta)
+    for (float phi = 0.0; phi < M_TAU; phi += sampleDelta)
     {
-        for (float theta = 0.0; theta < 0.5 * M_PI; theta += sampleDelta)
+        for (float theta = 0.0; theta < M_HPI; theta += sampleDelta)
         {
             vec3 sampleVec = OBN * vec3(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
             irradiance += texture(uSourceTex, sampleVec).rgb * cos(theta) * sin(theta);
