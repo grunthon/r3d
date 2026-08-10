@@ -7,6 +7,12 @@
  */
 
 // ================================
+// Includes
+// ================================
+
+#include <lib/color.glsl>
+
+// ================================
 // Built-In: Constants
 // ================================
 
@@ -55,19 +61,19 @@ void SceneVertex()
 {
     INSTANCE_POSITION = iPosition;
     INSTANCE_ROTATION = iRotation;
-    INSTANCE_SCALE = iScale;
-    INSTANCE_COLOR = iColor;
-    INSTANCE_CUSTOM = iCustom;
+    INSTANCE_SCALE    = iScale;
+    INSTANCE_COLOR    = C_SrgbToLinear(iColor);
+    INSTANCE_CUSTOM   = iCustom;
 
     POSITION = aPosition;
     TEXCOORD = uTexCoordOffset + aTexCoord * uTexCoordScale;
     EMISSION = uEmissionColor * uEmissionEnergy;
-    COLOR = aColor * uAlbedoColor;
-    TANGENT = aTangent;
-    NORMAL = aNormal;
+    COLOR    = C_SrgbToLinear(aColor) * uAlbedoColor;
+    TANGENT  = aTangent;
+    NORMAL   = aNormal;
 
     FRAME_INDEX = uFrame.index;
-    TIME = uFrame.time;
+    TIME        = uFrame.time;
 
     vertex();
 }
