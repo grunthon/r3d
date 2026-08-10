@@ -196,7 +196,7 @@ static void r3d_draw_light_spot_debug(const R3D_Light* light)
     Vector3 dir = Vector3Normalize(light->direction);
 
     // Build orthonormal basis
-    Vector3 ref = (fabsf(dir.y) < 0.999f) ? (Vector3){0,1,0} : (Vector3){1,0,0};
+    Vector3 ref = (fabsf(dir.y) < 0.999f) ? (Vector3) {0,1,0} : (Vector3) {1,0,0};
     Vector3 right = Vector3Normalize(Vector3CrossProduct(dir, ref));
     Vector3 up = Vector3CrossProduct(right, dir);
 
@@ -227,7 +227,7 @@ static void r3d_draw_light_spot_debug(const R3D_Light* light)
         rlEnd();
 
         // 4 lines from apex to ring (cardinal points only)
-        float ringAngles[4] = { 0, PI * 0.5f, PI, PI * 1.5f };
+        float ringAngles[4] = {0, PI * 0.5f, PI, PI * 1.5f};
         for (int i = 0; i < 4; i++)
         {
             Vector3 rim = Vector3Add(base, Vector3Add(
