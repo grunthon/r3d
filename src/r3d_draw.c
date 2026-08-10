@@ -2534,20 +2534,6 @@ r3d_target_t pass_post_bloom(r3d_target_t sceneTarget)
 
     R3D_TARGET_BIND(false, R3D_TARGET_BLOOM);
 
-    /* --- Calculate bloom prefilter --- */
-
-    float threshold = R3D.environment.bloom.threshold;
-    float softThreshold = R3D.environment.bloom.softThreshold;
-
-    float knee = threshold * softThreshold;
-
-    Vector4 prefilter = {
-        prefilter.x = threshold,
-        prefilter.y = threshold - knee,
-        prefilter.z = 2.0f * knee,
-        prefilter.w = 0.25f / (knee + 0.00001f),
-    };
-
     /* --- Adjust max mip count --- */
 
     int maxLevel = (int)((float)numLevels * R3D.environment.bloom.levels + 0.5f);
