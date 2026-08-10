@@ -33,7 +33,7 @@ int main(void)
     R3D_ShadowMap shadows[2];
     for (int i = 0; i < 2; i++)
     {
-        lights[i] = R3D_CreateOmniLight((Vector3) {i ? -5.0f : 5.0f, 5.0f, 0.0f}, 16.0f, WHITE, 8.0f);
+        lights[i] = R3D_CreateOmniLight((Vector3) {i ? -5.0f : 5.0f, 5.0f, 0.0f}, 16.0f, WHITE, 4.0f);
         shadows[i] = R3D_LoadShadowMap(R3D_LIGHT_OMNI);
     }
 
