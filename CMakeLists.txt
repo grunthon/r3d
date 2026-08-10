@@ -450,8 +450,16 @@ set(R3D_WARNING_FLAGS_GNU_CLANG
 )
 
 set(R3D_WARNING_FLAGS_MSVC
-    /W4
-    /permissive-
+    /W4         # -Wall -Wextra
+    /w14456     # -Wshadow: local variable shadows another local
+    /w14457     # -Wshadow: hides a function parameter
+    /w14458     # -Wshadow: hides a struct member
+    /w14459     # -Wshadow: shadows a global declaration
+    /wd4244     # remove: conversion, possible data loss
+    /wd4267     # remove: conversion size_t -> smaller type
+    /wd4245     # remove: signed/unsigned conversion
+    /wd4018     # remove: signed/unsigned comparison
+    /wd4389     # remove: signed/unsigned equality
 )
 
 target_compile_options(${PROJECT_NAME} PRIVATE
