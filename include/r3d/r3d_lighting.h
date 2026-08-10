@@ -130,9 +130,9 @@ R3DAPI bool R3D_IsShadowMapValid(R3D_ShadowMap shadowMap);
  * @note This function should be called while using the default 3D rendering mode of raylib, 
  *       not with R3D's rendering mode. It uses raylib's 3D drawing functions to render the light's shape.
  *
- * @param id The ID of the light.
+ * @param light The light to visualize (see R3D_Light).
  */
-R3DAPI void R3D_DrawLightDebug(R3D_Light id);
+R3DAPI void R3D_DrawLightDebug(R3D_Light light);
 
 // ----------------------------------------
 // LIGHTING: Math Helper Functions
