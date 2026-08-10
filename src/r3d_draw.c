@@ -10,7 +10,6 @@
 #include <r3d_config.h>
 #include <raymath.h>
 #include <stddef.h>
-#include <assert.h>
 #include <float.h>
 #include <rlgl.h>
 #include <glad.h>
@@ -744,7 +743,7 @@ void update_view_state(R3D_View view)
 
 void upload_light_array_block_for_mesh(const r3d_render_call_t* call, bool shadow)
 {
-    assert(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
+    R3D_ASSERT(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
 
     r3d_shader_block_light_array_t lights = {0};
 
@@ -988,7 +987,7 @@ void upload_fx_block(void)
 
 void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, const r3d_light_shadow_job_t* shadowJob)
 {
-    assert(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
+    R3D_ASSERT(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
 
     const r3d_render_group_t* group = r3d_render_get_call_group(call);
     const R3D_Material* material = &call->mesh.material;
@@ -1072,7 +1071,7 @@ void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, const r
 
 void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, const r3d_light_shadow_job_t* shadowJob)
 {
-    assert(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
+    R3D_ASSERT(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
 
     const r3d_render_group_t* group = r3d_render_get_call_group(call);
     const R3D_Material* material = &call->mesh.material;
@@ -1164,7 +1163,7 @@ void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, co
 
 void raster_probe_forward(const r3d_render_call_t* call, const r3d_env_probe_job_t* job, int face)
 {
-    assert(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
+    R3D_ASSERT(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
 
     const r3d_render_group_t* group = r3d_render_get_call_group(call);
     const R3D_Material* material = &call->mesh.material;
@@ -1254,7 +1253,7 @@ void raster_probe_forward(const r3d_render_call_t* call, const r3d_env_probe_job
 
 void raster_probe_unlit(const r3d_render_call_t* call, const r3d_env_probe_job_t* job, int face)
 {
-    assert(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
+    R3D_ASSERT(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
 
     const r3d_render_group_t* group = r3d_render_get_call_group(call);
     const R3D_Material* material = &call->mesh.material;
@@ -1330,7 +1329,7 @@ void raster_probe_unlit(const r3d_render_call_t* call, const r3d_env_probe_job_t
 
 void raster_geometry(const r3d_render_call_t* call, bool matchPrepass)
 {
-    assert(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
+    R3D_ASSERT(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
 
     const r3d_render_group_t* group = r3d_render_get_call_group(call);
     const R3D_Material* material = &call->mesh.material;
@@ -1424,7 +1423,7 @@ void raster_geometry(const r3d_render_call_t* call, bool matchPrepass)
 
 void raster_decal(const r3d_render_call_t* call)
 {
-    assert(call->type == R3D_RENDER_CALL_DECAL); //< Paranoid assert, should be fine
+    R3D_ASSERT(call->type == R3D_RENDER_CALL_DECAL); //< Paranoid assert, should be fine
 
     const r3d_render_group_t* group = r3d_render_get_call_group(call);
     const R3D_Decal* decal = &call->decal.instance;
@@ -1498,7 +1497,7 @@ void raster_decal(const r3d_render_call_t* call)
 
 void raster_forward(const r3d_render_call_t* call)
 {
-    assert(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
+    R3D_ASSERT(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
 
     const r3d_render_group_t* group = r3d_render_get_call_group(call);
     const R3D_Material* material = &call->mesh.material;
@@ -1585,7 +1584,7 @@ void raster_forward(const r3d_render_call_t* call)
 
 void raster_unlit(const r3d_render_call_t* call)
 {
-    assert(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
+    R3D_ASSERT(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
 
     const r3d_render_group_t* group = r3d_render_get_call_group(call);
     const R3D_Material* material = &call->mesh.material;
@@ -1790,7 +1789,7 @@ void pass_scene_probes(void)
             break;
 
         default:
-            assert(false);
+            R3D_ASSERT(false);
             break;
         }
 

@@ -9,7 +9,8 @@
 #include "./r3d_stack.h"
 #include <raylib.h>
 #include <string.h>
-#include <assert.h>
+
+#include "./r3d_helper.h"
 
 // ========================================
 // INTERNAL HELPERS
@@ -93,7 +94,7 @@ bool r3d_stack_push(r3d_stack_t** stackPtr, size_t reserve)
 {
     r3d_stack_t* stack = *stackPtr;
 
-    assert(stack->depth < R3D_STACK_MAX_DEPTH && "r3d_stack: max push() depth exceeded");
+    R3D_ASSERT(stack->depth < R3D_STACK_MAX_DEPTH && "r3d_stack: max push() depth exceeded");
     if (stack->depth >= R3D_STACK_MAX_DEPTH)
     {
         return false;
@@ -113,7 +114,7 @@ bool r3d_stack_push(r3d_stack_t** stackPtr, size_t reserve)
 
 void r3d_stack_pop(r3d_stack_t* stack)
 {
-    assert(stack->depth > 0 && "r3d_stack: pop() without matching push()");
+    R3D_ASSERT(stack->depth > 0 && "r3d_stack: pop() without matching push()");
     if (stack->depth == 0) return;
 
     stack->cursor = stack->marks[--stack->depth];
@@ -129,7 +130,7 @@ void* r3d_stack_alloc_aligned(r3d_stack_t** stackPtr, size_t size, size_t align)
     if (size == 0) return NULL;
     if (align == 0) align = 1;
 
-    assert((align & (align - 1)) == 0 && "r3d_stack: align must be a power of two");
+    R3D_ASSERT((align & (align - 1)) == 0 && "r3d_stack: align must be a power of two");
 
     r3d_stack_t* stack = *stackPtr;
 

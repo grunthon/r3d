@@ -10,7 +10,6 @@
 #include <r3d_config.h>
 #include <stddef.h>
 #include <string.h>
-#include <assert.h>
 
 #include "../common/r3d_helper.h"
 #include "../common/r3d_math.h"
@@ -158,9 +157,9 @@ static void alloc_depth_stencil_texture(uint32_t resW, uint32_t resH)
  */
 static int get_or_create_fbo(const r3d_target_t* targets, int count, bool depth)
 {
-    assert(targets || (!targets && count == 0));
-    assert(count <= R3D_TARGET_MAX_ATTACHMENTS);
-    assert(count > 0 || (count == 0 && depth));
+    R3D_ASSERT(targets || (!targets && count == 0));
+    R3D_ASSERT(count <= R3D_TARGET_MAX_ATTACHMENTS);
+    R3D_ASSERT(count > 0 || (count == 0 && depth));
 
     /* --- Search if the combination is already cached --- */
 
@@ -178,7 +177,7 @@ static int get_or_create_fbo(const r3d_target_t* targets, int count, bool depth)
 
     /* --- Create the FBO and cache it --- */
 
-    assert(R3D_MOD_TARGET.fboCount < R3D_TARGET_MAX_FRAMEBUFFERS);
+    R3D_ASSERT(R3D_MOD_TARGET.fboCount < R3D_TARGET_MAX_FRAMEBUFFERS);
 
     int newIndex = R3D_MOD_TARGET.fboCount++;
     r3d_target_fbo_t* fbo = &R3D_MOD_TARGET.fbo[newIndex];
@@ -360,8 +359,8 @@ r3d_target_t r3d_target_swap_scene(r3d_target_t scene)
 
 void r3d_target_clear(const r3d_target_t* targets, int count, int level, bool depth)
 {
-    assert((!depth || level == 0) && "If depth buffer bind, always bind at level zero");
-    assert(count > 0 || depth);
+    R3D_ASSERT((!depth || level == 0) && "If depth buffer bind, always bind at level zero");
+    R3D_ASSERT(count > 0 || depth);
 
     int fboIndex = get_or_create_fbo(targets, count, depth);
     if (fboIndex != R3D_MOD_TARGET.currentFbo)
@@ -391,8 +390,8 @@ void r3d_target_clear(const r3d_target_t* targets, int count, int level, bool de
 
 void r3d_target_bind(const r3d_target_t* targets, int count, int level, bool depth)
 {
-    assert((!depth || level == 0) && "If depth buffer bind, always bind at level zero");
-    assert(count > 0 || depth);
+    R3D_ASSERT((!depth || level == 0) && "If depth buffer bind, always bind at level zero");
+    R3D_ASSERT(count > 0 || depth);
 
     int fboIndex = get_or_create_fbo(targets, count, depth);
     if (fboIndex != R3D_MOD_TARGET.currentFbo)
@@ -412,7 +411,7 @@ void r3d_target_bind(const r3d_target_t* targets, int count, int level, bool dep
 
 void r3d_target_bind_levels(const r3d_target_t* targets, int* levels, int count)
 {
-    assert(count > 0);
+    R3D_ASSERT(count > 0);
 
     int fboIndex = get_or_create_fbo(targets, count, false);
     if (fboIndex != R3D_MOD_TARGET.currentFbo)
@@ -438,13 +437,13 @@ void r3d_target_set_viewport(r3d_target_t target, int level)
 
 void r3d_target_set_write_level(int attachment, int level)
 {
-    assert(R3D_MOD_TARGET.currentFbo >= 0);
+    R3D_ASSERT(R3D_MOD_TARGET.currentFbo >= 0);
 
     r3d_target_fbo_t* fbo = &R3D_MOD_TARGET.fbo[R3D_MOD_TARGET.currentFbo];
-    assert(fbo->targetCount > 0 && attachment < fbo->targetCount);
+    R3D_ASSERT(fbo->targetCount > 0 && attachment < fbo->targetCount);
 
     r3d_target_t target = fbo->targets[attachment];
-    assert(level < r3d_target_get_num_levels(target));
+    R3D_ASSERT(level < r3d_target_get_num_levels(target));
     r3d_target_attachment_state_t* state = &fbo->targetStates[attachment];
 
     if (state->writeLevel != level)
@@ -464,9 +463,9 @@ void r3d_target_set_read_level(r3d_target_t target, int level)
 
 void r3d_target_set_read_levels(r3d_target_t target, int baseLevel, int maxLevel)
 {
-    assert(R3D_MOD_TARGET.targetLoaded[target]);
-    assert(baseLevel < r3d_target_get_num_levels(target));
-    assert(maxLevel < r3d_target_get_num_levels(target));
+    R3D_ASSERT(R3D_MOD_TARGET.targetLoaded[target]);
+    R3D_ASSERT(baseLevel < r3d_target_get_num_levels(target));
+    R3D_ASSERT(maxLevel < r3d_target_get_num_levels(target));
 
     r3d_target_state_t* state = &R3D_MOD_TARGET.targetStates[target];
 
@@ -499,8 +498,8 @@ bool r3d_target_exists(r3d_target_t target)
 
 GLuint r3d_target_get(r3d_target_t target)
 {
-    assert(target > R3D_TARGET_INVALID && target < R3D_TARGET_COUNT);
-    assert(R3D_MOD_TARGET.targetLoaded[target]);
+    R3D_ASSERT(target > R3D_TARGET_INVALID && target < R3D_TARGET_COUNT);
+    R3D_ASSERT(R3D_MOD_TARGET.targetLoaded[target]);
     return R3D_MOD_TARGET.targetTextures[target];
 }
 
@@ -518,14 +517,14 @@ GLuint r3d_target_get_level(r3d_target_t target, int level)
 
 GLuint r3d_target_get_levels(r3d_target_t target, int baseLevel, int maxLevel)
 {
-    assert(target > R3D_TARGET_INVALID && target < R3D_TARGET_COUNT);
+    R3D_ASSERT(target > R3D_TARGET_INVALID && target < R3D_TARGET_COUNT);
     r3d_target_set_read_levels(target, baseLevel, maxLevel);
     return R3D_MOD_TARGET.targetTextures[target];
 }
 
 GLuint r3d_target_get_all_levels(r3d_target_t target)
 {
-    assert(target > R3D_TARGET_INVALID && target < R3D_TARGET_COUNT);
+    R3D_ASSERT(target > R3D_TARGET_INVALID && target < R3D_TARGET_COUNT);
     int maxLevel = r3d_target_get_num_levels(target) - 1;
     r3d_target_set_read_levels(target, 0, maxLevel);
     return R3D_MOD_TARGET.targetTextures[target];
@@ -538,7 +537,7 @@ GLuint r3d_target_get_depth_buffer(void)
 
 void r3d_target_blit(r3d_target_t target, bool depth, GLuint dstFbo, int dstX, int dstY, int dstW, int dstH, bool linear)
 {
-    assert(target > R3D_TARGET_INVALID || depth);
+    R3D_ASSERT(target > R3D_TARGET_INVALID || depth);
 
     int fboIndex = -1;
     if (target > R3D_TARGET_INVALID)

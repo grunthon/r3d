@@ -9,9 +9,9 @@
 #include <r3d/r3d_animation_player.h>
 #include <r3d_config.h>
 #include <raymath.h>
-#include <assert.h>
 #include <glad.h>
 
+#include "./common/r3d_helper.h"
 #include "./common/r3d_anim.h"
 
 // ========================================
@@ -288,7 +288,7 @@ bool is_anim_index_valid(R3D_AnimationPlayer* player, int animIndex)
 
 void reset_anim_time(R3D_AnimationPlayer* player, int animIndex)
 {
-    assert(is_anim_index_valid(player, animIndex));
+    R3D_ASSERT(is_anim_index_valid(player, animIndex));
 
     R3D_AnimationState* state = &player->states[animIndex];
     const R3D_Animation* anim = &player->animLib.animations[animIndex];
@@ -299,7 +299,7 @@ void reset_anim_time(R3D_AnimationPlayer* player, int animIndex)
 
 void compute_local_matrices(R3D_AnimationPlayer* player)
 {
-    assert(is_anim_index_valid(player, player->activeAnimIndex));
+    R3D_ASSERT(is_anim_index_valid(player, player->activeAnimIndex));
 
     const R3D_AnimationState* state = &player->states[player->activeAnimIndex];
     const R3D_Animation* anim = &player->animLib.animations[player->activeAnimIndex];

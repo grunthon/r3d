@@ -13,10 +13,10 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 #include <float.h>
 #include <glad.h>
 
+#include "../common/r3d_helper.h"
 #include "../common/r3d_math.h"
 #include "../common/r3d_hash.h"
 #include "../r3d_core_state.h"
@@ -553,14 +553,14 @@ static void instances_disable(R3D_InstanceFlags flags)
 
 static inline int array_get_call_index(const r3d_render_call_t* call)
 {
-    assert(call >= R3D_MOD_RENDER.calls);
+    R3D_ASSERT(call >= R3D_MOD_RENDER.calls);
     return (int)(call - R3D_MOD_RENDER.calls);
 }
 
 static inline int array_get_last_group_index(void)
 {
     int groupIndex = R3D_MOD_RENDER.numGroups - 1;
-    assert(groupIndex >= 0);
+    R3D_ASSERT(groupIndex >= 0);
     return groupIndex;
 }
 
@@ -624,7 +624,7 @@ static inline GLenum get_opengl_primitive(R3D_PrimitiveType primitive)
 
 static void get_draw_call_info(const r3d_render_call_t* call, GLenum* primitive, r3d_render_range_t* vertexRange, r3d_render_range_t* indexRange)
 {
-    assert(primitive && vertexRange && indexRange);
+    R3D_ASSERT(primitive && vertexRange && indexRange);
 
     *primitive = GL_NONE;
     *vertexRange = (r3d_render_range_t) {0};
@@ -660,7 +660,7 @@ static void get_draw_call_info(const r3d_render_call_t* call, GLenum* primitive,
         }
         break;
     default:
-        assert(false);
+        R3D_ASSERT(false);
         break;
     }
 }
@@ -715,7 +715,7 @@ static inline bool is_draw_call_visible(const R3D_Frustum* frustum, const r3d_re
             .max.x = +0.5f, .max.y = +0.5f, .max.z = +0.5f
         }, transform);
     default:
-        assert(false);
+        R3D_ASSERT(false);
         break;
     }
 
@@ -794,8 +794,8 @@ static inline void sort_fill_state_data(r3d_render_sort_state_t* state, const r3
 
 static void sort_fill_cache_front_to_back(r3d_render_list_enum_t list)
 {
-    assert(list < R3D_RENDER_LIST_NON_INST_COUNT && "Instantiated render lists should not be sorted by distance");
-    assert(list != R3D_RENDER_LIST_DECAL && "Decal render list should not be sorted by distance");
+    R3D_ASSERT(list < R3D_RENDER_LIST_NON_INST_COUNT && "Instantiated render lists should not be sorted by distance");
+    R3D_ASSERT(list != R3D_RENDER_LIST_DECAL && "Decal render list should not be sorted by distance");
 
     r3d_render_list_t* drawList = &R3D_MOD_RENDER.list[list];
 
@@ -816,8 +816,8 @@ static void sort_fill_cache_front_to_back(r3d_render_list_enum_t list)
 
 static void sort_fill_cache_back_to_front(r3d_render_list_enum_t list)
 {
-    assert(list < R3D_RENDER_LIST_NON_INST_COUNT && "Instantiated render lists should not be sorted by distance");
-    assert(list != R3D_RENDER_LIST_DECAL && "Decal render list should not be sorted by distance");
+    R3D_ASSERT(list < R3D_RENDER_LIST_NON_INST_COUNT && "Instantiated render lists should not be sorted by distance");
+    R3D_ASSERT(list != R3D_RENDER_LIST_DECAL && "Decal render list should not be sorted by distance");
 
     r3d_render_list_t* drawList = &R3D_MOD_RENDER.list[list];
 
@@ -1025,8 +1025,8 @@ void r3d_render_quit(void)
 
 bool r3d_render_alloc_vertices(int count, int* outOffset)
 {
-    assert(outOffset != NULL);
-    assert(count > 0);
+    R3D_ASSERT(outOffset != NULL);
+    R3D_ASSERT(count > 0);
 
     // First search the free list
     int offset = free_list_pop_range(
@@ -1059,8 +1059,8 @@ bool r3d_render_alloc_vertices(int count, int* outOffset)
 
 bool r3d_render_alloc_elements(int count, int* outOffset)
 {
-    assert(outOffset != NULL);
-    assert(count > 0);
+    R3D_ASSERT(outOffset != NULL);
+    R3D_ASSERT(count > 0);
 
     int offset = free_list_pop_range(
         R3D_MOD_RENDER.freeElements,
@@ -1091,8 +1091,8 @@ bool r3d_render_alloc_elements(int count, int* outOffset)
 
 bool r3d_render_realloc_vertices(int* offset, int* count, int newCount, bool keepData)
 {
-    assert(offset != NULL && count != NULL);
-    assert(*offset >= 0 && *count >= 0 && newCount > 0);
+    R3D_ASSERT(offset != NULL && count != NULL);
+    R3D_ASSERT(*offset >= 0 && *count >= 0 && newCount > 0);
 
     if (newCount == *count)
     {
@@ -1163,8 +1163,8 @@ bool r3d_render_realloc_vertices(int* offset, int* count, int newCount, bool kee
 
 bool r3d_render_realloc_elements(int* offset, int* count, int newCount, bool keepData)
 {
-    assert(offset != NULL && count != NULL);
-    assert(*offset >= 0 && *count >= 0 && newCount > 0);
+    R3D_ASSERT(offset != NULL && count != NULL);
+    R3D_ASSERT(*offset >= 0 && *count >= 0 && newCount > 0);
 
     if (newCount == *count)
     {
@@ -1235,7 +1235,7 @@ bool r3d_render_realloc_elements(int* offset, int* count, int newCount, bool kee
 
 void r3d_render_free_vertices(int offset, int count)
 {
-    assert(offset >= 0 && count > 0);
+    R3D_ASSERT(offset >= 0 && count > 0);
 
     if (!free_list_push_range(
             &R3D_MOD_RENDER.freeVertices,
@@ -1252,7 +1252,7 @@ void r3d_render_free_vertices(int offset, int count)
 
 void r3d_render_free_elements(int offset, int count)
 {
-    assert(offset >= 0 && count > 0);
+    R3D_ASSERT(offset >= 0 && count > 0);
 
     if (!free_list_push_range(
             &R3D_MOD_RENDER.freeElements,
@@ -1269,8 +1269,8 @@ void r3d_render_free_elements(int offset, int count)
 
 void r3d_render_upload_vertices(int offset, const R3D_Vertex* verts, int count)
 {
-    assert(offset >= 0 && verts != NULL && count > 0);
-    assert(offset + count <= R3D_MOD_RENDER.globalVertexCapacity);
+    R3D_ASSERT(offset >= 0 && verts != NULL && count > 0);
+    R3D_ASSERT(offset + count <= R3D_MOD_RENDER.globalVertexCapacity);
 
     glBindBuffer(GL_ARRAY_BUFFER, R3D_MOD_RENDER.globalVbo);
     glBufferSubData(
@@ -1283,8 +1283,8 @@ void r3d_render_upload_vertices(int offset, const R3D_Vertex* verts, int count)
 
 void r3d_render_upload_elements(int offset, const GLuint* indices, int count)
 {
-    assert(offset >= 0 && indices != NULL && count > 0);
-    assert(offset + count <= R3D_MOD_RENDER.globalElementCapacity);
+    R3D_ASSERT(offset >= 0 && indices != NULL && count > 0);
+    R3D_ASSERT(offset + count <= R3D_MOD_RENDER.globalElementCapacity);
 
     glBindVertexArray(0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, R3D_MOD_RENDER.globalEbo);

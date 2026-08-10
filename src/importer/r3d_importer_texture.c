@@ -31,7 +31,6 @@
 #include <stdatomic.h>
 #include <string.h>
 #include <uthash.h>
-#include <assert.h>
 #include <stdio.h>
 #include <glad.h>
 
@@ -224,7 +223,7 @@ static bool texture_job_init(texture_job_t* job, const struct aiMaterial* materi
     case R3D_MAP_EMISSION: return texture_job_extract_emission(job, material);
     case R3D_MAP_ORM:      return texture_job_extract_orm(job, material);
     case R3D_MAP_NORMAL:   return texture_job_extract_normal(job, material);
-    default:               assert(false); break;
+    default:               R3D_ASSERT(false); break;
     }
     return false;
 }

@@ -10,8 +10,9 @@
 #include <r3d_config.h>
 #include <string.h>
 #include <uthash.h>
-#include <assert.h>
 #include <glad.h>
+
+#include "../common/r3d_helper.h"
 
 // ========================================
 // CONFIGURATION
@@ -563,7 +564,7 @@ void r3d_driver_set_shadow_cast_mode(R3D_ShadowCastMode castMode, R3D_CullMode c
 
     case R3D_SHADOW_CAST_DISABLED:
     default:
-        assert(false && "This shouldn't happen");
+        R3D_ASSERT(false && "This shouldn't happen");
         break;
     }
 }

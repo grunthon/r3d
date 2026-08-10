@@ -14,10 +14,10 @@
 #include <stdalign.h>
 #include <raylib.h>
 #include <stdint.h>
-#include <assert.h>
 #include <glad.h>
 
 #include "../common/r3d_rshade.h"
+#include "../common/r3d_helper.h"
 #include "../common/r3d_math.h"
 
 // ========================================
@@ -32,7 +32,7 @@
 #define R3D_SHADER_USE(shader_name) do {                                        \
     if (R3D_MOD_SHADER.shader_name.id == 0) {                                   \
         bool ok = R3D_MOD_SHADER_LOADER.shader_name(NULL);                      \
-        assert(ok);                                                             \
+        R3D_ASSERT(ok);                                                         \
     }                                                                           \
     if (R3D_MOD_SHADER.currentProgram != R3D_MOD_SHADER.shader_name.id) {       \
         R3D_MOD_SHADER.currentProgram = R3D_MOD_SHADER.shader_name.id;          \
@@ -41,10 +41,10 @@
 } while(0)
 
 #define R3D_SHADER_USE_CUSTOM(custom, shader_name) do {                         \
-    assert((custom) != NULL);                                                   \
+    R3D_ASSERT((custom) != NULL);                                               \
     if ((custom)->program->shader_name.id == 0) {                               \
         bool ok = R3D_MOD_SHADER_LOADER.shader_name(custom);                    \
-        assert(ok);                                                             \
+        R3D_ASSERT(ok);                                                         \
     }                                                                           \
     if (R3D_MOD_SHADER.currentProgram != (custom)->program->shader_name.id) {   \
         R3D_MOD_SHADER.currentProgram = (custom)->program->shader_name.id;      \

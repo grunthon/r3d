@@ -13,7 +13,6 @@
 #include <r3d_config.h>
 #include <raymath.h>
 #include <string.h>
-#include <assert.h>
 
 #include "../common/r3d_helper.h"
 #include "../r3d_core_state.h"
@@ -388,7 +387,7 @@ void r3d_env_push_probe(const R3D_Probe* probe, bool updateProbe)
         probe_push(probe, &R3D_MOD_ENV.prefilter, R3D_MOD_ENV.listProbeReflection, updateProbe);
         break;
     default:
-        assert(false);
+        R3D_ASSERT(false);
         break;
     }
 }
@@ -402,7 +401,7 @@ R3D_Probe* r3d_env_probe_get(R3D_ProbeType type, int probeIndex)
     case R3D_PROBE_REFLECTION:
         return &R3D_LIST_GET(R3D_MOD_ENV.listProbeReflection, R3D_Probe, probeIndex);
     default:
-        assert(false);
+        R3D_ASSERT(false);
         break;
     }
     return NULL;
@@ -424,7 +423,7 @@ bool r3d_env_probe_layer_is_valid(R3D_ProbeType type, int layer)
     case R3D_PROBE_REFLECTION:
         return r3d_env_prefilter_layer_is_valid(layer);
     default:
-        assert(false);
+        R3D_ASSERT(false);
         break;
     }
 
@@ -442,14 +441,14 @@ void r3d_env_probe_capture_bind_fbo(R3D_ProbeType type, int face)
         cubemap_bind_fbo(&R3D_MOD_ENV.prefilterCapture, face);
         break;
     default:
-        assert(false);
+        R3D_ASSERT(false);
         break;
     }
 }
 
 void r3d_env_probe_capture_gen_mipmaps(R3D_ProbeType type)
 {
-    assert(type == R3D_PROBE_REFLECTION);
+    R3D_ASSERT(type == R3D_PROBE_REFLECTION);
     cubemap_gen_mipmaps(&R3D_MOD_ENV.prefilterCapture);
 }
 
@@ -462,7 +461,7 @@ GLuint r3d_env_probe_capture_get(R3D_ProbeType type)
     case R3D_PROBE_REFLECTION:
         return R3D_MOD_ENV.prefilterCapture.texture;
     default:
-        assert(false);
+        R3D_ASSERT(false);
         break;
     }
     return 0;
@@ -477,7 +476,7 @@ int r3d_env_probe_capture_size(R3D_ProbeType type)
     case R3D_PROBE_REFLECTION:
         return R3D_MOD_ENV.prefilterCapture.size;
     default:
-        assert(false);
+        R3D_ASSERT(false);
         break;
     }
     return 0;
@@ -558,7 +557,7 @@ void r3d_env_prefilter_bind_fbo(int layer, int face, int mipLevel)
 {
     r3d_env_cubemap_array_t* arr = &R3D_MOD_ENV.prefilter;
 
-    assert(mipLevel < arr->mipLevels);
+    R3D_ASSERT(mipLevel < arr->mipLevels);
 
     r3d_env_cubemap_layer_state_t* state = &R3D_LIST_GET(arr->layerStates, r3d_env_cubemap_layer_state_t, layer);
     state->rendered = true;

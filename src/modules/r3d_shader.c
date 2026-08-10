@@ -10,7 +10,6 @@
 #include <r3d_config.h>
 #include <stdint.h>
 #include <string.h>
-#include <assert.h>
 #include <stdio.h>
 
 #include "../common/r3d_helper.h"
@@ -806,7 +805,7 @@ bool r3d_shader_load_prepare_cubemap_procedural_sky(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_prepare_cubemap_custom_sky(r3d_shader_custom_t* custom)
 {
-    assert(custom != NULL);
+    R3D_ASSERT(custom != NULL);
 
     if (strstr(custom->program->userCode, "void fragment()") == NULL)
     {
@@ -1563,7 +1562,7 @@ bool r3d_shader_load_post_auto_exposure(r3d_shader_custom_t* custom)
 
 bool r3d_shader_load_post_screen(r3d_shader_custom_t* custom)
 {
-    assert(custom != NULL);
+    R3D_ASSERT(custom != NULL);
 
     if (strstr(custom->program->userCode, "void fragment()") == NULL)
     {
@@ -1920,7 +1919,7 @@ void r3d_shader_quit(void)
 
 void r3d_shader_bind_sampler(r3d_shader_sampler_t sampler, GLuint texture)
 {
-    assert(R3D_MOD_SHADER.samplerTargets[sampler] != GL_NONE);
+    R3D_ASSERT(R3D_MOD_SHADER.samplerTargets[sampler] != GL_NONE);
 
     if (texture != R3D_MOD_SHADER.samplerBindings[sampler])
     {
@@ -1933,7 +1932,7 @@ void r3d_shader_bind_sampler(r3d_shader_sampler_t sampler, GLuint texture)
 
 void r3d_shader_set_uniform_block(r3d_shader_block_t block, const void* data, bool orphan)
 {
-    assert(block < R3D_SHADER_BLOCK_COUNT);
+    R3D_ASSERT(block < R3D_SHADER_BLOCK_COUNT);
 
     GLuint ubo = R3D_MOD_SHADER.uniformBuffers[block];
     int blockSlot = R3D_SHADER_BLOCK_SLOTS[block];
@@ -1955,7 +1954,7 @@ void r3d_shader_set_uniform_block(r3d_shader_block_t block, const void* data, bo
 
 void r3d_shader_bind_uniform_block(r3d_shader_block_t block)
 {
-    assert(block < R3D_SHADER_BLOCK_COUNT);
+    R3D_ASSERT(block < R3D_SHADER_BLOCK_COUNT);
 
     GLuint ubo = R3D_MOD_SHADER.uniformBuffers[block];
     int blockSlot = R3D_SHADER_BLOCK_SLOTS[block];
@@ -2057,7 +2056,7 @@ void r3d_shader_custom_init_uniforms(r3d_shader_custom_t* custom, int currentOff
 
 bool r3d_shader_custom_set_uniform(r3d_shader_custom_t* shader, const char* name, const void* value)
 {
-    assert(shader != NULL);
+    R3D_ASSERT(shader != NULL);
 
     for (int i = 0; i < R3D_MAX_SHADER_UNIFORMS && shader->data.uniforms.entries[i].name[0] != '\0'; i++)
     {
@@ -2075,7 +2074,7 @@ bool r3d_shader_custom_set_uniform(r3d_shader_custom_t* shader, const char* name
 
 bool r3d_shader_custom_set_sampler(r3d_shader_custom_t* shader, const char* name, Texture texture)
 {
-    assert(shader != NULL);
+    R3D_ASSERT(shader != NULL);
 
     for (int i = 0; i < R3D_MAX_SHADER_SAMPLERS && shader->data.samplers[i].name[0] != '\0'; i++)
     {
@@ -2090,7 +2089,7 @@ bool r3d_shader_custom_set_sampler(r3d_shader_custom_t* shader, const char* name
 
 void r3d_shader_custom_bind_uniforms(r3d_shader_custom_t* shader)
 {
-    assert(shader != NULL);
+    R3D_ASSERT(shader != NULL);
 
     if (shader->data.uniforms.bufferId == 0) return;
 
@@ -2110,7 +2109,7 @@ void r3d_shader_custom_bind_uniforms(r3d_shader_custom_t* shader)
 
 void r3d_shader_custom_bind_samplers(r3d_shader_custom_t* shader)
 {
-    assert(shader != NULL);
+    R3D_ASSERT(shader != NULL);
 
     for (int i = 0; i < R3D_MAX_SHADER_SAMPLERS && shader->data.samplers[i].name[0] != '\0'; i++)
     {
@@ -2131,7 +2130,7 @@ void r3d_shader_custom_bind_samplers(r3d_shader_custom_t* shader)
             sampler = R3D_SHADER_SAMPLER_CUSTOM_CUBE;
             break;
         default:
-            assert(false);
+            R3D_ASSERT(false);
             break;
         }
 
@@ -2170,7 +2169,7 @@ static size_t shader_inject_defines(char* dest, size_t destCap, const char* code
     if (!code || count < 0) return 0;
 
     const char* versionStart = strstr(code, "#version");
-    assert(versionStart && "Shader must have version");
+    R3D_ASSERT(versionStart && "Shader must have version");
 
     const char* versionEnd = strchr(versionStart, '\n');
     if (!versionEnd) versionEnd = versionStart + strlen(versionStart);
@@ -2189,7 +2188,7 @@ static size_t shader_inject_defines(char* dest, size_t destCap, const char* code
     size_t newLen = prefixLen + definesLen + suffixLen;
 
     if (!dest) return newLen;
-    assert(destCap > newLen && "shader_inject_defines: destination buffer too small");
+    R3D_ASSERT(destCap > newLen && "shader_inject_defines: destination buffer too small");
 
     char* d = dest;
     memcpy(d, code, prefixLen); d += prefixLen;
@@ -2228,7 +2227,7 @@ static size_t shader_inject_content(char* dest, size_t destCap, const char* sour
         : sourceLen + contentLen;
 
     if (!dest) return newLen;
-    assert(destCap > newLen && "shader_inject_content: destination buffer too small");
+    R3D_ASSERT(destCap > newLen && "shader_inject_content: destination buffer too small");
 
     char* ptr = dest;
 
@@ -2263,7 +2262,7 @@ static size_t shader_inject_content(char* dest, size_t destCap, const char* sour
 
 static inline bool shader_stage_needs_processing(const char* tmpl, const char** defines, int defineCount, const char* userCode, const char* funcSig)
 {
-    assert(tmpl && "shader stage template must not be NULL");
+    R3D_ASSERT(tmpl && "shader stage template must not be NULL");
     bool hasDefines = (defines && defineCount > 0);
     bool hasUserFunc = (userCode && strstr(userCode, funcSig) != NULL);
     return hasDefines || hasUserFunc;
@@ -2354,7 +2353,7 @@ void set_custom_samplers(GLuint id, r3d_shader_custom_t* custom)
             sampler = R3D_SHADER_SAMPLER_CUSTOM_CUBE;
             break;
         default:
-            assert(false);
+            R3D_ASSERT(false);
             break;
         }
 

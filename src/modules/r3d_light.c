@@ -14,11 +14,10 @@
 #include <raymath.h>
 #include <stdint.h>
 #include <string.h>
-#include <assert.h>
 #include <float.h>
 
+#include "../common/r3d_helper.h"
 #include "../r3d_core_state.h"
-#include "r3d/r3d_lighting.h"
 
 // ========================================
 // CONSTANTS
@@ -704,7 +703,7 @@ void r3d_light_release_shadow_layer(R3D_LightType type, int layer)
 
 void r3d_light_bind_shadow_fbo(R3D_LightType type, int layer, int face)
 {
-    assert((type == R3D_LIGHT_OMNI && face >= 0 && face < 6) || (type != R3D_LIGHT_OMNI && face == 0));
+    R3D_ASSERT((type == R3D_LIGHT_OMNI && face >= 0 && face < 6) || (type != R3D_LIGHT_OMNI && face == 0));
 
     r3d_light_shadow_array_t* arr = &R3D_MOD_LIGHT.shadowArrays[type];
     int stride = (type == R3D_LIGHT_OMNI) ? 6 : 1;
@@ -739,6 +738,6 @@ GLuint r3d_light_shadow_map(R3D_LightType type)
 
 r3d_light_shadow_cache_t* r3d_light_shadow_cache(R3D_LightType type, int layer)
 {
-    assert(layer >= 0);
+    R3D_ASSERT(layer >= 0);
     return &R3D_LIST_GET(R3D_MOD_LIGHT.shadowArrays[type].cache, r3d_light_shadow_cache_t, layer);
 }

@@ -25,6 +25,12 @@
 // HELPER MACROS
 // ========================================
 
+#if !defined(NDEBUG)
+#   define R3D_ASSERT(x) assert(x)
+#else
+#   define R3D_ASSERT(x) R3D_UNUSED(x)
+#endif
+
 #define R3D_UNUSED(x) ((void)(x))
 
 #define R3D_MIN(x, y) ((x) < (y) ? (x) : (y))
