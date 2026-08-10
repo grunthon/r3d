@@ -42,13 +42,15 @@ To use R3D, the required specifications are:
 
 ## Bindings
 
-Here is a list with all the ports available. Feel free to send a PR if you know of any binding/wrapper not in this list.
+Here is a list with all the ports available:
 
 | Name | R3D Version | Language | License |
 | --- | :-: | :-: | :-: |
-| [r3d-odin](https://github.com/Bigfoot71/r3d-odin) | **0.10.0** | [Odin](https://odin-lang.org/) | Zlib |
-| [ray4laz_r3d](https://github.com/GuvaCode/ray4laz_r3d) | **0.11.0** | [FreePascal](https://en.wikipedia.org/wiki/Free_Pascal) | MIT |
 | [r3d-cs](https://github.com/graphnode/r3d-cs) | **0.10.0** | [C#](https://en.wikipedia.org/wiki/C_Sharp_(programming_language)) | Zlib |
+| [ray4laz_r3d](https://github.com/GuvaCode/ray4laz_r3d) | **0.11.0** | [FreePascal](https://en.wikipedia.org/wiki/Free_Pascal) | MIT |
+| [r3d-odin](https://github.com/Bigfoot71/r3d-odin) | **0.10.0** | [Odin](https://odin-lang.org/) | Zlib |
+
+_Feel free to send a PR if you know of any binding/wrapper not in this list._
 
 ## Installation
 
