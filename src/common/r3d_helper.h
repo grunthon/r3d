@@ -9,10 +9,10 @@
 #ifndef R3D_COMMON_HELPER_H
 #define R3D_COMMON_HELPER_H
 
-#include "raylib.h"
-#include <stdbool.h>
+#include <raylib.h>
 #include <stdint.h>
 #include <stdarg.h>
+#include <string.h>
 #include <limits.h>
 #include <assert.h>
 #include <stdio.h>
@@ -101,6 +101,15 @@ static inline void* r3d_realloc(void* ptr, size_t size)
 static inline void r3d_free(void* ptr)
 {
     MemFree(ptr);
+}
+
+static inline void r3d_string_copy(char* dst, size_t dstSize, const char* src, size_t srcLen)
+{
+    if (dstSize == 0) return;
+
+    size_t len = (srcLen < dstSize - 1) ? srcLen : dstSize - 1;
+    memcpy(dst, src, len);
+    dst[len] = '\0';
 }
 
 static inline int r3d_string_format(char* dst, size_t dstSize, const char* fmt, ...)

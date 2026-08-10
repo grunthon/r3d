@@ -363,8 +363,7 @@ static bool load_mesh_internal(
 
     if (outMeshName != NULL && aiMesh->mName.length > 0)
     {
-        strncpy(*outMeshName, aiMesh->mName.data, sizeof(R3D_MeshName) - 1);
-        *outMeshName[sizeof(R3D_MeshName) - 1] = '\0';
+        r3d_string_copy(*outMeshName, sizeof(R3D_MeshName), aiMesh->mName.data, aiMesh->mName.length);
     }
 
     return true;

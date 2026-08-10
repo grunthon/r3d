@@ -62,8 +62,7 @@ static void build_skeleton_recursive(
         }
 
         // Store bone infos
-        strncpy(ctx->bones[currentIndex].name, node->mName.data, sizeof(ctx->bones[currentIndex].name) - 1);
-        ctx->bones[currentIndex].name[sizeof(ctx->bones[currentIndex].name) - 1] = '\0';
+        r3d_string_format(ctx->bones[currentIndex].name, sizeof(ctx->bones[currentIndex].name), node->mName.data, node->mName.length);
         ctx->bones[currentIndex].parent = parentIndex;
 
         // This bone becomes the parent for its children

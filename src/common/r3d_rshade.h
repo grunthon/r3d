@@ -492,8 +492,7 @@ static inline bool r3d_rshade_parse_uniform(const char** ptr,
         if (*samplerCount < maxSamplers)
         {
             r3d_rshade_sampler_t* s = &samplers[(*samplerCount)++];
-            strncpy(s->name, name, R3D_RSHADE_MAX_VAR_NAME_LENGTH - 1);
-            s->name[R3D_RSHADE_MAX_VAR_NAME_LENGTH - 1] = '\0';
+            r3d_string_copy(s->name, sizeof(s->name), name, strlen(name));
             s->target = samplerTarget;
             s->texture = 0;
         }
@@ -508,10 +507,8 @@ static inline bool r3d_rshade_parse_uniform(const char** ptr,
         *currentOffset = r3d_align_offset(*currentOffset, r3d_rshade_get_std140_alignment(size));
 
         r3d_rshade_uniform_t* u = &uniforms->entries[(*uniformCount)++];
-        strncpy(u->name, name, R3D_RSHADE_MAX_VAR_NAME_LENGTH - 1);
-        u->name[R3D_RSHADE_MAX_VAR_NAME_LENGTH - 1] = '\0';
-        strncpy(u->type, type, R3D_RSHADE_MAX_VAR_TYPE_LENGTH - 1);
-        u->type[R3D_RSHADE_MAX_VAR_TYPE_LENGTH - 1] = '\0';
+        r3d_string_copy(u->name, sizeof(u->name), name, strlen(name));
+        r3d_string_copy(u->type, sizeof(u->type), type, strlen(type));
         u->offset = *currentOffset;
         u->size = size;
         *currentOffset += size;
