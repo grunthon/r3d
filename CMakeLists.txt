@@ -455,6 +455,7 @@ set(R3D_WARNING_FLAGS_MSVC
     /w14457     # -Wshadow: hides a function parameter
     /w14458     # -Wshadow: hides a struct member
     /w14459     # -Wshadow: shadows a global declaration
+    /wd4324     # remove: padded structure due to alignment specifier
     /wd4244     # remove: conversion, possible data loss
     /wd4267     # remove: conversion size_t -> smaller type
     /wd4245     # remove: signed/unsigned conversion
