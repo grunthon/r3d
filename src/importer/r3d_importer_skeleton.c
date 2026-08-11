@@ -15,7 +15,9 @@
 #include <glad.h>
 
 #include "../common/r3d_helper.h"
+#include "../common/r3d_stack.h"
 #include "../common/r3d_math.h"
+#include "../r3d_core_state.h"
 
 // ========================================
 // INTERNAL CONTEXT
@@ -83,21 +85,25 @@ static void build_skeleton_recursive(
 
 static void upload_skeleton_bind_pose(R3D_Skeleton* skeleton)
 {
-    Matrix* skinBuffer = r3d_malloc(skeleton->boneCount * sizeof(Matrix));
-    for (int i = 0; i < skeleton->boneCount; i++)
+    size_t size = skeleton->boneCount * sizeof(Matrix);
+
+    R3D_STACK_SCOPE(&R3D.stack, size)
     {
-        skinBuffer[i] = MatrixMultiply(skeleton->invBind[i], skeleton->modelBind[i]);
+        Matrix* skinBuffer = r3d_stack_alloc(&R3D.stack, size);
+
+        for (int i = 0; i < skeleton->boneCount; i++)
+        {
+            skinBuffer[i] = MatrixMultiply(skeleton->invBind[i], skeleton->modelBind[i]);
+        }
+
+        glGenTextures(1, &skeleton->skinTexture);
+        glBindTexture(GL_TEXTURE_1D, skeleton->skinTexture);
+        glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA16F, 4 * skeleton->boneCount, 0, GL_RGBA, GL_FLOAT, skinBuffer);
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glBindTexture(GL_TEXTURE_1D, 0);
     }
-
-    glGenTextures(1, &skeleton->skinTexture);
-    glBindTexture(GL_TEXTURE_1D, skeleton->skinTexture);
-    glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA16F, 4 * skeleton->boneCount, 0, GL_RGBA, GL_FLOAT, skinBuffer);
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glBindTexture(GL_TEXTURE_1D, 0);
-
-    r3d_free(skinBuffer);
 }
 
 // ========================================
