@@ -288,17 +288,3 @@ void R3D_DrawLightDebug(R3D_Light light)
         break;
     }
 }
-
-// ----------------------------------------
-// LIGHTING: Math Helper Functions
-// ----------------------------------------
-
-float R3D_LumensToEnergy(float lumens, float referenceDistance)
-{
-    return lumens / (4.0f * PI * referenceDistance * referenceDistance);
-}
-
-float R3D_EnergyToLumens(float energy, float referenceDistance)
-{
-    return energy * (4.0f * PI * referenceDistance * referenceDistance);
-}
