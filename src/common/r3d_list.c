@@ -18,8 +18,8 @@
 // ========================================
 
 static void reserve(r3d_list_t** list, size_t elemNeeded);
-static void push(r3d_list_t* list, void* elem);
-static void push_all(r3d_list_t* list, void* elems, size_t count);
+static void push(r3d_list_t* list, const void* elem);
+static void push_all(r3d_list_t* list, const void* elems, size_t count);
 
 // ========================================
 // LIST FUNCTIONS
@@ -62,13 +62,13 @@ void r3d_list_resize(r3d_list_t** list, size_t count)
     (*list)->elemCount = count;
 }
 
-void r3d_list_push(r3d_list_t** list, void* elem)
+void r3d_list_push(r3d_list_t** list, const void* elem)
 {
     reserve(list, (*list)->elemCount + 1);
     push(*list, elem);
 }
 
-void r3d_list_push_all(r3d_list_t** list, void* elems, size_t count)
+void r3d_list_push_all(r3d_list_t** list, const void* elems, size_t count)
 {
     reserve(list, (*list)->elemCount + count);
     push_all(*list, elems, count);
@@ -147,14 +147,14 @@ void reserve(r3d_list_t** list, size_t elemNeeded)
     (*list)->elements = (char*)(*list) + sizeof(r3d_list_t);
 }
 
-void push(r3d_list_t* list, void* elem)
+void push(r3d_list_t* list, const void* elem)
 {
     void* dst = &((char*)list->elements)[list->elemCount * list->elemSize];
     memcpy(dst, elem, list->elemSize);
     list->elemCount++;
 }
 
-void push_all(r3d_list_t* list, void* elems, size_t count)
+void push_all(r3d_list_t* list, const void* elems, size_t count)
 {
     void* dst = &((char*)list->elements)[list->elemCount * list->elemSize];
     memcpy(dst, elems, count * list->elemSize);
