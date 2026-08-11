@@ -15,7 +15,7 @@ int main(void)
     R3D_Init(GetScreenWidth(), GetScreenHeight());
 
     // Setup environment
-    R3D_ENVIRONMENT_SET(ambient.color, (Color){10, 10, 10, 255});
+    R3D_ENVIRONMENT_SET(ambient.color, (Color){40, 40, 40, 255});
     R3D_ENVIRONMENT_SET(bloom.mode, R3D_BLOOM_ADDITIVE);
 
     // Create meshes

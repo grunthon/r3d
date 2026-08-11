@@ -20,7 +20,7 @@ int main(void)
 
     // Set ambient light
     R3D_ENVIRONMENT_SET(background.color, BLACK);
-    R3D_ENVIRONMENT_SET(ambient.color, (Color){10, 10, 10, 255});
+    R3D_ENVIRONMENT_SET(ambient.color, (Color){40, 40, 40, 255});
 
     // Create plane and cube meshes
     R3D_Mesh plane = R3D_GenMeshPlane(100, 100, 1, 1);

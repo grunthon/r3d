@@ -38,7 +38,7 @@ int main(void)
     R3D_UnmapInstances(instances, R3D_INSTANCE_POSITION);
 
     // Setup environment
-    R3D_ENVIRONMENT_SET(ambient.color, (Color) {10, 10, 10, 255});
+    R3D_ENVIRONMENT_SET(ambient.color, (Color) {40, 40, 40, 255});
 
     // Create light
     R3D_Light light = R3D_CreateDirLight((Vector3) {0.5f, -1, -0.5f}, WHITE, 1.0f);

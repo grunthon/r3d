@@ -20,7 +20,7 @@ int main(void)
 
     // Set background/ambient color
     R3D_ENVIRONMENT_SET(background.color, (Color){102, 191, 255, 255});
-    R3D_ENVIRONMENT_SET(ambient.color, (Color){10, 19, 25, 255});
+    R3D_ENVIRONMENT_SET(ambient.color, (Color){40, 76, 100, 255});
     R3D_ENVIRONMENT_SET(tonemap.mode, R3D_TONEMAP_FILMIC);
 
     // Create ground mesh and material

@@ -23,7 +23,7 @@ int main(void)
     R3D_Init(GetScreenWidth(), GetScreenHeight());
 
     // Set ambient light
-    R3D_ENVIRONMENT_SET(ambient.color, DARKGRAY);
+    R3D_ENVIRONMENT_SET(ambient.color, GRAY);
 
     // Create cube mesh and default material
     R3D_Mesh mesh = R3D_GenMeshCube(1, 1, 1);

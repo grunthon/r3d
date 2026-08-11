@@ -60,7 +60,7 @@ int main(void)
     matOutlineRing.unlit = true;
 
     // Configure lighting, shadows, and ambient color
-    R3D_ENVIRONMENT_SET(ambient.color, (Color){10, 10, 15, 255});
+    R3D_ENVIRONMENT_SET(ambient.color, (Color){50, 50, 70, 255});
 
     // Setup directional light with shadows
     R3D_Light light = R3D_CreateSpotLight((Vector3) {4, 8, 5}, (Vector3) {-4, -8, -5}, 16.0f, WHITE, 1.0f);
