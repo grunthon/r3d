@@ -61,9 +61,9 @@ int main(void)
     float cameraPitch = 30.0f;
     Camera3D camera = {
         .position = {0, 5, 5},
-        .target = CAPSULE_CENTER(capsule),
-        .up = {0, 1, 0},
-        .fovy = 60
+        .target   = CAPSULE_CENTER(capsule),
+        .up       = {0, 1, 0},
+        .fovy     = 60
     };
 
     DisableCursor();

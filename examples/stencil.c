@@ -69,9 +69,9 @@ int main(void)
 
     Camera3D camera = {
         .position = {0, 3, 5},
-        .target = {0, 0, 0},
-        .up = {0, 1, 0},
-        .fovy = 55
+        .target   = {0, 0, 0},
+        .up       = {0, 1, 0},
+        .fovy     = 55
     };
 
     while (!WindowShouldClose())

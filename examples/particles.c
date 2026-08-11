@@ -32,12 +32,12 @@ int main(void)
 
     // Setup particle material
     R3D_Material material = R3D_GetDefaultMaterial();
-    material.billboardMode = R3D_BILLBOARD_FRONT;
-    material.blendMode = R3D_BLEND_ADDITIVE;
-    material.albedo.texture = R3D_GetBlackTexture();
-    material.emission.color = (Color){255, 0, 0, 255};
+    material.billboardMode    = R3D_BILLBOARD_FRONT;
+    material.blendMode        = R3D_BLEND_ADDITIVE;
+    material.albedo.texture   = R3D_GetBlackTexture();
+    material.emission.color   = (Color){255, 0, 0, 255};
     material.emission.texture = texture;
-    material.emission.energy = 1.0f;
+    material.emission.energy  = 1.0f;
 
     // Create particle instance buffer
     R3D_InstanceBuffer instances = R3D_LoadInstanceBuffer(MAX_PARTICLES, R3D_INSTANCE_POSITION);
@@ -45,10 +45,9 @@ int main(void)
     // Setup camera
     Camera3D camera = {
         .position = {-7, 7, -7},
-        .target = {0, 1, 0},
-        .up = {0, 1, 0},
-        .fovy = 60.0f,
-        .projection = CAMERA_PERSPECTIVE
+        .target   = {0, 1, 0},
+        .up       = {0, 1, 0},
+        .fovy     = 60.0f,
     };
 
     // CPU buffer for storing particles

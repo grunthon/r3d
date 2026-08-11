@@ -26,9 +26,9 @@ int main()
     // Setup camera
     Camera3D camera = {};
     camera.position = {0, 2, 2};
-    camera.target = {0, 0, 0};
-    camera.up = {0, 1, 0};
-    camera.fovy = 60;
+    camera.target   = {0, 0, 0};
+    camera.up       = {0, 1, 0};
+    camera.fovy     = 60;
 
     // Main loop
     while (!WindowShouldClose())

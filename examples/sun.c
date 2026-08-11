@@ -52,9 +52,9 @@ int main(void)
     // Setup camera
     Camera3D camera = {
         .position = {0, 1, 0},
-        .target = {1, 1.25f, 1},
-        .up = {0, 1, 0},
-        .fovy = 60
+        .target   = {1, 1.25f, 1},
+        .up       = {0, 1, 0},
+        .fovy     = 60
     };
 
     // Capture mouse

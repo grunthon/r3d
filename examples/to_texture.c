@@ -29,15 +29,15 @@ int main(void)
     // Setup cameras
     Camera3D r3dCamera = {
         .position = {0, 2, 2},
-        .target = {0, 0, 0},
-        .up = {0, 1, 0},
-        .fovy = 60
+        .target   = {0, 0, 0},
+        .up       = {0, 1, 0},
+        .fovy     = 60
     };
     Camera3D rlCamera = {
         .position = {0, 1, 4},
-        .target = {0, 1, -1},
-        .up = {0, 1, 0},
-        .fovy = 60
+        .target   = {0, 1, -1},
+        .up       = {0, 1, 0},
+        .fovy     = 60
     };
 
     DisableCursor();

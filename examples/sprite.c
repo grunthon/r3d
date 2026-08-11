@@ -43,9 +43,9 @@ int main(void)
     // Setup camera
     Camera3D camera = {
         .position = {0, 2, 5},
-        .target = {0, 0.5f, 0},
-        .up = {0, 1, 0},
-        .fovy = 45
+        .target   = {0, 0.5f, 0},
+        .up       = {0, 1, 0},
+        .fovy     = 45
     };
 
     // Bird data

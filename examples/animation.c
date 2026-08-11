@@ -64,9 +64,9 @@ int main(void)
     // Setup camera
     Camera3D camera = {
         .position = {0, 1.5f, 3.0f},
-        .target = {0, 0.75f, 0.0f},
-        .up = {0, 1, 0},
-        .fovy = 60
+        .target   = {0, 0.75f, 0.0f},
+        .up       = {0, 1, 0},
+        .fovy     = 60
     };
 
     // Main loop
