@@ -10,6 +10,7 @@
 #include <r3d_config.h>
 #include <string.h>
 
+#include "./common/r3d_helper.h"
 #include "./common/r3d_anim.h"
 
 // ========================================

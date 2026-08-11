@@ -280,9 +280,7 @@ static bool free_list_push_range(r3d_render_range_t** list, int* count, int* cap
     if (*count >= *capacity)
     {
         int newCapacity = (*capacity) * 2;
-        r3d_render_range_t* p = r3d_realloc(*list, newCapacity * sizeof(r3d_render_range_t));
-        if (!p) return false;
-        *list = p;
+        *list = r3d_realloc(*list, newCapacity * sizeof(r3d_render_range_t));;
         *capacity = newCapacity;
     }
 
@@ -570,35 +568,25 @@ static inline int array_get_last_group_index(void)
 //    return &R3D_MOD_RENDER.groups[groupIndex];
 //}
 
-static bool array_grow(void)
+static void array_grow(void)
 {
-    #define GROW_AND_ASSIGN(field) do { \
-        void* _p = r3d_realloc(R3D_MOD_RENDER.field, newCapacity * sizeof(*R3D_MOD_RENDER.field)); \
-        if (_p == NULL) return false; \
-        R3D_MOD_RENDER.field = _p; \
-    } while (0)
-
     int newCapacity = 2 * R3D_MOD_RENDER.capacity;
 
-    GROW_AND_ASSIGN(clusters);
-    GROW_AND_ASSIGN(groupVisibility);
-    GROW_AND_ASSIGN(callIndices);
-    GROW_AND_ASSIGN(groups);
+    R3D_MOD_RENDER.clusters        = r3d_realloc(R3D_MOD_RENDER.clusters, newCapacity * sizeof(*R3D_MOD_RENDER.clusters));
+    R3D_MOD_RENDER.groupVisibility = r3d_realloc(R3D_MOD_RENDER.groupVisibility, newCapacity * sizeof(*R3D_MOD_RENDER.groupVisibility));
+    R3D_MOD_RENDER.callIndices     = r3d_realloc(R3D_MOD_RENDER.callIndices, newCapacity * sizeof(*R3D_MOD_RENDER.callIndices));
+    R3D_MOD_RENDER.groups          = r3d_realloc(R3D_MOD_RENDER.groups, newCapacity * sizeof(*R3D_MOD_RENDER.groups));
 
     for (int i = 0; i < R3D_RENDER_LIST_COUNT; ++i)
     {
-        GROW_AND_ASSIGN(list[i].calls);
+        R3D_MOD_RENDER.list[i].calls = r3d_realloc(R3D_MOD_RENDER.list[i].calls, newCapacity * sizeof(*R3D_MOD_RENDER.list[i].calls));
     }
 
-    GROW_AND_ASSIGN(calls);
-    GROW_AND_ASSIGN(groupIndices);
-    GROW_AND_ASSIGN(sortCache);
-
-    #undef GROW_AND_ASSIGN
+    R3D_MOD_RENDER.calls        = r3d_realloc(R3D_MOD_RENDER.calls, newCapacity * sizeof(*R3D_MOD_RENDER.calls));
+    R3D_MOD_RENDER.groupIndices = r3d_realloc(R3D_MOD_RENDER.groupIndices, newCapacity * sizeof(*R3D_MOD_RENDER.groupIndices));
+    R3D_MOD_RENDER.sortCache    = r3d_realloc(R3D_MOD_RENDER.sortCache, newCapacity * sizeof(*R3D_MOD_RENDER.sortCache));
 
     R3D_MOD_RENDER.capacity = newCapacity;
-
-    return true;
 }
 
 // ========================================
@@ -919,48 +907,30 @@ bool r3d_render_init(void)
 
     /* --- CPU array allocation (draw calls, groups, etc) --- */
 
-    #define ALLOC_AND_ASSIGN(field, logfmt, ...) do { \
-        void* _p = r3d_malloc(R3D_HINT(R3D_HINT_DRAW_CALL_CAPACITY) * sizeof(*R3D_MOD_RENDER.field)); \
-        if (_p == NULL) { \
-            R3D_TRACELOG(LOG_FATAL, "Failed to init render module; " logfmt, ##__VA_ARGS__); \
-            goto fail; \
-        } \
-        R3D_MOD_RENDER.field = _p; \
-    } while (0)
+    R3D_MOD_RENDER.clusters         = r3d_malloc(R3D_HINT(R3D_HINT_DRAW_CALL_CAPACITY) * sizeof(*R3D_MOD_RENDER.clusters));
+    R3D_MOD_RENDER.groupVisibility  = r3d_malloc(R3D_HINT(R3D_HINT_DRAW_CALL_CAPACITY) * sizeof(*R3D_MOD_RENDER.groupVisibility));
+    R3D_MOD_RENDER.callIndices      = r3d_malloc(R3D_HINT(R3D_HINT_DRAW_CALL_CAPACITY) * sizeof(*R3D_MOD_RENDER.callIndices));
+    R3D_MOD_RENDER.groups           = r3d_malloc(R3D_HINT(R3D_HINT_DRAW_CALL_CAPACITY) * sizeof(*R3D_MOD_RENDER.groups));
 
-    ALLOC_AND_ASSIGN(clusters, "Render cluster array allocation failed");
-    ALLOC_AND_ASSIGN(groupVisibility, "Render group visibility array allocation failed");
-    ALLOC_AND_ASSIGN(callIndices, "Draw call indices array allocation failed");
-    ALLOC_AND_ASSIGN(groups, "Render group array allocation failed");
-
-    for (int i = 0; i < R3D_RENDER_LIST_COUNT; i++) {
-        ALLOC_AND_ASSIGN(list[i].calls, "Draw call list[%i] allocation failed", i);
+    for (int i = 0; i < R3D_RENDER_LIST_COUNT; i++)
+    {
+        R3D_MOD_RENDER.list[i].calls = r3d_malloc(R3D_HINT(R3D_HINT_DRAW_CALL_CAPACITY) * sizeof(*R3D_MOD_RENDER.list[i].calls));
     }
 
-    ALLOC_AND_ASSIGN(calls, "Draw call array allocation failed");
-    ALLOC_AND_ASSIGN(groupIndices, "Render group indices array allocation failed");
-    ALLOC_AND_ASSIGN(sortCache, "Sorting cache array allocation failed");
-
-    #undef ALLOC_AND_ASSIGN
+    R3D_MOD_RENDER.calls         = r3d_malloc(R3D_HINT(R3D_HINT_DRAW_CALL_CAPACITY) * sizeof(*R3D_MOD_RENDER.calls));
+    R3D_MOD_RENDER.groupIndices  = r3d_malloc(R3D_HINT(R3D_HINT_DRAW_CALL_CAPACITY) * sizeof(*R3D_MOD_RENDER.groupIndices));
+    R3D_MOD_RENDER.sortCache     = r3d_malloc(R3D_HINT(R3D_HINT_DRAW_CALL_CAPACITY) * sizeof(*R3D_MOD_RENDER.sortCache));
 
     R3D_MOD_RENDER.capacity = R3D_HINT(R3D_HINT_DRAW_CALL_CAPACITY);
     R3D_MOD_RENDER.activeCluster = -1;
 
     /* --- CPU free list allocation --- */
 
-    #define ALLOC_FREELIST(field, cap_field, logmsg) do { \
-        R3D_MOD_RENDER.field = r3d_malloc(R3D_HINT(R3D_HINT_MESH_STREAMING_CAPACITY) * sizeof(*R3D_MOD_RENDER.field)); \
-        if (!R3D_MOD_RENDER.field) { \
-            R3D_TRACELOG(LOG_FATAL, "Failed to init render module; " logmsg); \
-            goto fail; \
-        } \
-        R3D_MOD_RENDER.cap_field = R3D_HINT(R3D_HINT_MESH_STREAMING_CAPACITY); \
-    } while (0)
+    R3D_MOD_RENDER.freeVertices = r3d_malloc(R3D_HINT(R3D_HINT_MESH_STREAMING_CAPACITY) * sizeof(*R3D_MOD_RENDER.freeVertices));
+    R3D_MOD_RENDER.freeVertexCapacity = R3D_HINT(R3D_HINT_MESH_STREAMING_CAPACITY);
 
-    ALLOC_FREELIST(freeVertices, freeVertexCapacity, "Free vertex list allocation failed");
-    ALLOC_FREELIST(freeElements, freeElementCapacity, "Free element list allocation failed");
-
-    #undef ALLOC_FREELIST
+    R3D_MOD_RENDER.freeElements = r3d_malloc(R3D_HINT(R3D_HINT_MESH_STREAMING_CAPACITY) * sizeof(*R3D_MOD_RENDER.freeElements));
+    R3D_MOD_RENDER.freeElementCapacity = R3D_HINT(R3D_HINT_MESH_STREAMING_CAPACITY);
 
     /* --- Creation of the global VAO/VBO/EBO --- */
 
@@ -988,10 +958,6 @@ bool r3d_render_init(void)
     glBindVertexArray(0);
 
     return true;
-
-fail:
-    r3d_render_quit();
-    return false;
 }
 
 void r3d_render_quit(void)
@@ -1322,11 +1288,7 @@ bool r3d_render_cluster_begin(BoundingBox aabb)
 
     if (R3D_MOD_RENDER.numClusters >= R3D_MOD_RENDER.capacity)
     {
-        if (!array_grow())
-        {
-            R3D_TRACELOG(LOG_FATAL, "Bad alloc on render cluster begin");
-            return false;
-        }
+        array_grow();
     }
 
     R3D_MOD_RENDER.activeCluster = R3D_MOD_RENDER.numClusters++;
@@ -1349,11 +1311,7 @@ void r3d_render_group_push(const r3d_render_group_t* group)
 {
     if (R3D_MOD_RENDER.numGroups >= R3D_MOD_RENDER.capacity)
     {
-        if (!array_grow())
-        {
-            R3D_TRACELOG(LOG_FATAL, "Bad alloc on render group push");
-            return;
-        }
+        array_grow();
     }
 
     int groupIndex = R3D_MOD_RENDER.numGroups++;
@@ -1371,11 +1329,7 @@ void r3d_render_call_push(const r3d_render_call_t* call)
 {
     if (R3D_MOD_RENDER.numCalls >= R3D_MOD_RENDER.capacity)
     {
-        if (!array_grow())
-        {
-            R3D_TRACELOG(LOG_FATAL, "Bad alloc on draw call push");
-            return;
-        }
+        array_grow();
     }
 
     // Get group and their call indices

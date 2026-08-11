@@ -42,24 +42,11 @@ R3D_MeshData R3D_LoadMeshData(int vertexCount, int indexCount)
     }
 
     meshData.vertices = r3d_malloc(vertexCount * sizeof(*meshData.vertices));
-    if (meshData.vertices == NULL)
-    {
-        R3D_TRACELOG(LOG_ERROR, "Failed to allocate memory for mesh vertices");
-        return meshData;
-    }
     meshData.vertexCapacity = vertexCount;
 
     if (indexCount > 0)
     {
         meshData.indices = r3d_malloc(indexCount * sizeof(*meshData.indices));
-        if (meshData.indices == NULL)
-        {
-            R3D_TRACELOG(LOG_ERROR, "Failed to allocate memory for mesh indices");
-            r3d_free(meshData.vertices);
-            meshData.vertexCapacity = 0;
-            meshData.vertices = NULL;
-            return meshData;
-        }
         meshData.indexCapacity = indexCount;
     }
 
@@ -1646,26 +1633,14 @@ void R3D_ReserveMeshData(R3D_MeshData* meshData, int vertexCount, int indexCount
 {
     if (vertexCount > meshData->vertexCapacity)
     {
-        void* vertices = r3d_realloc(meshData->vertices, vertexCount * sizeof(*meshData->vertices));
-        if (vertices == NULL)
-        {
-            R3D_TRACELOG(LOG_WARNING, "Failed to reserve vertices memory");
-            return;
-        }
+        meshData->vertices = r3d_realloc(meshData->vertices, vertexCount * sizeof(*meshData->vertices));
         meshData->vertexCapacity = vertexCount;
-        meshData->vertices = vertices;
     }
 
     if (indexCount > meshData->indexCapacity)
     {
-        void* indices = r3d_realloc(meshData->indices, indexCount * sizeof(*meshData->indices));
-        if (indices == NULL)
-        {
-            R3D_TRACELOG(LOG_WARNING, "Failed to reserve indices memory");
-            return;
-        }
+        meshData->indices = r3d_realloc(meshData->indices, indexCount * sizeof(*meshData->indices));
         meshData->indexCapacity = indexCount;
-        meshData->indices = indices;
     }
 }
 
@@ -1673,26 +1648,14 @@ void R3D_ShrinkMeshData(R3D_MeshData* meshData)
 {
     if (meshData->vertexCount > 0 && meshData->vertexCount != meshData->vertexCapacity)
     {
-        void* vertices = r3d_realloc(meshData->vertices, meshData->vertexCount * sizeof(*meshData->vertices));
-        if (vertices == NULL)
-        {
-            R3D_TRACELOG(LOG_WARNING, "Failed to shrink vertices memory");
-            return;
-        }
+        meshData->vertices = r3d_realloc(meshData->vertices, meshData->vertexCount * sizeof(*meshData->vertices));
         meshData->vertexCapacity = meshData->vertexCount;
-        meshData->vertices = vertices;
     }
 
     if (meshData->indexCount > 0 && meshData->indexCount != meshData->indexCapacity)
     {
-        void* indices = r3d_realloc(meshData->indices, meshData->indexCount * sizeof(*meshData->indices));
-        if (indices == NULL)
-        {
-            R3D_TRACELOG(LOG_WARNING, "Failed to shrink indices memory");
-            return;
-        }
+        meshData->indices = r3d_realloc(meshData->indices, meshData->indexCount * sizeof(*meshData->indices));
         meshData->indexCapacity = meshData->indexCount;
-        meshData->indices = indices;
     }
 }
 
@@ -2177,19 +2140,12 @@ BoundingBox R3D_CalculateMeshDataBoundingBox(R3D_MeshData meshData)
 bool alloc_mesh(R3D_MeshData* meshData, int vertexCount, int indexCount)
 {
     meshData->vertices = r3d_malloc(vertexCount * sizeof(*meshData->vertices));
-    meshData->indices = r3d_malloc(indexCount * sizeof(*meshData->indices));
+    meshData->indices  = r3d_malloc(indexCount * sizeof(*meshData->indices));
 
-    if (!meshData->vertices || !meshData->indices)
-    {
-        if (meshData->vertices) r3d_free(meshData->vertices);
-        if (meshData->indices) r3d_free(meshData->indices);
-        return false;
-    }
-
-    meshData->vertexCount = vertexCount;
-    meshData->indexCount = indexCount;
+    meshData->vertexCount    = vertexCount;
+    meshData->indexCount     = indexCount;
     meshData->vertexCapacity = vertexCount;
-    meshData->indexCapacity = indexCount;
+    meshData->indexCapacity  = indexCount;
 
     return true;
 }

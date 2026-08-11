@@ -426,17 +426,11 @@ bool r3d_importer_load_meshes(const R3D_Importer* importer, R3D_Model* model)
     const struct aiScene* scene = r3d_importer_get_scene(importer);
 
     // Allocate space for meshes
-    model->meshCount = scene->mNumMeshes;
-    model->meshes = r3d_malloc(model->meshCount * sizeof(*model->meshes));
+    model->meshCount     = scene->mNumMeshes;
+    model->meshes        = r3d_malloc(model->meshCount * sizeof(*model->meshes));
     model->meshMaterials = r3d_malloc(model->meshCount * sizeof(*model->meshMaterials));
-    if (keepMeshData) model->meshData = r3d_malloc(model->meshCount * sizeof(*model->meshData));
+    if (keepMeshData)  model->meshData  = r3d_malloc(model->meshCount * sizeof(*model->meshData));
     if (keepMeshNames) model->meshNames = r3d_malloc(model->meshCount * sizeof(*model->meshNames));
-
-    if (!model->meshes || !model->meshMaterials || (keepMeshData && !model->meshData) || (keepMeshNames && !model->meshNames))
-    {
-        R3D_TRACELOG(LOG_ERROR, "Unable to allocate memory for meshes");
-        goto cleanup_and_fail;
-    }
 
     // Load all meshes recursively
     if (!load_recursive(importer, model, r3d_importer_get_root(importer), &R3D_MATRIX_IDENTITY))

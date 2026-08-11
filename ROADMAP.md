@@ -5,7 +5,7 @@
 * [ ] **Redesign the lighting API**
   Rewrite the lighting API to use a stateless system, allowing users to fill in their own structures and submit them every frame, similarly to draw calls.
 
-* [ ] **Review and harmonize OOM handling**
+* [x] **Review and harmonize OOM handling**
   Currently, each "module" handles allocation failures differently, sometimes logging them and sometimes ignoring them.
   This should be made consistent, possibly following raylib's approach by doing nothing and letting the program fail.
 

@@ -43,10 +43,7 @@ static r3d_stack_t* stack_grow(r3d_stack_t* stack, size_t minCapacity)
         newCap = doubled;
     }
 
-    void* newMemStack = r3d_malloc(stack_total_size(newCap));
-    if (!newMemStack) return NULL;
-
-    r3d_stack_t* newStack = newMemStack;
+    r3d_stack_t* newStack = r3d_malloc(stack_total_size(newCap));
     *newStack = *stack;
     newStack->capacity = newCap;
 
@@ -72,13 +69,10 @@ r3d_stack_t* r3d_stack_create(size_t capacity)
         return NULL;
     }
 
-    void* memStack = r3d_malloc(stack_total_size(capacity));
-    if (!memStack) return NULL;
-
-    r3d_stack_t* stack = memStack;
-    stack->capacity = capacity;
-    stack->cursor = 0;
-    stack->depth = 0;
+    r3d_stack_t* stack = r3d_malloc(stack_total_size(capacity));
+    stack->capacity    = capacity;
+    stack->cursor      = 0;
+    stack->depth       = 0;
 
     stack_set_pointer(stack);
 

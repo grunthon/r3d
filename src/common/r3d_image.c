@@ -26,7 +26,7 @@ Image r3d_image_compose_rgb(const Image* sources[3], Color defaultColor)
 {
     Image image = {0};
 
-    /* --- Determine dimensions --- */
+    /* --- Determine dimensions and allocate --- */
 
     int w = 0, h = 0;
     for (int i = 0; i < 3; i++)
@@ -43,13 +43,7 @@ Image r3d_image_compose_rgb(const Image* sources[3], Color defaultColor)
         return image;
     }
 
-    /* --- Allocation --- */
-
     uint8_t* pixels = r3d_malloc(3 * w * h);
-    if (pixels == NULL)
-    {
-        return image;
-    }
 
     /* --- Calculate scales --- */
 

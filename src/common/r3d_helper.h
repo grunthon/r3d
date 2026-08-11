@@ -9,7 +9,9 @@
 #ifndef R3D_COMMON_HELPER_H
 #define R3D_COMMON_HELPER_H
 
+#include <r3d_config.h>
 #include <raylib.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdarg.h>
 #include <string.h>
@@ -86,16 +88,38 @@ int r3d_get_cpu_count(void);
 
 static inline void* r3d_malloc(size_t size)
 {
-    assert(size <= UINT_MAX);
+    if (size > UINT_MAX)
+    {
+        R3D_TRACELOG(LOG_FATAL, "Allocation size %zu exceeds UINT_MAX", size);
+        abort();
+    }
 
-    return MemAlloc((unsigned int)size);
+    void* ptr = MemAlloc((unsigned int)size);
+    if (ptr == NULL)
+    {
+        R3D_TRACELOG(LOG_FATAL, "OOM: allocation of %zu bytes failed", size);
+        abort();
+    }
+
+    return ptr;
 }
 
 static inline void* r3d_realloc(void* ptr, size_t size)
 {
-    assert(size <= UINT_MAX);
+    if (size > UINT_MAX)
+    {
+        R3D_TRACELOG(LOG_FATAL, "Reallocation size %zu exceeds UINT_MAX", size);
+        abort();
+    }
 
-    return MemRealloc(ptr, (unsigned int)size);
+    void* newPtr = MemRealloc(ptr, (unsigned int)size);
+    if (newPtr == NULL)
+    {
+        R3D_TRACELOG(LOG_FATAL, "OOM: reallocation of %zu bytes failed", size);
+        abort();
+    }
+
+    return newPtr;
 }
 
 static inline void r3d_free(void* ptr)

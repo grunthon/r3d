@@ -418,13 +418,11 @@ r3d_importer_texture_cache_t* r3d_importer_load_texture_cache(
     // Persistent output buffer (outlives the scratch scope below)
     int maxSlots = materialCount * R3D_MAP_COUNT;
     Texture2D* finalTextures = r3d_malloc(maxSlots * sizeof(Texture2D));
-    if (!finalTextures)
-    {
-        R3D_TRACELOG(LOG_WARNING, "Failed to allocate texture cache: out of memory");
-        return NULL;
-    }
 
-    int uniqueCount = 0, uploadedCount = 0, processedCount = 0;
+    int uniqueCount    = 0;
+    int uploadedCount  = 0;
+    int processedCount = 0;
+
     bool ok;
 
     // Worst-case scratch size for the whole scope below
@@ -570,31 +568,16 @@ r3d_importer_texture_cache_t* r3d_importer_load_texture_cache(
     }
 
     r3d_importer_texture_cache_t* cache = r3d_malloc(sizeof(*cache));
-    if (!cache)
-    {
-        for (int i = 0; i < maxSlots; i++)
-        {
-            if (finalTextures[i].id != 0) UnloadTexture(finalTextures[i]);
-        }
-        r3d_free(finalTextures);
-        R3D_TRACELOG(LOG_WARNING, "Failed to allocate texture cache handle: out of memory");
-        return NULL;
-    }
-
     cache->materialCount = materialCount;
-    cache->textures = finalTextures;
+    cache->textures      = finalTextures;
 
     if (uploadedCount == processedCount)
     {
-        R3D_TRACELOG(LOG_INFO, "Model textures cached: %d/%d textures loaded successfully", 
-            uploadedCount, processedCount
-        );
+        R3D_TRACELOG(LOG_INFO, "Model textures cached: %d/%d textures loaded successfully", uploadedCount, processedCount);
     }
     else
     {
-        R3D_TRACELOG(LOG_WARNING, "Model textures cached: %d/%d textures loaded (%d failed)", 
-            uploadedCount, processedCount, processedCount - uploadedCount
-        );
+        R3D_TRACELOG(LOG_WARNING, "Model textures cached: %d/%d textures loaded (%d failed)", uploadedCount, processedCount, processedCount - uploadedCount);
     }
 
     return cache;

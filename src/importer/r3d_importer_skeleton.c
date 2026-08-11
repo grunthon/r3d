@@ -14,6 +14,7 @@
 #include <string.h>
 #include <glad.h>
 
+#include "../common/r3d_helper.h"
 #include "../common/r3d_math.h"
 
 // ========================================
@@ -118,22 +119,11 @@ bool r3d_importer_load_skeleton(const R3D_Importer* importer, R3D_Skeleton* skel
     }
 
     // Allocate bone arrays
-    skeleton->bones = r3d_malloc(boneCount * sizeof(R3D_BoneInfo));
-    skeleton->invBind = r3d_malloc(boneCount * sizeof(Matrix));
+    skeleton->bones     = r3d_malloc(boneCount * sizeof(R3D_BoneInfo));
+    skeleton->invBind   = r3d_malloc(boneCount * sizeof(Matrix));
     skeleton->localBind = r3d_malloc(boneCount * sizeof(Matrix));
     skeleton->modelBind = r3d_malloc(boneCount * sizeof(Matrix));
     skeleton->boneCount = boneCount;
-
-    if (!skeleton->bones || !skeleton->invBind || !skeleton->localBind || !skeleton->modelBind)
-    {
-        R3D_TRACELOG(LOG_ERROR, "Failed to allocate memory for skeleton bones");
-        r3d_free(skeleton->bones);
-        r3d_free(skeleton->invBind);
-        r3d_free(skeleton->localBind);
-        r3d_free(skeleton->modelBind);
-        r3d_free(skeleton);
-        return false;
-    }
 
     // Initialize parent indices to -1 (no parent)
     for (int i = 0; i < boneCount; i++)
