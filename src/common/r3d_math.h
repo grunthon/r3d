@@ -14,8 +14,6 @@
 #include <string.h>
 #include <math.h>
 
-#include "./r3d_helper.h"
-
 // ========================================
 // DEFINITIONS AND CONSTANTS
 // ========================================
