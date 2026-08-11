@@ -15,7 +15,9 @@
 #include "./modules/r3d_driver.h"
 #include "./modules/r3d_shader.h"
 #include "./modules/r3d_render.h"
+#include "./common/r3d_image.h"
 #include "./r3d_core_state.h"
+#include "common/r3d_math.h"
 
 // ========================================
 // INTERNAL SHARED FUNCTIONS
@@ -328,9 +330,9 @@ R3D_Cubemap load_cubemap_from_line_horizontal(Image image, int size)
 
     for (int i = 0; i < 6; i++)
     {
-        Rectangle srcRect = {(float)i * size, 0, (float)size, (float)size};
-        Rectangle dstRect = {0, (float)i * size, (float)size, (float)size};
-        ImageDraw(&faces, image, srcRect, dstRect, WHITE);
+        r3d_rect_t srcRect = {i * size, 0, size, size};
+        r3d_rect_t dstRect = {0, i * size, size, size};
+        r3d_image_blit(&faces, &image, srcRect, dstRect);
     }
 
     R3D_Cubemap cubemap = load_cubemap_from_line_vertical(faces, size);
@@ -341,26 +343,26 @@ R3D_Cubemap load_cubemap_from_line_horizontal(Image image, int size)
 
 R3D_Cubemap load_cubemap_from_cross_three_by_four(Image image, int size)
 {
-    Rectangle srcRecs[6] = {0};
+    r3d_rect_t srcRecs[6] = {0};
 
     for (int i = 0; i < 6; i++)
     {
-        srcRecs[i] = (Rectangle) {0, 0, (float)size, (float)size};
+        srcRecs[i] = (r3d_rect_t) {0, 0, size, size};
     }
 
-    srcRecs[0].x = (float)size; srcRecs[0].y = (float)size;
-    srcRecs[1].x = (float)size; srcRecs[1].y = 3.0f * size;
-    srcRecs[2].x = (float)size; srcRecs[2].y = 0;
-    srcRecs[3].x = (float)size; srcRecs[3].y = 2.0f * size;
-    srcRecs[4].x = 0;           srcRecs[4].y = (float)size;
-    srcRecs[5].x = 2.0f * size; srcRecs[5].y = (float)size;
+    srcRecs[0].x = size;     srcRecs[0].y = size;
+    srcRecs[1].x = size;     srcRecs[1].y = 3 * size;
+    srcRecs[2].x = size;     srcRecs[2].y = 0;
+    srcRecs[3].x = size;     srcRecs[3].y = 2 * size;
+    srcRecs[4].x = 0;        srcRecs[4].y = size;
+    srcRecs[5].x = 2 * size; srcRecs[5].y = size;
 
     Image faces = alloc_work_faces_image(image, size);
 
     for (int i = 0; i < 6; i++)
     {
-        Rectangle dstRec = {0, (float)i * size, (float)size, (float)size};
-        ImageDraw(&faces, image, srcRecs[i], dstRec, WHITE);
+        r3d_rect_t dstRec = {0, i * size, size, size};
+        r3d_image_blit(&faces, &image, srcRecs[i], dstRec);
     }
 
     R3D_Cubemap cubemap = load_cubemap_from_line_vertical(faces, size);
@@ -371,26 +373,26 @@ R3D_Cubemap load_cubemap_from_cross_three_by_four(Image image, int size)
 
 R3D_Cubemap load_cubemap_from_cross_four_by_three(Image image, int size)
 {
-    Rectangle srcRecs[6] = {0};
+    r3d_rect_t srcRecs[6] = {0};
 
     for (int i = 0; i < 6; i++)
     {
-        srcRecs[i] = (Rectangle) {0, 0, (float)size, (float)size};
+        srcRecs[i] = (r3d_rect_t) {0, 0, size, size};
     }
 
-    srcRecs[0].x = 2.0f * size; srcRecs[0].y = (float)size;
-    srcRecs[1].x = 0;           srcRecs[1].y = (float)size;
-    srcRecs[2].x = (float)size; srcRecs[2].y = 0;
-    srcRecs[3].x = (float)size; srcRecs[3].y = 2.0f * size;
-    srcRecs[4].x = (float)size; srcRecs[4].y = (float)size;
-    srcRecs[5].x = 3.0f * size; srcRecs[5].y = (float)size;
+    srcRecs[0].x = 2 * size; srcRecs[0].y = size;
+    srcRecs[1].x = 0;        srcRecs[1].y = size;
+    srcRecs[2].x = size;     srcRecs[2].y = 0;
+    srcRecs[3].x = size;     srcRecs[3].y = 2 * size;
+    srcRecs[4].x = size;     srcRecs[4].y = size;
+    srcRecs[5].x = 3 * size; srcRecs[5].y = size;
 
     Image faces = alloc_work_faces_image(image, size);
 
     for (int i = 0; i < 6; i++)
     {
-        Rectangle dstRec = {0, (float)i * size, (float)size, (float)size};
-        ImageDraw(&faces, image, srcRecs[i], dstRec, WHITE);
+        r3d_rect_t dstRec = {0, i * size, size, size};
+        r3d_image_blit(&faces, &image, srcRecs[i], dstRec);
     }
 
     R3D_Cubemap cubemap = load_cubemap_from_line_vertical(faces, size);

@@ -11,9 +11,18 @@
 
 #include <raylib.h>
 
-// ========================================
-// IMAGE FUNCTIONS
-// ========================================
+#include "./r3d_math.h"
+
+/**
+ * Copy or resample a rectangular region from `src` into `dst`.
+ *
+ * Both rectangles are clipped to their image bounds. Automatically picks
+ * the fastest strategy: raw memcpy (same size/format), per-pixel format
+ * conversion (same size, different format), or bilinear resampling
+ * (different size). Only mip level 0 of `dst` is affected. Compressed
+ * pixel formats are not supported.
+ */
+void r3d_image_blit(Image* dst, const Image* src, r3d_rect_t dstRect, r3d_rect_t srcRect);
 
 /**
  * Build an RGB image from up to 3 grayscale sources (R,G,B).
@@ -22,10 +31,6 @@
  * Channels are resampled with nearest-neighbor (16.16 fixed-point).
  */
 Image r3d_image_compose_rgb(const Image* sources[3], Color defaultColor);
-
-// ========================================
-// TEXTURE FUNCTIONS
-// ========================================
 
 /**
  * Uploads the given image to a 2D texture, setting wrap and filter.
