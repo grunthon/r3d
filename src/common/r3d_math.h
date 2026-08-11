@@ -62,9 +62,9 @@ static inline Vector3 r3d_color_srgb_to_linear_vec3(Color color)
 {
     Vector4 linear = ColorNormalize(color);
 
-    linear.x = (linear.x < 0.04045f) ? linear.x * (1.0f / 12.92f) : powf((float)((linear.x + 0.055) * (1.0 / (1.0 + 0.055))), 2.4f);
-    linear.y = (linear.y < 0.04045f) ? linear.y * (1.0f / 12.92f) : powf((float)((linear.y + 0.055) * (1.0 / (1.0 + 0.055))), 2.4f);
-    linear.z = (linear.z < 0.04045f) ? linear.z * (1.0f / 12.92f) : powf((float)((linear.z + 0.055) * (1.0 / (1.0 + 0.055))), 2.4f);
+    linear.x = (linear.x < 0.04045f) ? linear.x * (1.0f / 12.92f) : powf((linear.x + 0.055f) * (1.0f / 1.055f), 2.4f);
+    linear.y = (linear.y < 0.04045f) ? linear.y * (1.0f / 12.92f) : powf((linear.y + 0.055f) * (1.0f / 1.055f), 2.4f);
+    linear.z = (linear.z < 0.04045f) ? linear.z * (1.0f / 12.92f) : powf((linear.z + 0.055f) * (1.0f / 1.055f), 2.4f);
 
     return (Vector3) {linear.x, linear.y, linear.z};
 }
@@ -73,27 +73,27 @@ static inline Vector4 r3d_color_srgb_to_linear_vec4(Color color)
 {
     Vector4 linear = ColorNormalize(color);
 
-    linear.x = (linear.x < 0.04045f) ? linear.x * (1.0f / 12.92f) : powf((float)((linear.x + 0.055) * (1.0 / (1.0 + 0.055))), 2.4f);
-    linear.y = (linear.y < 0.04045f) ? linear.y * (1.0f / 12.92f) : powf((float)((linear.y + 0.055) * (1.0 / (1.0 + 0.055))), 2.4f);
-    linear.z = (linear.z < 0.04045f) ? linear.z * (1.0f / 12.92f) : powf((float)((linear.z + 0.055) * (1.0 / (1.0 + 0.055))), 2.4f);
+    linear.x = (linear.x < 0.04045f) ? linear.x * (1.0f / 12.92f) : powf((linear.x + 0.055f) * (1.0f / 1.055f), 2.4f);
+    linear.y = (linear.y < 0.04045f) ? linear.y * (1.0f / 12.92f) : powf((linear.y + 0.055f) * (1.0f / 1.055f), 2.4f);
+    linear.z = (linear.z < 0.04045f) ? linear.z * (1.0f / 12.92f) : powf((linear.z + 0.055f) * (1.0f / 1.055f), 2.4f);
 
     return linear;
 }
 
 static inline Color r3d_color_linear_to_srgb_vec3(Vector3 linear)
 {
-    linear.x = (linear.x < 0.0031308f) ? 12.92f * linear.x : (1.0 + 0.055) * powf(linear.x, 1.0f / 2.4f) - 0.055;
-    linear.y = (linear.y < 0.0031308f) ? 12.92f * linear.y : (1.0 + 0.055) * powf(linear.y, 1.0f / 2.4f) - 0.055;
-    linear.z = (linear.z < 0.0031308f) ? 12.92f * linear.z : (1.0 + 0.055) * powf(linear.z, 1.0f / 2.4f) - 0.055;
+    linear.x = (linear.x < 0.0031308f) ? 12.92f * linear.x : (1.0f + 0.055f) * powf(linear.x, 1.0f / 2.4f) - 0.055f;
+    linear.y = (linear.y < 0.0031308f) ? 12.92f * linear.y : (1.0f + 0.055f) * powf(linear.y, 1.0f / 2.4f) - 0.055f;
+    linear.z = (linear.z < 0.0031308f) ? 12.92f * linear.z : (1.0f + 0.055f) * powf(linear.z, 1.0f / 2.4f) - 0.055f;
 
     return ColorFromNormalized((Vector4) {linear.x, linear.y, linear.z, 1.0f});
 }
 
 static inline Color r3d_color_linear_to_srgb_vec4(Vector4 linear)
 {
-    linear.x = (linear.x < 0.0031308f) ? 12.92f * linear.x : (1.0 + 0.055) * powf(linear.x, 1.0f / 2.4f) - 0.055;
-    linear.y = (linear.y < 0.0031308f) ? 12.92f * linear.y : (1.0 + 0.055) * powf(linear.y, 1.0f / 2.4f) - 0.055;
-    linear.z = (linear.z < 0.0031308f) ? 12.92f * linear.z : (1.0 + 0.055) * powf(linear.z, 1.0f / 2.4f) - 0.055;
+    linear.x = (linear.x < 0.0031308f) ? 12.92f * linear.x : (1.0f + 0.055f) * powf(linear.x, 1.0f / 2.4f) - 0.055f;
+    linear.y = (linear.y < 0.0031308f) ? 12.92f * linear.y : (1.0f + 0.055f) * powf(linear.y, 1.0f / 2.4f) - 0.055f;
+    linear.z = (linear.z < 0.0031308f) ? 12.92f * linear.z : (1.0f + 0.055f) * powf(linear.z, 1.0f / 2.4f) - 0.055f;
 
     return ColorFromNormalized(linear);
 }
