@@ -64,10 +64,7 @@ static r3d_stack_t* stack_grow(r3d_stack_t* stack, size_t minCapacity)
 
 r3d_stack_t* r3d_stack_create(size_t capacity)
 {
-    if (capacity == 0)
-    {
-        return NULL;
-    }
+    R3D_ASSERT(capacity > 0 && "r3d_stack: capacity must be non-zero");
 
     r3d_stack_t* stack = r3d_malloc(stack_total_size(capacity));
     stack->capacity    = capacity;
@@ -84,26 +81,19 @@ void r3d_stack_destroy(r3d_stack_t* stack)
     r3d_free(stack);
 }
 
-bool r3d_stack_push(r3d_stack_t** stackPtr, size_t reserve)
+void r3d_stack_push(r3d_stack_t** stackPtr, size_t reserve)
 {
     r3d_stack_t* stack = *stackPtr;
 
     R3D_ASSERT(stack->depth < R3D_STACK_MAX_DEPTH && "r3d_stack: max push() depth exceeded");
-    if (stack->depth >= R3D_STACK_MAX_DEPTH)
-    {
-        return false;
-    }
 
     if (reserve > 0 && stack->cursor + reserve > stack->capacity)
     {
         stack = stack_grow(stack, stack->cursor + reserve);
-        if (!stack) return false;
         *stackPtr = stack;
     }
 
     stack->marks[stack->depth++] = stack->cursor;
-
-    return true;
 }
 
 void r3d_stack_pop(r3d_stack_t* stack)
@@ -135,7 +125,6 @@ void* r3d_stack_alloc_aligned(r3d_stack_t** stackPtr, size_t size, size_t align)
     if (stack->cursor + worst > stack->capacity)
     {
         stack = stack_grow(stack, stack->cursor + worst);
-        if (!stack) return NULL;
         *stackPtr = stack;
     }
 

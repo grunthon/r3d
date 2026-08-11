@@ -32,27 +32,21 @@
 // ========================================
 
 /* Push/alloc/pop in one block; pop() runs automatically on block exit.
- * 'okVar' (no need to initialize) ends up true only if the body ran
- * to completion; false if push() failed (max depth or OOM, body
- * skipped entirely) or if the body exited early.
  *
- *   bool ok;
- *   R3D_STACK_SCOPE(&stack, 1024, ok) {
+ *   R3D_STACK_SCOPE(&stack, 1024) {
  *       void* tmp = r3d_stack_alloc(&stack, 64);
  *       ...
- *   } // pop() happens here, ok is now set
- *   if (!ok) { / * handle failure * / }
+ *   } // pop() happens here
  *
  * A plain `break` inside the body exits early without popping.
- * Use R3D_STACK_SCOPE_EXIT for an early safe exit
+ * Use R3D_STACK_SCOPE_EXIT for an early safe exit.
  */
-#define R3D_STACK_SCOPE(stackPtr, reserve, okVar)                       \
-    for (bool R3D_CONCAT(r3d_stack_scope_ok_, __LINE__) =               \
-             ((okVar) = false, r3d_stack_push((stackPtr), (reserve)));  \
-         R3D_CONCAT(r3d_stack_scope_ok_, __LINE__);                     \
-         r3d_stack_pop(*(stackPtr)),                                    \
-         (okVar) = true,                                                \
-         R3D_CONCAT(r3d_stack_scope_ok_, __LINE__) = false)
+#define R3D_STACK_SCOPE(stackPtr, reserve)                          \
+    for (int R3D_CONCAT(r3d_stack_scope_i_, __LINE__) =             \
+             (r3d_stack_push((stackPtr), (reserve)), 0);            \
+         R3D_CONCAT(r3d_stack_scope_i_, __LINE__) < 1;              \
+         r3d_stack_pop(*(stackPtr)),                                \
+         R3D_CONCAT(r3d_stack_scope_i_, __LINE__) = 1)
 
 /* Early, safe exit from a R3D_STACK_SCOPE: pops then breaks out.
  *
@@ -95,7 +89,7 @@ void r3d_stack_destroy(r3d_stack_t* stack);
  * the buffer so at least that many bytes are available without further
  * reallocation during the scope. *stackPtr is updated if it grows.
  * Returns false on failure (max depth reached or OOM) */
-bool r3d_stack_push(r3d_stack_t** stackPtr, size_t reserve);
+void r3d_stack_push(r3d_stack_t** stackPtr, size_t reserve);
 
 /* Close the current scope: rewinds the cursor to the matching push() */
 void r3d_stack_pop(r3d_stack_t* stack);

@@ -423,8 +423,6 @@ r3d_importer_texture_cache_t* r3d_importer_load_texture_cache(
     int uploadedCount  = 0;
     int processedCount = 0;
 
-    bool ok;
-
     // Worst-case scratch size for the whole scope below
     size_t reserve =
         (size_t)maxSlots * sizeof(texture_job_t) +
@@ -435,7 +433,7 @@ r3d_importer_texture_cache_t* r3d_importer_load_texture_cache(
         (size_t)r3d_get_cpu_count() * sizeof(thrd_t); // threads, worst case numThreads == cpu count
 
     // Collect, load, upload, build
-    R3D_STACK_SCOPE(&R3D.stack, reserve, ok)
+    R3D_STACK_SCOPE(&R3D.stack, reserve)
     {
         // Pre-alloacte temp memory
         texture_job_t* jobs = r3d_stack_alloc(&R3D.stack, maxSlots * sizeof(texture_job_t));
@@ -551,20 +549,6 @@ r3d_importer_texture_cache_t* r3d_importer_load_texture_cache(
             int slotIdx = materialToSlot[i];
             if (slotIdx >= 0) finalTextures[i] = slots[slotIdx].texture;
         }
-    }
-
-    if (!ok)
-    {
-        // Loading was aborted mid-way: any textures already uploaded
-        // to VRAM in this run are still referenced by finalTextures,
-        // free them before bailing out to avoid leaking GPU handles
-        for (int i = 0; i < maxSlots; i++)
-        {
-            if (finalTextures[i].id != 0) UnloadTexture(finalTextures[i]);
-        }
-        r3d_free(finalTextures);
-        R3D_TRACELOG(LOG_WARNING, "Failed to load texture cache: out of memory");
-        return NULL;
     }
 
     r3d_importer_texture_cache_t* cache = r3d_malloc(sizeof(*cache));

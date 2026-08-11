@@ -1908,9 +1908,8 @@ void R3D_GenMeshDataNormals(R3D_MeshData* meshData, R3D_PrimitiveType type)
     }
 
     size_t bufferSize = meshData->vertexCount * sizeof(Vector3);
-    bool ok;
 
-    R3D_STACK_SCOPE(&R3D.stack, bufferSize, ok)
+    R3D_STACK_SCOPE(&R3D.stack, bufferSize)
     {
         // Accumulate in float to avoid precision loss
         Vector3* normals = r3d_stack_alloc(&R3D.stack, bufferSize);
@@ -1962,11 +1961,6 @@ void R3D_GenMeshDataNormals(R3D_MeshData* meshData, R3D_PrimitiveType type)
         {
             R3D_PackNormal((int8_t*)meshData->vertices[i].normal, Vector3Normalize(normals[i]));
         }
-    }
-
-    if (!ok)
-    {
-        R3D_TRACELOG(LOG_ERROR, "Failed to allocate temporary vertex buffer to generate normals");
     }
 }
 
@@ -2030,9 +2024,8 @@ void R3D_GenMeshDataTangents(R3D_MeshData* meshData, R3D_PrimitiveType type)
     }
 
     size_t bufferSize = meshData->vertexCount * sizeof(Vector3);
-    bool ok;
 
-    R3D_STACK_SCOPE(&R3D.stack, 2 * bufferSize, ok)
+    R3D_STACK_SCOPE(&R3D.stack, 2 * bufferSize)
     {
         Vector3* tangents = r3d_stack_alloc(&R3D.stack, bufferSize);
         memset(tangents, 0, bufferSize);
@@ -2103,11 +2096,6 @@ void R3D_GenMeshDataTangents(R3D_MeshData* meshData, R3D_PrimitiveType type)
             float handedness = Vector3DotProduct(Vector3CrossProduct(n, t), bitangents[i]) < 0.0f ? -1.0f : 1.0f;
             R3D_PackTangent((int8_t*)meshData->vertices[i].tangent, (Vector4){t.x, t.y, t.z, handedness});
         }
-    }
-
-    if (!ok)
-    {
-        R3D_TRACELOG(LOG_ERROR, "Failed to allocate temporary vertex buffer to generate tangents");
     }
 }
 

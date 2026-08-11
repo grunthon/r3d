@@ -821,9 +821,7 @@ void upload_view_block(void)
 
 void upload_env_block(void)
 {
-    bool ok;
-
-    R3D_STACK_SCOPE(&R3D.stack, sizeof(r3d_shader_block_env_t), ok)
+    R3D_STACK_SCOPE(&R3D.stack, sizeof(r3d_shader_block_env_t))
     {
         const R3D_EnvBackground* background = &R3D.environment.background;
         const R3D_EnvAmbient* ambient = &R3D.environment.ambient;
@@ -872,8 +870,6 @@ void upload_env_block(void)
 
         r3d_shader_set_uniform_block(R3D_SHADER_BLOCK_ENV, env, false);
     }
-
-    R3D_UNUSED(ok);
 }
 
 void upload_fx_block(void)
