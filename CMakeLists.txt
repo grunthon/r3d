@@ -449,18 +449,13 @@ set(R3D_WARNING_FLAGS_GNU_CLANG
 )
 
 set(R3D_WARNING_FLAGS_MSVC
-    /W4         # -Wall -Wextra
+    /W3
+    /w14100     # -Wunused-parameter (part of -Wextra): unused function parameter
+    /w14189     # -Wunused-but-set-variable (part of -Wextra): variable set but never used
     /w14456     # -Wshadow: local variable shadows another local
     /w14457     # -Wshadow: hides a function parameter
     /w14458     # -Wshadow: hides a struct member
     /w14459     # -Wshadow: shadows a global declaration
-    /wd4324     # remove: padded structure due to alignment specifier
-    /wd4244     # remove: conversion, possible data loss
-    /wd4267     # remove: conversion size_t -> smaller type
-    /wd4245     # remove: signed/unsigned conversion
-    /wd4018     # remove: signed/unsigned comparison
-    /wd4389     # remove: signed/unsigned equality
-    /wd4702     # remove: unreachable code
 )
 
 target_compile_options(${PROJECT_NAME} PRIVATE
