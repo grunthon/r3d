@@ -18,6 +18,8 @@
 #include <r3d/r3d_mesh.h>
 #include <glad.h>
 
+#include "../common/r3d_list.h"
+
 // ========================================
 // HELPER MACROS
 // ========================================
@@ -51,17 +53,18 @@
  *
  * Intended for internal rendering passes only.
  */
-#define R3D_RENDER_FOR_EACH(call, cond, frustum, ...)                           \
-    for (int _lists[] = {__VA_ARGS__}, _list_idx = 0, _i = 0, _keep = 1;        \
-         _list_idx < (int)(sizeof(_lists)/sizeof(_lists[0]));                   \
-         (_i >= R3D_MOD_RENDER.list[_lists[_list_idx]].numCalls ?               \
-          (_list_idx++, _i = 0) : 0))                                           \
-        for (; _list_idx < (int)(sizeof(_lists)/sizeof(_lists[0])) &&           \
-               _i < R3D_MOD_RENDER.list[_lists[_list_idx]].numCalls;            \
-             _i++, _keep = 1)                                                   \
-            for (const r3d_render_call_t* call =                                \
-                 &R3D_MOD_RENDER.calls[R3D_MOD_RENDER.list[_lists[_list_idx]].calls[_i]]; \
-                 _keep && (cond) && (!(frustum) || r3d_render_call_is_visible(call, (frustum))); \
+#define R3D_RENDER_FOR_EACH(call, cond, frustum, ...)                                               \
+    for (int _lists[] = {__VA_ARGS__}, _list_idx = 0, _i = 0, _keep = 1;                            \
+         _list_idx < (int)(sizeof(_lists)/sizeof(_lists[0]));                                       \
+         ((size_t)_i >= R3D_LIST_LENGTH(R3D_MOD_RENDER.list[_lists[_list_idx]].calls) ?             \
+          (_list_idx++, _i = 0) : 0))                                                               \
+        for (; _list_idx < (int)(sizeof(_lists)/sizeof(_lists[0])) &&                               \
+               (size_t)_i < R3D_LIST_LENGTH(R3D_MOD_RENDER.list[_lists[_list_idx]].calls);          \
+             _i++, _keep = 1)                                                                       \
+            for (const r3d_render_call_t* call =                                                    \
+                 &R3D_LIST_GET(R3D_MOD_RENDER.calls, r3d_render_call_t,                             \
+                     R3D_LIST_GET(R3D_MOD_RENDER.list[_lists[_list_idx]].calls, int, _i));          \
+                 _keep && (cond) && (!(frustum) || r3d_render_call_is_visible(call, (frustum)));    \
                  _keep = 0)
 
 /*
@@ -253,8 +256,7 @@ typedef struct {
  * A render list stores indices into the global draw call array.
  */
 typedef struct {
-    int* calls;     //< Indices of draw calls
-    int numCalls;   //< Number of active entries
+    r3d_list_t* calls;   //< Indices of draw calls (list<int>)
 } r3d_render_list_t;
 
 /*
@@ -304,32 +306,23 @@ extern struct r3d_mod_render {
     int globalVertexCount;                              //< High-water mark: first never-allocated vertex offset
     int globalElementCount;                             //< High-water mark: first never-allocated index offset
 
-    r3d_render_range_t* freeVertices;                   //< Free list of released vertex ranges available for reuse
-    r3d_render_range_t* freeElements;                   //< Free list of released index ranges available for reuse
-    int numFreeVertices;                                //< Number of entries in the vertex free list
-    int numFreeElements;                                //< Number of entries in the element free list
-    int freeVertexCapacity;                             //< Allocated capacity of the vertex free list array
-    int freeElementCapacity;                            //< Allocated capacity of the element free list array
+    r3d_list_t* freeVertices;                           //< Free list of released vertex ranges available for reuse (list<r3d_render_range_t>)
+    r3d_list_t* freeElements;                           //< Free list of released index ranges available for reuse (list<r3d_render_range_t>)
 
     r3d_render_instance_state_t instanceState;          //< Cached instance binding configuration
     r3d_render_shape_t shapes[R3D_RENDER_SHAPE_COUNT];  //< Array of built-in shapes buffers
 
-    r3d_render_cluster_t* clusters;                     //< Array of render clusters
+    r3d_list_t* clusters;                               //< Array of render clusters (list<r3d_render_cluster_t>)
     int activeCluster;                                  //< Index of the active cluster for new render groups (-1 if no active clusters)
 
-    r3d_render_group_visibility_t* groupVisibility;     //< Array containing visibility info for each render group (generated during group culling)
-    r3d_render_indices_t* callIndices;                  //< Array of draw call index ranges for each render group (automatically managed)
-    r3d_render_group_t* groups;                         //< Array of render groups (shared data across draw calls)
+    r3d_list_t* groupVisibility;                        //< Array containing visibility info for each render group (list<r3d_render_group_visibility_t>, generated during group culling)
+    r3d_list_t* callIndices;                            //< Array of draw call index ranges for each render group (list<r3d_render_indices_t>, automatically managed)
+    r3d_list_t* groups;                                 //< Array of render groups (list<r3d_render_group_t>, shared data across draw calls)
 
     r3d_render_list_t list[R3D_RENDER_LIST_COUNT];      //< Lists of draw call indices organized by rendering category
-    r3d_render_sort_t* sortCache;                       //< Draw call sorting data cache array
-    r3d_render_call_t* calls;                           //< Array of draw calls
-    int* groupIndices;                                  //< Array of group indices for each draw call (automatically managed)
-
-    int numClusters;                                    //< Number of active render clusters
-    int numGroups;                                      //< Number of active render groups
-    int numCalls;                                       //< Number of active draw calls
-    int capacity;                                       //< Allocated capacity for all arrays (in number of elements)
+    r3d_list_t* sortCache;                              //< Draw call sorting data cache array (list<r3d_render_sort_t>)
+    r3d_list_t* calls;                                  //< Array of draw calls (list<r3d_render_call_t>)
+    r3d_list_t* groupIndices;                           //< Array of group indices for each draw call (list<int>, automatically managed)
 
     bool groupCulled;                                   //< Indicates if groups already culled (controls visibility reset)
     bool hasDeferred;                                   //< If there are any deferred calls (lit opaque)
@@ -529,8 +522,8 @@ static inline bool r3d_render_has_forward(void)
 static inline bool r3d_render_has_decal(void)
 {
     return
-        (R3D_MOD_RENDER.list[R3D_RENDER_LIST_DECAL].numCalls > 0) ||
-        (R3D_MOD_RENDER.list[R3D_RENDER_LIST_DECAL_INST].numCalls > 0);
+        (!R3D_LIST_EMPTY(R3D_MOD_RENDER.list[R3D_RENDER_LIST_DECAL].calls)) ||
+        (!R3D_LIST_EMPTY(R3D_MOD_RENDER.list[R3D_RENDER_LIST_DECAL_INST].calls));
 }
 
 /*
