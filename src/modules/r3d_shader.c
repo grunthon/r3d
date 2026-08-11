@@ -105,7 +105,8 @@ struct r3d_mod_shader R3D_MOD_SHADER;
         ? &R3D_MOD_SHADER.category.shader_name                                  \
         : &(custom)->program->category.shader_name
 
-#define LOAD_SHADER(shader_name, vsCode, fsCode) do {                           \
+#define LOAD_SHADER(shader_name, vsCode, fsCode)                                \
+do {                                                                            \
     shader_name->id = load_shader((vsCode), (fsCode));                          \
     if (shader_name->id == 0) {                                                 \
         R3D_TRACELOG(LOG_ERROR, "Failed to load shader '" #shader_name "'");    \
@@ -113,7 +114,8 @@ struct r3d_mod_shader R3D_MOD_SHADER;
     }                                                                           \
 } while(0)
 
-#define LOAD_SHADER_EX(shader_name, desc) do {                                  \
+#define LOAD_SHADER_EX(shader_name, desc)                                       \
+do {                                                                            \
     R3D_STACK_SCOPE(&R3D.stack, shader_source_reserve(&(desc)))                 \
     {                                                                           \
         const char *vsCode = NULL, *fsCode = NULL;                              \
@@ -131,36 +133,45 @@ struct r3d_mod_shader R3D_MOD_SHADER;
     }                                                                           \
 } while(0)
 
-#define USE_SHADER(shader_name) do {                                            \
+#define USE_SHADER(shader_name)                                                 \
+do {                                                                            \
     glUseProgram(shader_name->id);                                              \
 } while(0)                                                                      \
 
-#define GET_LOCATION(shader_name, uniform) do {                                 \
+#define GET_LOCATION(shader_name, uniform)                                      \
+do {                                                                            \
     shader_name->uniform.loc = glGetUniformLocation(                            \
         shader_name->id, #uniform                                               \
     );                                                                          \
 } while(0)
 
-#define SET_SAMPLER(shader_name, uniform, value) do {                           \
+#define SET_SAMPLER(shader_name, uniform, value)                                \
+do {                                                                            \
     GLint loc = glGetUniformLocation(shader_name->id, #uniform);                \
     glUniform1i(loc, (int)(value));                                             \
     shader_name->uniform.slot = (int)(value);                                   \
 } while(0)
 
-#define SET_UNIFORM_BUFFER(shader_name, uniform, slot) do {                     \
+#define SET_UNIFORM_BUFFER(shader_name, uniform, slot)                          \
+do {                                                                            \
     GLuint idx = glGetUniformBlockIndex(shader_name->id, #uniform);             \
     glUniformBlockBinding(shader_name->id, idx, slot);                          \
 } while(0)                                                                      \
 
-#define UNLOAD_SHADER(shader_name) do {                                         \
-    if (R3D_MOD_SHADER.shader_name.id != 0) {                                   \
+#define UNLOAD_SHADER(shader_name)                                              \
+do {                                                                            \
+    if (R3D_MOD_SHADER.shader_name.id != 0)                                     \
+    {                                                                           \
         glDeleteProgram(R3D_MOD_SHADER.shader_name.id);                         \
     }                                                                           \
 } while(0)
 
-#define UNLOAD_SHADERS(shader_name) do {                                        \
-    for (int i = 0; i < (int)R3D_ARRAY_SIZE(R3D_MOD_SHADER.shader_name); i++) { \
-        if (R3D_MOD_SHADER.shader_name[i].id != 0) {                            \
+#define UNLOAD_SHADERS(shader_name)                                             \
+do {                                                                            \
+    for (int i = 0; i < (int)R3D_ARRAY_SIZE(R3D_MOD_SHADER.shader_name); i++)   \
+    {                                                                           \
+        if (R3D_MOD_SHADER.shader_name[i].id != 0)                              \
+        {                                                                       \
             glDeleteProgram(R3D_MOD_SHADER.shader_name[i].id);                  \
         }                                                                       \
     }                                                                           \
