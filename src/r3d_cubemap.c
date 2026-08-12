@@ -16,8 +16,8 @@
 #include "./modules/r3d_shader.h"
 #include "./modules/r3d_render.h"
 #include "./common/r3d_image.h"
+#include "./common/r3d_math.h"
 #include "./r3d_core_state.h"
-#include "common/r3d_math.h"
 
 // ========================================
 // INTERNAL SHARED FUNCTIONS
