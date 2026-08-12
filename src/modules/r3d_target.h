@@ -24,14 +24,13 @@
  */
 typedef enum {
     R3D_TARGET_INVALID = -1,
-    R3D_TARGET_ALBEDO,          //< Full - Mip 2 - RGB8
-    R3D_TARGET_NORMAL,          //< Full - Mip 2 - RG16
-    R3D_TARGET_ORM,             //< Full - Mip 2 - RGBA8
-    R3D_TARGET_DEPTH,           //< Full - Mip 2 - R16F
-    R3D_TARGET_DIFFUSE,         //< Full - Mip 2 - RGB16F
-    R3D_TARGET_SPECULAR,        //< Full - Mip 2 - RGB16F
+    R3D_TARGET_ALBEDO,          //< Full - Mip 1 - RGB8
+    R3D_TARGET_NORMAL,          //< Full - Mip N - RG16
+    R3D_TARGET_ORM,             //< Full - Mip 1 - RGBA8
+    R3D_TARGET_DEPTH,           //< Full - Mip N - R16F
+    R3D_TARGET_DIFFUSE,         //< Full - Mip N - RGB16F
+    R3D_TARGET_SPECULAR,        //< Full - Mip N - RGB16F
     R3D_TARGET_GEOM_NORMAL,     //< Full - Mip 1 - RG16
-    R3D_TARGET_SELECTOR,        //< Half - Mip 2 - R8UI
     R3D_TARGET_VFOG_RAD,        //< Half - Mip 1 - RGB16F
     R3D_TARGET_SSAO_0,          //< Half - Mip 1 - R8
     R3D_TARGET_SSAO_1,          //< Half - Mip 1 - R8
