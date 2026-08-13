@@ -76,11 +76,12 @@ typedef struct {
 
 static const target_config_t TARGET_CONFIG[] = {
     [R3D_TARGET_ALBEDO]      = { FORMAT_RGB8,    1, GL_NEAREST,                GL_NEAREST, 1, {0} },
-    [R3D_TARGET_NORMAL]      = { FORMAT_RG16,    1, GL_NEAREST,                GL_NEAREST, 0, {0} },
+    [R3D_TARGET_NORMAL]      = { FORMAT_RG16,    1, GL_NEAREST,                GL_NEAREST, 2, {0} },
     [R3D_TARGET_ORM]         = { FORMAT_RGBA8,   1, GL_NEAREST,                GL_NEAREST, 1, {0} },
     [R3D_TARGET_DEPTH]       = { FORMAT_R16F,    1, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST, 0, {65504.0f, 65504.0f, 65504.0f, 65504.0f} },
-    [R3D_TARGET_DIFFUSE]     = { FORMAT_RGB16F,  1, GL_NEAREST,                GL_NEAREST, 0, {0} },
-    [R3D_TARGET_SPECULAR]    = { FORMAT_RGB16F,  1, GL_NEAREST,                GL_NEAREST, 0, {0} },
+    [R3D_TARGET_SELECTOR]    = { FORMAT_R8UI,    2, GL_NEAREST,                GL_NEAREST, 0, {0} },
+    [R3D_TARGET_DIFFUSE]     = { FORMAT_RGB16F,  1, GL_NEAREST,                GL_NEAREST, 2, {0} },
+    [R3D_TARGET_SPECULAR]    = { FORMAT_RGB16F,  1, GL_NEAREST,                GL_NEAREST, 2, {0} },
     [R3D_TARGET_GEOM_NORMAL] = { FORMAT_RG16,    1, GL_NEAREST,                GL_NEAREST, 1, {0} },
     [R3D_TARGET_VFOG_RAD]    = { FORMAT_RGB16F,  2, GL_LINEAR,                 GL_LINEAR,  1, {0} },
     [R3D_TARGET_SSAO_0]      = { FORMAT_R8,      2, GL_LINEAR,                 GL_LINEAR,  1, {0} },

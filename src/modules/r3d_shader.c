@@ -26,7 +26,7 @@
 #include <shaders/denoiser_sparse.frag.h>
 #include <shaders/blur_down.frag.h>
 #include <shaders/blur_up.frag.h>
-#include <shaders/down_pyramid.frag.h>
+#include <shaders/pyramid.frag.h>
 #include <shaders/ssao.frag.h>
 #include <shaders/ssil.frag.h>
 #include <shaders/ssgi.frag.h>
@@ -364,20 +364,56 @@ bool r3d_shader_load_prepare_blur_up(r3d_shader_custom_t* custom)
     return true;
 }
 
-bool r3d_shader_load_prepare_down_pyramid(r3d_shader_custom_t* custom)
+bool r3d_shader_load_prepare_pyramid(r3d_shader_custom_t* custom)
 {
     R3D_UNUSED(custom);
 
-    DECL_SHADER(r3d_shader_prepare_down_pyramid_t, prepare, downPyramid);
-    LOAD_SHADER(downPyramid, SCREEN_VERT, DOWN_PYRAMID_FRAG);
+    const char* FS_DEFINES[] = {"PYRAMID"};
 
-    SET_UNIFORM_BUFFER(downPyramid, ViewBlock, R3D_SHADER_BLOCK_SLOT_VIEW);
+    shader_source_desc_t desc = {
+        .vsTemplate    = SCREEN_VERT,
+        .vsDefines     = NULL,
+        .vsDefineCount = 0,
+        .fsTemplate    = PYRAMID_FRAG,
+        .fsDefines     = FS_DEFINES,
+        .fsDefineCount = R3D_ARRAY_SIZE(FS_DEFINES),
+        .userCode      = NULL,
+    };
 
-    USE_SHADER(downPyramid);
-    SET_SAMPLER(downPyramid, uDepthTex, R3D_SHADER_SAMPLER_BUFFER_DEPTH);
-    SET_SAMPLER(downPyramid, uNormalTex, R3D_SHADER_SAMPLER_BUFFER_NORMAL);
-    SET_SAMPLER(downPyramid, uDiffuseTex, R3D_SHADER_SAMPLER_BUFFER_DIFFUSE);
-    SET_SAMPLER(downPyramid, uSpecularTex, R3D_SHADER_SAMPLER_BUFFER_SPECULAR);
+    DECL_SHADER(r3d_shader_prepare_pyramid_t, prepare, pyramid);
+    LOAD_SHADER_EX(pyramid, desc);
+
+    SET_UNIFORM_BUFFER(pyramid, ViewBlock, R3D_SHADER_BLOCK_SLOT_VIEW);
+
+    USE_SHADER(pyramid);
+    SET_SAMPLER(pyramid, uDepthTex, R3D_SHADER_SAMPLER_BUFFER_DEPTH);
+
+    return true;
+}
+
+bool r3d_shader_load_prepare_downsample(r3d_shader_custom_t* custom)
+{
+    R3D_UNUSED(custom);
+
+    const char* FS_DEFINES[] = {"DOWNSAMPLE"};
+
+    shader_source_desc_t desc = {
+        .vsTemplate    = SCREEN_VERT,
+        .vsDefines     = NULL,
+        .vsDefineCount = 0,
+        .fsTemplate    = PYRAMID_FRAG,
+        .fsDefines     = FS_DEFINES,
+        .fsDefineCount = R3D_ARRAY_SIZE(FS_DEFINES),
+        .userCode      = NULL,
+    };
+
+
+    DECL_SHADER(r3d_shader_prepare_downsample_t, prepare, downsample);
+    LOAD_SHADER_EX(downsample, desc);
+
+    USE_SHADER(downsample);
+    SET_SAMPLER(downsample, uSelectorTex, R3D_SHADER_SAMPLER_BUFFER_SELECTOR);
+    SET_SAMPLER(downsample, uSourceTex, R3D_SHADER_SAMPLER_SOURCE_2D_0);
 
     return true;
 }
@@ -1809,7 +1845,8 @@ void r3d_shader_quit(void)
     UNLOAD_SHADER(prepare.denoiserSparse);
     UNLOAD_SHADER(prepare.blurDown);
     UNLOAD_SHADER(prepare.blurUp);
-    UNLOAD_SHADER(prepare.downPyramid);
+    UNLOAD_SHADER(prepare.pyramid);
+    UNLOAD_SHADER(prepare.downsample);
     UNLOAD_SHADER(prepare.ssao);
     UNLOAD_SHADER(prepare.ssil);
     UNLOAD_SHADER(prepare.ssgi);
