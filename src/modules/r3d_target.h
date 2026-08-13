@@ -93,50 +93,28 @@ typedef enum {
 #define R3D_TARGET_TEXEL_W  R3D_MOD_TARGET.txlW
 #define R3D_TARGET_TEXEL_H  R3D_MOD_TARGET.txlH
 
-#define R3D_TARGET_LEVEL_LIST(...) (int[]) {__VA_ARGS__}
-
-#define R3D_TARGET_CLEAR(depth, ...)                                    \
+#define R3D_TARGET_CLEAR(level, depth, ...)                             \
     r3d_target_clear(                                                   \
         (r3d_target_t[]) {__VA_ARGS__},                                 \
         sizeof((r3d_target_t[]) {__VA_ARGS__}) / sizeof(r3d_target_t),  \
-        0, (depth)                                                      \
+        (level), (depth)                                                \
     )
 
-#define R3D_TARGET_CLEAR_LEVEL(level, ...)                              \
-    r3d_target_clear(                                                   \
-        (r3d_target_t[]) {__VA_ARGS__},                                 \
-        sizeof((r3d_target_t[]) {__VA_ARGS__}) / sizeof(r3d_target_t),  \
-        (level), false                                                  \
-    )
-
-#define R3D_TARGET_BIND(depth, ...)                                     \
+#define R3D_TARGET_BIND(level, depth, ...)                              \
     r3d_target_bind(                                                    \
         (r3d_target_t[]){ __VA_ARGS__ },                                \
         sizeof((r3d_target_t[]) {__VA_ARGS__}) / sizeof(r3d_target_t),  \
-        0, (depth)                                                      \
-    )
-
-#define R3D_TARGET_BIND_LEVEL(level, ...)                               \
-    r3d_target_bind(                                                    \
-        (r3d_target_t[]) {__VA_ARGS__},                                 \
-        sizeof((r3d_target_t[]) {__VA_ARGS__}) / sizeof(r3d_target_t),  \
-        (level), false                                                  \
-    )
-
-#define R3D_TARGET_BIND_LEVELS(levelsArr, ...)                          \
-    r3d_target_bind_levels(                                             \
-        (r3d_target_t[]) {__VA_ARGS__},                                 \
-        (levelsArr),                                                    \
-        sizeof((r3d_target_t[]) {__VA_ARGS__}) / sizeof(r3d_target_t)   \
+        (level), (depth)                                                \
     )
 
 /*
  * Binds the target, then swaps to the alternate scene target.
  * Modifies the target parameter to point to the other buffer.
  */
-#define R3D_TARGET_BIND_AND_SWAP_SCENE(target) do {                     \
-    R3D_TARGET_BIND(false, target);                                     \
-    target = r3d_target_swap_scene(target);                             \
+#define R3D_TARGET_BIND_AND_SWAP_SCENE(target)  \
+do {                                            \
+    R3D_TARGET_BIND(0, false, target);          \
+    target = r3d_target_swap_scene(target);     \
 } while(0)
 
 // ========================================
@@ -147,13 +125,9 @@ typedef enum {
 #define R3D_TARGET_MAX_ATTACHMENTS  8
 
 typedef struct {
-    int writeLevel;         //< Indicates the level currently attached to the FBO
-} r3d_target_attachment_state_t;
-
-typedef struct {
-    r3d_target_attachment_state_t targetStates[R3D_TARGET_MAX_ATTACHMENTS];
     r3d_target_t targets[R3D_TARGET_MAX_ATTACHMENTS];
     int targetCount;
+    int boundLevel;
     bool hasDepth;
     GLuint id;
 } r3d_target_fbo_t;
@@ -211,20 +185,32 @@ void r3d_target_quit(void);
 void r3d_target_resize(uint32_t resW, uint32_t resH);
 
 /*
- * Returns the total number of mip levels of the internal buffers
- * based on their full resolution.
+ * Returns the minimum virtual mip level for the target.
+ * Levels below this value don't exist for the target and will trigger an assert.
+ * Example: a half-resolution target has a minimum level of 1 (its physical level 0
+ * is exposed publicly as level 1, as if it were a mip of a full-resolution texture).
+ */
+int r3d_target_get_min_level(r3d_target_t target);
+
+/*
+ * Returns the maximum virtual mip level for the target.
+ */
+int r3d_target_get_max_level(r3d_target_t target);
+
+/*
+ * Returns the total of physical mip levels of the target.
  */
 int r3d_target_get_num_levels(r3d_target_t target);
 
 /*
  * Returns the internal resolution for the specified mip level.
  */
-void r3d_target_get_resolution(int* w, int* h, r3d_target_t target, int level);
+void r3d_target_get_resolution(int* w, int* h, int level);
 
 /*
  * Returns the texel size for the specified mip level.
  */
-void r3d_target_get_texel_size(float* w, float* h, r3d_target_t target, int level);
+Vector2 r3d_target_get_texel_size(int level);
 
 /*
  * Returns target '1' if target '0' is provided, otherwise returns target '0'.
@@ -252,32 +238,15 @@ void r3d_target_clear(const r3d_target_t* targets, int count, int level, bool de
 void r3d_target_bind(const r3d_target_t* targets, int count, int level, bool depth);
 
 /*
- * Creates (or retrieves) and binds an FBO for the given attachments.
- * Attachment locations follow the order of targets (COLOR0 = targets[0], etc).
- *
- * Unlike r3d_target_bind(), each attachment can be bound at a different mip level
- * via the corresponding entry in levels.
- *
- * The viewport is set from targets[0] at levels[0].
- *
- * Notes:
- * - All specified levels must have identical dimensions.
- * - No hardware depth buffer is attached by this function.
+ * Sets the viewport according to the specified level.
  */
-void r3d_target_bind_levels(const r3d_target_t* targets, int* levels, int count);
+void r3d_target_set_viewport(int level);
 
 /*
- * Sets the viewport according to the target and specified level.
- */
-void r3d_target_set_viewport(r3d_target_t target, int level);
-
-/*
- * Changes the mip level of the specified attachment.
- * Takes effect on the currently bound FBO.
- * The attachment index corresponds to the target's location in 'r3d_target_bind'.
+ * Changes the mip level of the currently bound FBO.
  * Asserts that a valid FBO is currently bound and that the level is valid.
  */
-void r3d_target_set_write_level(int attachment, int level);
+void r3d_target_set_write_level(int level);
 
 /*
  * Defines the sampling level of the target.

@@ -345,8 +345,6 @@ bool r3d_shader_load_prepare_blur_down(r3d_shader_custom_t* custom)
     DECL_SHADER(r3d_shader_prepare_blur_down_t, prepare, blurDown);
     LOAD_SHADER(blurDown, SCREEN_VERT, BLUR_DOWN_FRAG);
 
-    GET_LOCATION(blurDown, uSourceLod);
-
     USE_SHADER(blurDown);
     SET_SAMPLER(blurDown, uSourceTex, R3D_SHADER_SAMPLER_SOURCE_2D_0);
 
@@ -359,8 +357,6 @@ bool r3d_shader_load_prepare_blur_up(r3d_shader_custom_t* custom)
 
     DECL_SHADER(r3d_shader_prepare_blur_up_t, prepare, blurUp);
     LOAD_SHADER(blurUp, SCREEN_VERT, BLUR_UP_FRAG);
-
-    GET_LOCATION(blurUp, uSourceLod);
 
     USE_SHADER(blurUp);
     SET_SAMPLER(blurUp, uSourceTex, R3D_SHADER_SAMPLER_SOURCE_2D_0);
@@ -512,7 +508,7 @@ bool r3d_shader_load_prepare_bloom_down(r3d_shader_custom_t* custom)
     SET_UNIFORM_BUFFER(bloomDown, FxBlock, R3D_SHADER_BLOCK_SLOT_FX);
 
     GET_LOCATION(bloomDown, uTexelSize);
-    GET_LOCATION(bloomDown, uDstLevel);
+    GET_LOCATION(bloomDown, uFirstPass);
 
     USE_SHADER(bloomDown);
     SET_SAMPLER(bloomDown, uTexture, R3D_SHADER_SAMPLER_BUFFER_BLOOM);
@@ -528,7 +524,6 @@ bool r3d_shader_load_prepare_bloom_up(r3d_shader_custom_t* custom)
     LOAD_SHADER(bloomUp, SCREEN_VERT, BLOOM_UP_FRAG);
 
     GET_LOCATION(bloomUp, uFilterRadius);
-    GET_LOCATION(bloomUp, uSrcLevel);
 
     USE_SHADER(bloomUp);
     SET_SAMPLER(bloomUp, uTexture, R3D_SHADER_SAMPLER_BUFFER_BLOOM);

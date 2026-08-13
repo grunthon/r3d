@@ -658,13 +658,11 @@ typedef struct {
 typedef struct {
     GLuint id;
     r3d_shader_uniform_sampler_t uSourceTex;
-    r3d_shader_uniform_int_t uSourceLod;
 } r3d_shader_prepare_blur_down_t;
 
 typedef struct {
     GLuint id;
     r3d_shader_uniform_sampler_t uSourceTex;
-    r3d_shader_uniform_int_t uSourceLod;
 } r3d_shader_prepare_blur_up_t;
 
 typedef struct {
@@ -724,14 +722,13 @@ typedef struct {
     GLuint id;
     r3d_shader_uniform_sampler_t uTexture;
     r3d_shader_uniform_vec2_t uTexelSize;
-    r3d_shader_uniform_int_t uDstLevel;
+    r3d_shader_uniform_int_t uFirstPass;
 } r3d_shader_prepare_bloom_down_t;
 
 typedef struct {
     GLuint id;
     r3d_shader_uniform_sampler_t uTexture;
     r3d_shader_uniform_vec2_t uFilterRadius;
-    r3d_shader_uniform_float_t uSrcLevel;
 } r3d_shader_prepare_bloom_up_t;
 
 typedef struct {

@@ -9,6 +9,12 @@
 #version 330 core
 
 // ================================
+// Inlucdes
+// ================================
+
+#include <ubo/view.glsl>
+
+// ================================
 // Out - Fragments
 // ================================
 
@@ -76,4 +82,11 @@ void main()
     FragNormal   = texelFetch(uNormalTex,   srcCoord, 0).rg;
     FragDiffuse  = texelFetch(uDiffuseTex,  srcCoord, 0).rgb;
     FragSpecular = texelFetch(uSpecularTex, srcCoord, 0).rgb;
+
+	gl_FragDepth = 1.0 - float(
+		(d0 < uView.far) ||
+		(d1 < uView.far) ||
+		(d2 < uView.far) ||
+		(d3 < uView.far)
+	);
 }

@@ -67,40 +67,40 @@ static const target_format_t TARGET_FORMAT[] = {
 
 typedef struct {
     target_format_enum_t format;
-    float resolutionFactor;
+    int resolutionDiv;              // 1 = full res, 2 = half res, 4 = quarter res... 0 = 1x1
     GLenum minFilter;
     GLenum magFilter;
-    int numLevels;
+    int numLevels;                  // 0 = auto (full mip chain), >0 = fixed number of native levels
     float clear[4];
 } target_config_t;
 
 static const target_config_t TARGET_CONFIG[] = {
-    [R3D_TARGET_ALBEDO]      = { FORMAT_RGB8,    1.0f, GL_NEAREST,              GL_NEAREST, 1, {0} },
-    [R3D_TARGET_NORMAL]      = { FORMAT_RG16,    1.0f, GL_NEAREST,              GL_NEAREST, 0, {0} },
-    [R3D_TARGET_ORM]         = { FORMAT_RGBA8,   1.0f, GL_NEAREST,              GL_NEAREST, 1, {0} },
-    [R3D_TARGET_DEPTH]       = { FORMAT_R16F,    1.0f, GL_NEAREST,              GL_NEAREST, 0, {65504.0f, 65504.0f, 65504.0f, 65504.0f} },
-    [R3D_TARGET_DIFFUSE]     = { FORMAT_RGB16F,  1.0f, GL_NEAREST,              GL_NEAREST, 0, {0} },
-    [R3D_TARGET_SPECULAR]    = { FORMAT_RGB16F,  1.0f, GL_NEAREST,              GL_NEAREST, 0, {0} },
-    [R3D_TARGET_GEOM_NORMAL] = { FORMAT_RG16,    1.0f, GL_NEAREST,              GL_NEAREST, 1, {0} },
-    [R3D_TARGET_VFOG_RAD]    = { FORMAT_RGB16F,  0.5f, GL_LINEAR,               GL_LINEAR,  1, {0} },
-    [R3D_TARGET_SSAO_0]      = { FORMAT_R8,      0.5f, GL_LINEAR,               GL_LINEAR,  1, {0} },
-    [R3D_TARGET_SSAO_1]      = { FORMAT_R8,      0.5f, GL_LINEAR,               GL_LINEAR,  1, {0} },
-    [R3D_TARGET_SSIL_0]      = { FORMAT_RGBA16F, 0.5f, GL_LINEAR,               GL_LINEAR,  1, {0} },
-    [R3D_TARGET_SSIL_1]      = { FORMAT_RGBA16F, 0.5f, GL_LINEAR,               GL_LINEAR,  1, {0} },
-    [R3D_TARGET_SSGI_0]      = { FORMAT_RGB16F,  0.5f, GL_LINEAR,               GL_LINEAR,  1, {0} },
-    [R3D_TARGET_SSGI_1]      = { FORMAT_RGB16F,  0.5f, GL_LINEAR,               GL_LINEAR,  1, {0} },
-    [R3D_TARGET_SSR]         = { FORMAT_RGBA16F, 0.5f, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR,  0, {0} },
-    [R3D_TARGET_DOF_COC]     = { FORMAT_R16F,    1.0f, GL_LINEAR,               GL_LINEAR,  1, {0} },
-    [R3D_TARGET_DOF_0]       = { FORMAT_RGBA16F, 0.5f, GL_LINEAR,               GL_LINEAR,  1, {0} },
-    [R3D_TARGET_DOF_1]       = { FORMAT_RGBA16F, 0.5f, GL_LINEAR,               GL_LINEAR,  1, {0} },
-    [R3D_TARGET_BLOOM]       = { FORMAT_RGB16F,  0.5f, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR,  0, {0} },
-    [R3D_TARGET_SMAA_EDGES]  = { FORMAT_RG8,     1.0f, GL_LINEAR,               GL_LINEAR,  1, {0} },
-    [R3D_TARGET_SMAA_BLEND]  = { FORMAT_RGBA8,   1.0f, GL_LINEAR,               GL_LINEAR,  1, {0} },
-    [R3D_TARGET_LUMINANCE]   = { FORMAT_R16F,    0.5f, GL_NEAREST,              GL_NEAREST, 0, {0} },
-    [R3D_TARGET_EXPOSURE_0]  = { FORMAT_RG16F,   0.0f, GL_NEAREST,              GL_NEAREST, 1, {1.0f, R3D_LOG018, 0.0f, 1.0f} },
-    [R3D_TARGET_EXPOSURE_1]  = { FORMAT_RG16F,   0.0f, GL_NEAREST,              GL_NEAREST, 1, {1.0f, R3D_LOG018, 0.0f, 1.0f} },
-    [R3D_TARGET_SCENE_0]     = { FORMAT_RGB16F,  1.0f, GL_LINEAR,               GL_LINEAR,  1, {0} },
-    [R3D_TARGET_SCENE_1]     = { FORMAT_RGB16F,  1.0f, GL_LINEAR,               GL_LINEAR,  1, {0} },
+    [R3D_TARGET_ALBEDO]      = { FORMAT_RGB8,    1, GL_NEAREST,              GL_NEAREST, 1, {0} },
+    [R3D_TARGET_NORMAL]      = { FORMAT_RG16,    1, GL_NEAREST,              GL_NEAREST, 0, {0} },
+    [R3D_TARGET_ORM]         = { FORMAT_RGBA8,   1, GL_NEAREST,              GL_NEAREST, 1, {0} },
+    [R3D_TARGET_DEPTH]       = { FORMAT_R16F,    1, GL_NEAREST,              GL_NEAREST, 0, {65504.0f, 65504.0f, 65504.0f, 65504.0f} },
+    [R3D_TARGET_DIFFUSE]     = { FORMAT_RGB16F,  1, GL_NEAREST,              GL_NEAREST, 0, {0} },
+    [R3D_TARGET_SPECULAR]    = { FORMAT_RGB16F,  1, GL_NEAREST,              GL_NEAREST, 0, {0} },
+    [R3D_TARGET_GEOM_NORMAL] = { FORMAT_RG16,    1, GL_NEAREST,              GL_NEAREST, 1, {0} },
+    [R3D_TARGET_VFOG_RAD]    = { FORMAT_RGB16F,  2, GL_LINEAR,               GL_LINEAR,  1, {0} },
+    [R3D_TARGET_SSAO_0]      = { FORMAT_R8,      2, GL_LINEAR,               GL_LINEAR,  1, {0} },
+    [R3D_TARGET_SSAO_1]      = { FORMAT_R8,      2, GL_LINEAR,               GL_LINEAR,  1, {0} },
+    [R3D_TARGET_SSIL_0]      = { FORMAT_RGBA16F, 2, GL_LINEAR,               GL_LINEAR,  1, {0} },
+    [R3D_TARGET_SSIL_1]      = { FORMAT_RGBA16F, 2, GL_LINEAR,               GL_LINEAR,  1, {0} },
+    [R3D_TARGET_SSGI_0]      = { FORMAT_RGB16F,  2, GL_LINEAR,               GL_LINEAR,  1, {0} },
+    [R3D_TARGET_SSGI_1]      = { FORMAT_RGB16F,  2, GL_LINEAR,               GL_LINEAR,  1, {0} },
+    [R3D_TARGET_SSR]         = { FORMAT_RGBA16F, 2, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR,  0, {0} },
+    [R3D_TARGET_DOF_COC]     = { FORMAT_R16F,    1, GL_LINEAR,               GL_LINEAR,  1, {0} },
+    [R3D_TARGET_DOF_0]       = { FORMAT_RGBA16F, 2, GL_LINEAR,               GL_LINEAR,  1, {0} },
+    [R3D_TARGET_DOF_1]       = { FORMAT_RGBA16F, 2, GL_LINEAR,               GL_LINEAR,  1, {0} },
+    [R3D_TARGET_BLOOM]       = { FORMAT_RGB16F,  2, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR,  0, {0} },
+    [R3D_TARGET_SMAA_EDGES]  = { FORMAT_RG8,     1, GL_LINEAR,               GL_LINEAR,  1, {0} },
+    [R3D_TARGET_SMAA_BLEND]  = { FORMAT_RGBA8,   1, GL_LINEAR,               GL_LINEAR,  1, {0} },
+    [R3D_TARGET_LUMINANCE]   = { FORMAT_R16F,    2, GL_NEAREST,              GL_NEAREST, 0, {0} },
+    [R3D_TARGET_EXPOSURE_0]  = { FORMAT_RG16F,   0, GL_NEAREST,              GL_NEAREST, 1, {1.0f, R3D_LOG018, 0.0f, 1.0f} },
+    [R3D_TARGET_EXPOSURE_1]  = { FORMAT_RG16F,   0, GL_NEAREST,              GL_NEAREST, 1, {1.0f, R3D_LOG018, 0.0f, 1.0f} },
+    [R3D_TARGET_SCENE_0]     = { FORMAT_RGB16F,  1, GL_LINEAR,               GL_LINEAR,  1, {0} },
+    [R3D_TARGET_SCENE_1]     = { FORMAT_RGB16F,  1, GL_LINEAR,               GL_LINEAR,  1, {0} },
 };
 
 static void alloc_target_texture(r3d_target_t target)
@@ -111,16 +111,17 @@ static void alloc_target_texture(r3d_target_t target)
     const target_config_t* config = &TARGET_CONFIG[target];
     const target_format_t* format = &TARGET_FORMAT[config->format];
 
+    int minLevel  = r3d_target_get_min_level(target);
     int numLevels = r3d_target_get_num_levels(target);
 
-    for (int i = 0; i < numLevels; ++i)
+    for (int i = 0; i < numLevels; i++)
     {
         int wLevel = 0, hLevel = 0;
-        r3d_target_get_resolution(&wLevel, &hLevel, target, i);
+        r3d_target_get_resolution(&wLevel, &hLevel, minLevel + i);
         glTexImage2D(GL_TEXTURE_2D, i, format->internal, wLevel, hLevel, 0, format->format, format->type, NULL);
     }
 
-    // NOTE: By default, sampling is blocked at the first level
+    // NOTE: By default, sampling is locked at the first level
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL,  0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, config->minFilter);
@@ -134,19 +135,28 @@ static void alloc_target_texture(r3d_target_t target)
     R3D_MOD_TARGET.targetLoaded[target] = true;
 }
 
-static void alloc_depth_stencil_texture(uint32_t resW, uint32_t resH)
+static void alloc_depth_stencil_texture(void)
 {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, R3D_MOD_TARGET.depthTexture);
-    glTexImage2D(
-        GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8,
-        (GLsizei)resW, (GLsizei)resH, 0,
-        GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL
-    );
+
+    int maxLevel = r3d_target_get_max_level(R3D_TARGET_DEPTH);
+
+    for (int level = 0; level <= maxLevel; level++)
+    {
+        int w = 0, h = 0;
+        r3d_target_get_resolution(&w, &h, level);
+        glTexImage2D(
+            GL_TEXTURE_2D, level, GL_DEPTH24_STENCIL8,
+            w, h, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL
+        );
+    }
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
@@ -160,8 +170,7 @@ static int get_or_create_fbo(const r3d_target_t* targets, int count, bool depth)
     R3D_ASSERT(count <= R3D_TARGET_MAX_ATTACHMENTS);
     R3D_ASSERT(count > 0 || (count == 0 && depth));
 
-    /* --- Search if the combination is already cached --- */
-
+    // Search if the combination is already cached
     for (int i = 0; i < R3D_MOD_TARGET.fboCount; i++)
     {
         const r3d_target_fbo_t* fbo = &R3D_MOD_TARGET.fbo[i];
@@ -174,8 +183,7 @@ static int get_or_create_fbo(const r3d_target_t* targets, int count, bool depth)
         }
     }
 
-    /* --- Create the FBO and cache it --- */
-
+    // Otherwise create the FBO and cache it
     R3D_ASSERT(R3D_MOD_TARGET.fboCount < R3D_TARGET_MAX_FRAMEBUFFERS);
 
     int newIndex = R3D_MOD_TARGET.fboCount++;
@@ -187,7 +195,7 @@ static int get_or_create_fbo(const r3d_target_t* targets, int count, bool depth)
     GLenum glColor[R3D_TARGET_MAX_ATTACHMENTS];
     int locCount = 0;
 
-    for (int i = 0; i < count; ++i)
+    for (int i = 0; i < count; i++)
     {
         if (!R3D_MOD_TARGET.targetLoaded[targets[i]])
         {
@@ -195,9 +203,10 @@ static int get_or_create_fbo(const r3d_target_t* targets, int count, bool depth)
         }
 
         GLuint texture = R3D_MOD_TARGET.targetTextures[targets[i]];
-        fbo->targetStates[i] = (r3d_target_attachment_state_t) {0};
         fbo->targets[i] = targets[i];
 
+        // Temporary binding at native level 0, solely to validate completeness
+        // Will be overwritten by the first real bind via the sentinel boundLevel = -1
         GLenum attachment = GL_COLOR_ATTACHMENT0 + locCount;
         glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, texture, 0);
         glColor[locCount++] = attachment;
@@ -207,13 +216,13 @@ static int get_or_create_fbo(const r3d_target_t* targets, int count, bool depth)
     {
         glFramebufferTexture2D(
             GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
-            GL_TEXTURE_2D, R3D_MOD_TARGET.depthTexture,
-            0
+            GL_TEXTURE_2D, R3D_MOD_TARGET.depthTexture, 0
         );
     }
 
     fbo->targetCount = count;
-    fbo->hasDepth = depth;
+    fbo->hasDepth    = depth;
+    fbo->boundLevel  = -1;      // -1 forces the first r3d_target_set_write_level() to re-attach
 
     if (locCount > 0)
     {
@@ -244,7 +253,6 @@ bool r3d_target_init(int resW, int resH)
 
     glGenTextures(R3D_TARGET_COUNT, R3D_MOD_TARGET.targetTextures);
     glGenTextures(1, &R3D_MOD_TARGET.depthTexture);
-    alloc_depth_stencil_texture(resW, resH);
 
     R3D_MOD_TARGET.currentFbo = -1;
 
@@ -252,6 +260,8 @@ bool r3d_target_init(int resW, int resH)
     R3D_MOD_TARGET.resH = resH;
     R3D_MOD_TARGET.txlW = 1.0f / resW;
     R3D_MOD_TARGET.txlH = 1.0f / resH;
+
+    alloc_depth_stencil_texture();
 
     return true;
 }
@@ -282,7 +292,7 @@ void r3d_target_resize(uint32_t resW, uint32_t resH)
     R3D_MOD_TARGET.txlW = 1.0f / (float)resW;
     R3D_MOD_TARGET.txlH = 1.0f / (float)resH;
 
-    alloc_depth_stencil_texture(resW, resH);
+    alloc_depth_stencil_texture();
 
     for (int i = 0; i < R3D_TARGET_COUNT; i++)
     {
@@ -293,58 +303,61 @@ void r3d_target_resize(uint32_t resW, uint32_t resH)
     }
 }
 
+int r3d_target_get_min_level(r3d_target_t target)
+{
+    const target_config_t* config = &TARGET_CONFIG[target];
+
+    if (config->resolutionDiv <= 0)
+    {
+        return r3d_get_mip_levels_2d(R3D_MOD_TARGET.resW, R3D_MOD_TARGET.resH) - 1;
+    }
+
+    return r3d_log2i_fast(config->resolutionDiv);
+}
+
+int r3d_target_get_max_level(r3d_target_t target)
+{
+    const target_config_t* config = &TARGET_CONFIG[target];
+
+    if (config->numLevels <= 0)
+    {
+        return r3d_get_mip_levels_2d(R3D_MOD_TARGET.resW, R3D_MOD_TARGET.resH) - 1;
+    }
+
+    return r3d_target_get_min_level(target) + config->numLevels - 1;
+}
+
 int r3d_target_get_num_levels(r3d_target_t target)
 {
     const target_config_t* config = &TARGET_CONFIG[target];
-    if (config->numLevels > 0) return config->numLevels;
-    if (config->resolutionFactor <= 0.0f) return 1;
 
-    int w = (int)((float)R3D_MOD_TARGET.resW * config->resolutionFactor);
-    int h = (int)((float)R3D_MOD_TARGET.resH * config->resolutionFactor);
-    return r3d_get_mip_levels_2d(w, h);
+    if (config->numLevels > 0)
+    {
+        return config->numLevels;
+    }
+
+    int minLevel = r3d_target_get_min_level(target);
+    int maxLevel = r3d_target_get_max_level(target);
+
+    return maxLevel - minLevel + 1;
 }
 
-void r3d_target_get_resolution(int* w, int* h, r3d_target_t target, int level)
+void r3d_target_get_resolution(int* w, int* h, int level)
 {
-    const target_config_t* config = &TARGET_CONFIG[target];
+    int rw = (int)(R3D_MOD_TARGET.resW >> level);
+    int rh = (int)(R3D_MOD_TARGET.resH >> level);
 
-    if (config->resolutionFactor <= 0.0f)
-    {
-        if (w) *w = 1;
-        if (h) *h = 1;
-        return;
-    }
-
-    if (w) *w = (int)((float)R3D_MOD_TARGET.resW * config->resolutionFactor);
-    if (h) *h = (int)((float)R3D_MOD_TARGET.resH * config->resolutionFactor);
-
-    if (level > 0)
-    {
-        if (w) *w = *w >> level, *w = *w > 1 ? *w : 1;
-        if (h) *h = *h >> level, *h = *h > 1 ? *h : 1;
-    }
+    if (w) *w = rw > 0 ? rw : 1;
+    if (h) *h = rh > 0 ? rh : 1;
 }
 
-void r3d_target_get_texel_size(float* w, float* h, r3d_target_t target, int level)
+Vector2 r3d_target_get_texel_size(int level)
 {
-    const target_config_t* config = &TARGET_CONFIG[target];
+    float scale = (float)(1 << level);
+    float tx = R3D_MOD_TARGET.txlW * scale;
+    float ty = R3D_MOD_TARGET.txlH * scale;
 
-    if (config->resolutionFactor <= 0.0f)
-    {
-        if (w) *w = 1.0f;
-        if (h) *h = 1.0f;
-        return;
-    }
-
-    if (w) *w = R3D_MOD_TARGET.txlW / config->resolutionFactor;
-    if (h) *h = R3D_MOD_TARGET.txlH / config->resolutionFactor;
-
-    if (level > 0)
-    {
-        float scale = (float)(1 << level);
-        if (w) *w *= scale;
-        if (h) *h *= scale;
-    }
+    return (Vector2) {tx, ty};
 }
 
 r3d_target_t r3d_target_swap_scene(r3d_target_t scene)
@@ -358,23 +371,7 @@ r3d_target_t r3d_target_swap_scene(r3d_target_t scene)
 
 void r3d_target_clear(const r3d_target_t* targets, int count, int level, bool depth)
 {
-    R3D_ASSERT((!depth || level == 0) && "If depth buffer bind, always bind at level zero");
-    R3D_ASSERT(count > 0 || depth);
-
-    int fboIndex = get_or_create_fbo(targets, count, depth);
-    if (fboIndex != R3D_MOD_TARGET.currentFbo)
-    {
-        glBindFramebuffer(GL_FRAMEBUFFER, R3D_MOD_TARGET.fbo[fboIndex].id);
-        R3D_MOD_TARGET.currentFbo = fboIndex;
-    }
-
-    for (int i = 0; i < count; i++)
-    {
-        r3d_target_set_write_level(i, level);
-    }
-
-    if (count > 0) r3d_target_set_viewport(targets[0], level);
-    else glViewport(0, 0, R3D_MOD_TARGET.resW, R3D_MOD_TARGET.resH);
+    r3d_target_bind(targets, count, level, depth);
 
     for (int i = 0; i < count; i++)
     {
@@ -389,7 +386,6 @@ void r3d_target_clear(const r3d_target_t* targets, int count, int level, bool de
 
 void r3d_target_bind(const r3d_target_t* targets, int count, int level, bool depth)
 {
-    R3D_ASSERT((!depth || level == 0) && "If depth buffer bind, always bind at level zero");
     R3D_ASSERT(count > 0 || depth);
 
     int fboIndex = get_or_create_fbo(targets, count, depth);
@@ -399,59 +395,52 @@ void r3d_target_bind(const r3d_target_t* targets, int count, int level, bool dep
         R3D_MOD_TARGET.currentFbo = fboIndex;
     }
 
-    for (int i = 0; i < count; i++)
-    {
-        r3d_target_set_write_level(i, level);
-    }
-
-    if (count > 0) r3d_target_set_viewport(targets[0], level);
-    else glViewport(0, 0, R3D_MOD_TARGET.resW, R3D_MOD_TARGET.resH);
+    r3d_target_set_write_level(level);
+    r3d_target_set_viewport(level);
 }
 
-void r3d_target_bind_levels(const r3d_target_t* targets, int* levels, int count)
-{
-    R3D_ASSERT(count > 0);
-
-    int fboIndex = get_or_create_fbo(targets, count, false);
-    if (fboIndex != R3D_MOD_TARGET.currentFbo)
-    {
-        glBindFramebuffer(GL_FRAMEBUFFER, R3D_MOD_TARGET.fbo[fboIndex].id);
-        R3D_MOD_TARGET.currentFbo = fboIndex;
-    }
-
-    for (int i = 0; i < count; i++)
-    {
-        r3d_target_set_write_level(i, levels[i]);
-    }
-
-    r3d_target_set_viewport(targets[0], levels[0]);
-}
-
-void r3d_target_set_viewport(r3d_target_t target, int level)
+void r3d_target_set_viewport(int level)
 {
     int vpW = 0, vpH = 0;
-    r3d_target_get_resolution(&vpW, &vpH, target, level);
+    r3d_target_get_resolution(&vpW, &vpH, level);
     glViewport(0, 0, vpW, vpH);
 }
 
-void r3d_target_set_write_level(int attachment, int level)
+void r3d_target_set_write_level(int level)
 {
     R3D_ASSERT(R3D_MOD_TARGET.currentFbo >= 0);
 
     r3d_target_fbo_t* fbo = &R3D_MOD_TARGET.fbo[R3D_MOD_TARGET.currentFbo];
-    R3D_ASSERT(fbo->targetCount > 0 && attachment < fbo->targetCount);
 
-    r3d_target_t target = fbo->targets[attachment];
-    R3D_ASSERT(level < r3d_target_get_num_levels(target));
-    r3d_target_attachment_state_t* state = &fbo->targetStates[attachment];
-
-    if (state->writeLevel != level)
+    if (level != fbo->boundLevel)
     {
-        glFramebufferTexture2D(
-            GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + attachment,
-            GL_TEXTURE_2D, R3D_MOD_TARGET.targetTextures[target], level
-        );
-        state->writeLevel = level;
+        for (int i = 0; i < fbo->targetCount; i++)
+        {
+            r3d_target_t target = fbo->targets[i];
+            int minLevel = r3d_target_get_min_level(target);
+            int maxLevel = r3d_target_get_max_level(target);
+
+            R3D_ASSERT(level >= minLevel && "Level below target's native resolution");
+            R3D_ASSERT(level <= maxLevel && "Level exceeds target's mip chain");
+
+            int nativeLevel = level - minLevel;
+
+            glFramebufferTexture2D(
+                GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i,
+                GL_TEXTURE_2D, R3D_MOD_TARGET.targetTextures[target], nativeLevel
+            );
+        }
+
+        if (fbo->hasDepth)
+        {
+            R3D_ASSERT(level >= 0 && level <= r3d_target_get_max_level(R3D_TARGET_DEPTH));
+            glFramebufferTexture2D(
+                GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
+                GL_TEXTURE_2D, R3D_MOD_TARGET.depthTexture, level
+            );
+        }
+
+        fbo->boundLevel = level;
     }
 }
 
@@ -463,20 +452,29 @@ void r3d_target_set_read_level(r3d_target_t target, int level)
 void r3d_target_set_read_levels(r3d_target_t target, int baseLevel, int maxLevel)
 {
     R3D_ASSERT(R3D_MOD_TARGET.targetLoaded[target]);
-    R3D_ASSERT(baseLevel < r3d_target_get_num_levels(target));
-    R3D_ASSERT(maxLevel < r3d_target_get_num_levels(target));
+
+    int minLevel = r3d_target_get_min_level(target);
+    int maxValid = r3d_target_get_max_level(target);
+
+    R3D_ASSERT(baseLevel >= minLevel && maxLevel >= minLevel);
+    R3D_ASSERT(baseLevel <= maxValid);
+    R3D_ASSERT(maxLevel  <= maxValid);
+
+    int nativeBase = baseLevel - minLevel;
+    int nativeMax  = maxLevel - minLevel;
 
     r3d_target_state_t* state = &R3D_MOD_TARGET.targetStates[target];
 
-    if (state->baseLevel != baseLevel || state->maxLevel != maxLevel)
+    if (state->baseLevel != nativeBase || state->maxLevel != nativeMax)
     {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, R3D_MOD_TARGET.targetTextures[target]);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, baseLevel);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL,  maxLevel);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, nativeBase);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL,  nativeMax);
         glBindTexture(GL_TEXTURE_2D, 0);
-        state->baseLevel = baseLevel;
-        state->maxLevel = maxLevel;
+
+        state->baseLevel = nativeBase;
+        state->maxLevel  = nativeMax;
     }
 }
 
@@ -524,8 +522,12 @@ GLuint r3d_target_get_levels(r3d_target_t target, int baseLevel, int maxLevel)
 GLuint r3d_target_get_all_levels(r3d_target_t target)
 {
     R3D_ASSERT(target > R3D_TARGET_INVALID && target < R3D_TARGET_COUNT);
-    int maxLevel = r3d_target_get_num_levels(target) - 1;
-    r3d_target_set_read_levels(target, 0, maxLevel);
+
+    int minLevel = r3d_target_get_min_level(target);
+    int maxLevel = r3d_target_get_max_level(target);
+
+    r3d_target_set_read_levels(target, minLevel, maxLevel);
+
     return R3D_MOD_TARGET.targetTextures[target];
 }
 
@@ -570,7 +572,8 @@ void r3d_target_blit(r3d_target_t target, bool depth, GLuint dstFbo, int dstX, i
             );
         }
     }
-    else {
+    else
+    {
         GLbitfield mask = GL_NONE;
         if (target > R3D_TARGET_INVALID) mask |= GL_COLOR_BUFFER_BIT;
         if (depth) mask |= GL_DEPTH_BUFFER_BIT;
