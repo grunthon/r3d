@@ -56,7 +56,7 @@ float FetchCellK(ivec2 cellIndex, int level)
 // Hi-Z Tracing
 // ================================
 
-struct HitResult { vec2 uv; float t; bool hit; };
+struct HitResult { vec2 uv; float z; float t; bool hit; };
 
 HitResult TraceHiZ(vec3 startViewPos, vec3 reflectionDir)
 {
@@ -153,6 +153,7 @@ HitResult TraceHiZ(vec3 startViewPos, vec3 reflectionDir)
         vec3 hitRay = screenPos + screenRayDir * t;
         result.hit = true;
         result.uv = hitRay.xy;
+        result.z = hitRay.z;
         result.t = clamp(t / tMax, 0.0, 1.0);
     }
 
@@ -186,11 +187,23 @@ void main()
         return;
     }
 
-    vec3 hitDiff = textureLod(uDiffuseTex, result.uv, 0).rgb;
-    vec3 hitSpec = textureLod(uSpecularTex, result.uv, 0).rgb;
+    ivec2 hitPixCoord = ivec2(result.uv * vec2(textureSize(uDepthTex, 0)));
+
+    vec3 hitDiff = texelFetch(uDiffuseTex, hitPixCoord, 0).rgb;
+    vec3 hitSpec = texelFetch(uSpecularTex, hitPixCoord, 0).rgb;
+
+    float rayLinearDepth = 1.0 / result.z;
+    vec3 rayPos = V_GetViewPosition(result.uv, rayLinearDepth);
+
+    float realLinearDepth = texelFetch(uDepthTex, hitPixCoord, 0).r;
+    vec3 hitPos = V_GetViewPosition(result.uv, realLinearDepth);
+
+    float delta = length(rayPos - hitPos);
+    float confidence = 1.0 - smoothstep(0.0, uSsr.thickness, delta);
+    float validity = clamp(confidence * confidence, 0.0, 1.0);
 
     vec2 distToBorder = min(result.uv, 1.0 - result.uv);
     float edgeFade = smoothstep(0.0, uSsr.edgeFade, min(distToBorder.x, distToBorder.y));
 
-    FragColor = vec4(hitDiff + hitSpec, edgeFade);
+    FragColor = vec4(hitDiff + hitSpec, validity * edgeFade);
 }
