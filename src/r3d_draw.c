@@ -1918,13 +1918,16 @@ r3d_target_t pass_prepare_ssao(void)
     /* --- Setup OpenGL pipeline --- */
 
     r3d_driver_disable(GL_STENCIL_TEST);
-    r3d_driver_disable(GL_DEPTH_TEST);
     r3d_driver_disable(GL_CULL_FACE);
     r3d_driver_disable(GL_BLEND);
 
+    r3d_driver_enable(GL_DEPTH_TEST);
+    r3d_driver_set_depth_mask(GL_FALSE);
+    r3d_driver_set_depth_func(GL_GREATER);
+
     /* --- Calculate SSAO --- */
 
-    R3D_TARGET_BIND(1, false, R3D_TARGET_SSAO_0);
+    R3D_TARGET_BIND(1, true, R3D_TARGET_SSAO_0);
     R3D_SHADER_USE(prepare.ssao);
 
     R3D_SHADER_BIND_SAMPLER(prepare.ssao, uNormalTex, r3d_target_get_level(R3D_TARGET_NORMAL, 1));
@@ -1934,7 +1937,7 @@ r3d_target_t pass_prepare_ssao(void)
 
     /* --- Denoise SSAO --- */
 
-    R3D_TARGET_BIND(1, false, R3D_TARGET_SSAO_1);
+    R3D_TARGET_BIND(1, true, R3D_TARGET_SSAO_1);
     R3D_SHADER_USE(prepare.denoiserSparse);
 
     R3D_SHADER_BIND_SAMPLER(prepare.denoiserSparse, uNormalTex, r3d_target_get_level(R3D_TARGET_NORMAL, 1));
@@ -1958,13 +1961,16 @@ r3d_target_t pass_prepare_ssil(void)
     /* --- Setup OpenGL pipeline --- */
 
     r3d_driver_disable(GL_STENCIL_TEST);
-    r3d_driver_disable(GL_DEPTH_TEST);
     r3d_driver_disable(GL_CULL_FACE);
     r3d_driver_disable(GL_BLEND);
 
+    r3d_driver_enable(GL_DEPTH_TEST);
+    r3d_driver_set_depth_mask(GL_FALSE);
+    r3d_driver_set_depth_func(GL_GREATER);
+
     /* --- Calculate SSIL --- */
 
-    R3D_TARGET_BIND(1, false, R3D_TARGET_SSIL_0);
+    R3D_TARGET_BIND(1, true, R3D_TARGET_SSIL_0);
     R3D_SHADER_USE(prepare.ssil);
 
     R3D_SHADER_BIND_SAMPLER(prepare.ssil, uDiffuseTex, r3d_target_get_level(R3D_TARGET_DIFFUSE, 1));
@@ -1989,7 +1995,7 @@ r3d_target_t pass_prepare_ssil(void)
     float radius = 16.0f;
     for (int i = 0; i < 3; i++, radius *= 0.5f)
     {
-        R3D_TARGET_BIND(1, false, dst);
+        R3D_TARGET_BIND(1, true, dst);
         R3D_SHADER_SET_FLOAT(prepare.denoiserSparse, uBlurRadius, radius);
         R3D_SHADER_SET_FLOAT(prepare.denoiserSparse, uInvBlurRadius2, 1.0f / (radius * radius));
         R3D_SHADER_BIND_SAMPLER(prepare.denoiserSparse, uSourceTex, r3d_target_get(src));
@@ -2006,13 +2012,16 @@ r3d_target_t pass_prepare_ssgi(void)
     /* --- Setup OpenGL pipeline --- */
 
     r3d_driver_disable(GL_STENCIL_TEST);
-    r3d_driver_disable(GL_DEPTH_TEST);
     r3d_driver_disable(GL_CULL_FACE);
     r3d_driver_disable(GL_BLEND);
 
+    r3d_driver_enable(GL_DEPTH_TEST);
+    r3d_driver_set_depth_mask(GL_FALSE);
+    r3d_driver_set_depth_func(GL_GREATER);
+
     /* --- Calculate SSGI (RAW) --- */
 
-    R3D_TARGET_BIND(1, false, R3D_TARGET_SSGI_0);
+    R3D_TARGET_BIND(1, true, R3D_TARGET_SSGI_0);
     R3D_SHADER_USE(prepare.ssgi);
 
     R3D_SHADER_BIND_SAMPLER(prepare.ssgi, uDiffuseTex, r3d_target_get_level(R3D_TARGET_DIFFUSE, 1));
@@ -2067,7 +2076,7 @@ r3d_target_t pass_prepare_ssgi(void)
         {
             float invStepWidth2 = 1.0f / (stepWidth[i]*stepWidth[i]);
 
-            R3D_TARGET_BIND(1, false, dst);
+            R3D_TARGET_BIND(1, true, dst);
             R3D_SHADER_BIND_SAMPLER(prepare.denoiserAtrous, uSourceTex, r3d_target_get(src));
             R3D_SHADER_SET_FLOAT(prepare.denoiserAtrous, uInvStepWidth2, invStepWidth2);
             R3D_SHADER_SET_INT(prepare.denoiserAtrous, uStepWidth, stepWidth[i]);
@@ -2085,16 +2094,19 @@ r3d_target_t pass_prepare_ssr(void)
     /* --- Setup OpenGL pipeline --- */
 
     r3d_driver_disable(GL_STENCIL_TEST);
-    r3d_driver_disable(GL_DEPTH_TEST);
     r3d_driver_disable(GL_CULL_FACE);
     r3d_driver_disable(GL_BLEND);
+
+    r3d_driver_enable(GL_DEPTH_TEST);
+    r3d_driver_set_depth_mask(GL_FALSE);
+    r3d_driver_set_depth_func(GL_GREATER);
 
     int minLevel = r3d_target_get_min_level(R3D_TARGET_SSR);
     int maxLevel = r3d_target_get_max_level(R3D_TARGET_SSR);
 
     /* --- Calculate SSR --- */
 
-    R3D_TARGET_BIND(minLevel, false, R3D_TARGET_SSR);
+    R3D_TARGET_BIND(minLevel, true, R3D_TARGET_SSR);
     R3D_SHADER_USE(prepare.ssr);
 
     R3D_SHADER_BIND_SAMPLER(prepare.ssr, uDiffuseTex, r3d_target_get_level(R3D_TARGET_DIFFUSE, 1));

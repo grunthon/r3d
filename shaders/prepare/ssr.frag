@@ -120,20 +120,11 @@ vec4 TraceRay(vec3 startViewPos, vec3 reflectionDir)
 
 void main()
 {
-    // Early depth rejection
     float linearDepth = texelFetch(uDepthTex, ivec2(gl_FragCoord.xy), 0).r;
-    if (linearDepth >= uView.far)
-    {
-        FragColor = vec4(0.0);
-        return;
-    }
-
-    // Fetch view-space geometry
     vec3 viewNormal = V_GetViewNormal(uNormalTex, ivec2(gl_FragCoord.xy));
     vec3 viewPos = V_GetViewPosition(vTexCoord, linearDepth);
     vec3 viewDir = normalize(viewPos);
-    vec3 reflectionDir = reflect(viewDir, viewNormal);
 
-    // Trace reflection ray
+    vec3 reflectionDir = reflect(viewDir, viewNormal);
     FragColor = TraceRay(viewPos, reflectionDir);
 }

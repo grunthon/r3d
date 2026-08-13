@@ -78,12 +78,9 @@ vec2 TapLocation(int i, float numSpiralTurns, float spin, out float rNorm)
 
 void main()
 {
-    FragOcclusion = 1.0;
-
     ivec2 pixelCoord = ivec2(gl_FragCoord.xy);
-    float depth = texelFetch(uDepthTex, pixelCoord, 0).r;
-    if (depth >= uView.far) return;
 
+    float depth = texelFetch(uDepthTex, pixelCoord, 0).r;
     vec3 position = V_GetViewPosition(vTexCoord, depth);
     vec3 normal = V_GetViewNormal(uNormalTex, pixelCoord);
 
