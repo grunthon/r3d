@@ -174,8 +174,15 @@ void main()
 
     vec3 reflectionDir = normalize(reflect(viewDir, viewNormal));
     HitResult result = TraceHiZ(viewPos, reflectionDir);
-
     if (!result.hit)
+    {
+        FragColor = vec4(0.0);
+        return;
+    }
+
+    ivec2 hitPixCoord = ivec2(result.uv * vec2(textureSize(uDepthTex, 0)));
+    float hitLinearDepth = texelFetch(uDepthTex, hitPixCoord, 0).r;
+    if (hitLinearDepth >= uView.far)
     {
         FragColor = vec4(0.0);
         return;
@@ -188,19 +195,13 @@ void main()
         return;
     }
 
-    ivec2 hitPixCoord = ivec2(result.uv * vec2(textureSize(uDepthTex, 0)));
-
     vec3 hitDiff = texelFetch(uDiffuseTex, hitPixCoord, 0).rgb;
     vec3 hitSpec = texelFetch(uSpecularTex, hitPixCoord, 0).rgb;
 
-    float rayLinearDepth = 1.0 / result.z;
-    vec3 rayPos = V_GetViewPosition(result.uv, rayLinearDepth);
+    vec3 rayPos = V_GetViewPosition(result.uv, 1.0 / result.z);
+    vec3 hitPos = V_GetViewPosition(result.uv, hitLinearDepth);
 
-    float realLinearDepth = texelFetch(uDepthTex, hitPixCoord, 0).r;
-    vec3 hitPos = V_GetViewPosition(result.uv, realLinearDepth);
-
-    float delta = length(rayPos - hitPos);
-    float confidence = 1.0 - smoothstep(0.0, uSsr.thickness, delta);
+    float confidence = 1.0 - smoothstep(0.0, uSsr.thickness, length(rayPos - hitPos));
     float validity = clamp(confidence * confidence, 0.0, 1.0);
 
     vec2 distToBorder = min(result.uv, 1.0 - result.uv);
