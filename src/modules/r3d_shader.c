@@ -371,6 +371,8 @@ bool r3d_shader_load_prepare_down_pyramid(r3d_shader_custom_t* custom)
     DECL_SHADER(r3d_shader_prepare_down_pyramid_t, prepare, downPyramid);
     LOAD_SHADER(downPyramid, SCREEN_VERT, DOWN_PYRAMID_FRAG);
 
+    SET_UNIFORM_BUFFER(downPyramid, ViewBlock, R3D_SHADER_BLOCK_SLOT_VIEW);
+
     USE_SHADER(downPyramid);
     SET_SAMPLER(downPyramid, uDepthTex, R3D_SHADER_SAMPLER_BUFFER_DEPTH);
     SET_SAMPLER(downPyramid, uNormalTex, R3D_SHADER_SAMPLER_BUFFER_NORMAL);
