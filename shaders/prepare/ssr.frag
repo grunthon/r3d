@@ -52,6 +52,24 @@ float FetchCellK(ivec2 cellIndex, int level)
     return 1.0 / linearDepth;
 }
 
+float NextCellEdgeT(vec2 posXY, vec2 cellCount, vec2 cellStep, vec3 screenPos, vec3 screenRayDir)
+{
+    vec2 cellIdx = floor(posXY * cellCount);
+    vec2 nextIdx = cellIdx + clamp(cellStep, vec2(0.0), vec2(1.0));
+    vec2 nextUV = (nextIdx / cellCount) + cellStep * 1e-6;
+    vec2 edgeT = (nextUV - screenPos.xy) / screenRayDir.xy;
+    return min(edgeT.x, edgeT.y);
+}
+
+vec3 ClipToNearPlane(vec3 pos, vec3 dir)
+{
+    if (pos.z > 0.0)
+    {
+        pos -= dir / dir.z * (pos.z + 1e-5);
+    }
+    return pos;
+}
+
 // ================================
 // Hi-Z Tracing
 // ================================
@@ -65,15 +83,10 @@ HitResult TraceHiZ(vec3 startViewPos, vec3 reflectionDir)
     result.uv = vec2(0.0);
     result.t = 0.0;
 
-    vec3 endViewPos = startViewPos + reflectionDir;
-    if (endViewPos.z > 0.0)
-    {
-        endViewPos -= reflectionDir / reflectionDir.z * (endViewPos.z + 1e-5);
-    }
-
+    vec3 endViewPos = ClipToNearPlane(startViewPos + reflectionDir, reflectionDir);
+    vec2 uv1 = V_ViewToScreen(endViewPos);
     float k0 = -1.0 / startViewPos.z;
     float k1 = -1.0 / endViewPos.z;
-    vec2 uv1 = V_ViewToScreen(endViewPos);
 
     vec3 screenPos = vec3(vTexCoord, k0);
     vec3 screenEndPos = vec3(uv1, k1);
@@ -95,31 +108,19 @@ HitResult TraceHiZ(vec3 startViewPos, vec3 reflectionDir)
 
     // Push the start position to the boundary of its level-0 cell to avoid
     // immediately self-intersecting the current pixel.
-    float t;
-    {
-        vec2 cellCount0 = CellCount(0);
-        vec2 cellIdx = floor(screenPos.xy * cellCount0);
-        vec2 nextIdx = cellIdx + clamp(cellStep, vec2(0.0), vec2(1.0));
-        vec2 nextUV = (nextIdx / cellCount0) + cellStep * 1e-6;
-        vec2 edgeT = (nextUV - screenPos.xy) / screenRayDir.xy;
-        t = min(edgeT.x, edgeT.y);
-    }
+    float t = NextCellEdgeT(screenPos.xy, CellCount(0), cellStep, screenPos, screenRayDir);
 
     while (level >= 0 && iterationsLeft > 0 && t < tMax)
     {
-        vec3 curRay = screenPos + screenRayDir * t;
+        vec3 curPos = screenPos + screenRayDir * t;
 
         vec2 cellCount = CellCount(level);
-        vec2 cellIdxF = floor(curRay.xy * cellCount);
+        vec2 cellIdxF = floor(curPos.xy * cellCount);
         ivec2 cellIdx = ivec2(cellIdxF);
 
         float cellK = FetchCellK(cellIdx, level);
         float depthT = (cellK - screenPos.z) * screenRayDir.z;
-
-        vec2 nextIdx = cellIdxF + clamp(cellStep, vec2(0.0), vec2(1.0));
-        vec2 nextUV = (nextIdx / cellCount) + cellStep * 1e-6;
-        vec2 edgeTv = (nextUV - screenPos.xy) / screenRayDir.xy;
-        float edgeT = min(edgeTv.x, edgeTv.y);
+        float edgeT = NextCellEdgeT(curPos.xy, cellCount, cellStep, screenPos, screenRayDir);
 
         bool cellHit = movingAway ? (t <= depthT) : (depthT <= edgeT);
         int mipOffset = cellHit ? -1 : 1;
@@ -127,7 +128,7 @@ HitResult TraceHiZ(vec3 startViewPos, vec3 reflectionDir)
         if (level == 0)
         {
             float cellLinearDepth = 1.0 / cellK;
-            float rayLinearDepth = 1.0 / curRay.z;
+            float rayLinearDepth = 1.0 / curPos.z;
             if ((cellLinearDepth - rayLinearDepth) > uSsr.thickness)
             {
                 cellHit = false;
