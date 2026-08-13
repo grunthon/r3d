@@ -561,7 +561,7 @@ static bool anode_update_anim(r3d_animtree_anim_t* node, float elapsedTime, upin
 
     if (info)
     {
-        float xFade = info->xFade * fabs(speed);
+        float xFade = info->xFade * fabsf(speed);
         float durXFade = R3D_CLAMP(duration - xFade, 0.0f, duration);
         bool crossXFade = ((speed < 0.0f && tCur <= xFade) || (speed > 0.0f && tCur >= durXFade));
         *info = (upinfo_t) {
