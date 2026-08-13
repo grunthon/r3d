@@ -1,4 +1,4 @@
-/* down_pyramid.frag - GBuffer pyramid downsampling shader
+/* pyramid.frag - GBuffer pyramid downsampling shader
  *
  * Copyright (c) 2025-2026 Le Juez Victor
  *
