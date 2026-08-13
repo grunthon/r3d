@@ -94,13 +94,10 @@
             .enabled = false,                           \
         },                                              \
         .ssr = {                                        \
-            .maxRaySteps = 32,                          \
-            .binarySteps = 4,                           \
-            .stepSize = 0.125f,                         \
-            .thickness = 0.2f,                          \
-            .maxDistance = 4.0f,                        \
-            .edgeFade = 0.25f,                          \
-            .enabled = false,                           \
+            .maxIterations = 64,                        \
+            .thickness     = 0.5f,                      \
+            .edgeFade      = 0.25f,                     \
+            .enabled       = false,                     \
         },                                              \
         .fog = {                                        \
             .mode = R3D_FOG_DISABLED,                   \
@@ -285,12 +282,16 @@ typedef struct R3D_EnvSSGI {
  * Real-time reflections calculated in screen space.
  */
 typedef struct R3D_EnvSSR {
-    int maxRaySteps;        ///< Maximum ray marching steps (default: 32)
-    int binarySteps;        ///< Binary search refinement steps (default: 4)
-    float stepSize;         ///< Ray step size (default: 0.125)
-    float thickness;        ///< Depth tolerance for valid hits (default: 0.2)
-    float maxDistance;      ///< Maximum ray distance (default: 4.0)
-    float edgeFade;         ///< Screen edge fade start [0,1] (default: 0.25)
+    //int maxRaySteps;        ///< Maximum ray marching steps (default: 32)
+    //int binarySteps;        ///< Binary search refinement steps (default: 4)
+    //float stepSize;         ///< Ray step size (default: 0.125)
+    //float thickness;        ///< Depth tolerance for valid hits (default: 0.2)
+    //float maxDistance;      ///< Maximum ray distance (default: 4.0)
+    //float edgeFade;         ///< Screen edge fade start [0,1] (default: 0.25)
+
+    int maxIterations;
+    float thickness;
+    float edgeFade;
     bool enabled;           ///< Enable/disable SSR (default: false)
 } R3D_EnvSSR;
 

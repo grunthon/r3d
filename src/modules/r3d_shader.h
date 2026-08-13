@@ -517,14 +517,12 @@ typedef struct {
     } uSsgi;
 
     struct r3d_shader_block_fx_ssr {
-        alignas(4) int32_t maxRaySteps;
-        alignas(4) int32_t binarySteps;
-        alignas(4) float stepSize;
+        alignas(4) int32_t maxLevel;
+        alignas(4) int32_t maxIterations;
         alignas(4) float thickness;
-        alignas(4) float maxDistance;
         alignas(4) float edgeFade;
         alignas(4) int32_t enabled;
-        uint8_t _pad[4];
+        uint8_t _pad[12];
     } uSsr;
 
     struct r3d_shader_block_fx_fog {

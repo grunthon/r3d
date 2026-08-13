@@ -62,7 +62,8 @@ void main()
     FragDepth = d0;
     uint index = 0u;
 
-    bool useMax = ((int(gl_FragCoord.x) + int(gl_FragCoord.y)) & 1) == 0;
+    //bool useMax = ((int(gl_FragCoord.x) + int(gl_FragCoord.y)) & 1) == 0;
+    bool useMax = false; // TODO: Review that
 
     if (useMax)
     {

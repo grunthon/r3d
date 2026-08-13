@@ -68,11 +68,9 @@ struct FX_Ssgi {
 };
 
 struct FX_Ssr {
-    int maxRaySteps;
-    int binarySteps;
-    float stepSize;
+    int maxLevel;
+    int maxIterations;
     float thickness;
-    float maxDistance;
     float edgeFade;
     bool enabled;
 };

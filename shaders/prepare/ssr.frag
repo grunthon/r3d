@@ -1,4 +1,4 @@
-/* ssr.frag -- Screen Space Reflections fragment shader
+/* ssr.frag -- Screen Space Reflections fragment shader (Hi-Z tracing)
  *
  * Copyright (c) 2025-2026 Le Juez Victor
  *
@@ -38,80 +38,125 @@ uniform sampler2D uNormalTex;
 uniform sampler2D uDepthTex;
 
 // ================================
-// Raymarching Function
+// Helper Functions
 // ================================
 
-vec4 TraceRay(vec3 startViewPos, vec3 reflectionDir)
+vec2 CellCount(int level)
 {
-    vec3 dirStep = reflectionDir * uSsr.stepSize;
-    float stepDistanceSq = dot(dirStep, dirStep);
-    float maxDistanceSq = uSsr.maxDistance * uSsr.maxDistance;
+    return vec2(textureSize(uDepthTex, level));
+}
 
-    vec3 currentPos = startViewPos + dirStep;
-    vec3 prevPos = startViewPos;
-    float rayDistanceSq = stepDistanceSq;
+float FetchCellK(ivec2 cellIndex, int level)
+{
+    float linearDepth = texelFetch(uDepthTex, cellIndex, level).r;
+    return 1.0 / linearDepth;
+}
 
-    vec2 hitUV = vec2(0.0);
-    bool hit = false;
+// ================================
+// Hi-Z Tracing
+// ================================
 
-    for (int i = 1; i < uSsr.maxRaySteps; i++)
+struct HitResult { vec2 uv; float t; bool hit; };
+
+HitResult TraceHiZ(vec3 startViewPos, vec3 reflectionDir)
+{
+    HitResult result;
+    result.hit = false;
+    result.uv = vec2(0.0);
+    result.t = 0.0;
+
+    vec3 endViewPos = startViewPos + reflectionDir;
+    if (endViewPos.z > 0.0)
     {
-        if (rayDistanceSq > maxDistanceSq) break;
-        vec2 uv = V_ViewToScreen(currentPos);
-        if (V_OffScreen(uv)) break;
-
-        float sampleZ = -textureLod(uDepthTex, uv, 0).r;
-        float depthDiff = sampleZ - currentPos.z;
-
-        if (depthDiff > 0.0 && depthDiff < uSsr.thickness)
-        {
-            hitUV = uv;
-            hit = true;
-            break;
-        }
-
-        prevPos = currentPos;
-        currentPos += dirStep;
-        rayDistanceSq += stepDistanceSq;
+        endViewPos -= reflectionDir / reflectionDir.z * (endViewPos.z + 1e-5);
     }
 
-    if (!hit) return vec4(0.0);
+    float k0 = -1.0 / startViewPos.z;
+    float k1 = -1.0 / endViewPos.z;
+    vec2 uv1 = V_ViewToScreen(endViewPos);
 
-    vec3 start = prevPos;
-    vec3 end = currentPos;
+    vec3 screenPos = vec3(vTexCoord, k0);
+    vec3 screenEndPos = vec3(uv1, k1);
 
-    for (int i = 0; i < uSsr.binarySteps; i++)
+    vec3 screenRayDir = screenEndPos - screenPos;
+    screenRayDir /= abs(screenRayDir.z);
+
+    bool movingAway = screenRayDir.z >= 0.0;
+
+    vec2 tNear = (vec2(0.0) - screenPos.xy) / screenRayDir.xy;
+    vec2 tFar  = (vec2(1.0) - screenPos.xy) / screenRayDir.xy;
+    vec2 tExit = max(tNear, tFar);
+    float tMax = min(tExit.x, tExit.y);
+
+    vec2 cellStep = vec2(screenRayDir.x < 0.0 ? -1.0 : 1.0, screenRayDir.y < 0.0 ? -1.0 : 1.0);
+
+    int level = 0;
+    int iterationsLeft = uSsr.maxIterations;
+
+    // Push the start position to the boundary of its level-0 cell to avoid
+    // immediately self-intersecting the current pixel.
+    float t;
     {
-        vec3 mid = mix(start, end, 0.5);
-        vec2 uv = V_ViewToScreen(mid);
-        if (V_OffScreen(uv)) break;
+        vec2 cellCount0 = CellCount(0);
+        vec2 cellIdx = floor(screenPos.xy * cellCount0);
+        vec2 nextIdx = cellIdx + clamp(cellStep, vec2(0.0), vec2(1.0));
+        vec2 nextUV = (nextIdx / cellCount0) + cellStep * 1e-6;
+        vec2 edgeT = (nextUV - screenPos.xy) / screenRayDir.xy;
+        t = min(edgeT.x, edgeT.y);
+    }
 
-        float sampleZ = -textureLod(uDepthTex, uv, 0).r;
-        float depthDiff = sampleZ - mid.z;
+    while (level >= 0 && iterationsLeft > 0 && t < tMax)
+    {
+        vec3 curRay = screenPos + screenRayDir * t;
 
-        if (depthDiff > 0.0 && depthDiff < uSsr.thickness)
+        vec2 cellCount = CellCount(level);
+        vec2 cellIdxF = floor(curRay.xy * cellCount);
+        ivec2 cellIdx = ivec2(cellIdxF);
+
+        float cellK = FetchCellK(cellIdx, level);
+        float depthT = (cellK - screenPos.z) * screenRayDir.z;
+
+        vec2 nextIdx = cellIdxF + clamp(cellStep, vec2(0.0), vec2(1.0));
+        vec2 nextUV = (nextIdx / cellCount) + cellStep * 1e-6;
+        vec2 edgeTv = (nextUV - screenPos.xy) / screenRayDir.xy;
+        float edgeT = min(edgeTv.x, edgeTv.y);
+
+        bool cellHit = movingAway ? (t <= depthT) : (depthT <= edgeT);
+        int mipOffset = cellHit ? -1 : 1;
+
+        if (level == 0)
         {
-            hitUV = uv;
-            end = mid;
+            float cellLinearDepth = 1.0 / cellK;
+            float rayLinearDepth = 1.0 / curRay.z;
+            if ((cellLinearDepth - rayLinearDepth) > uSsr.thickness)
+            {
+                cellHit = false;
+                mipOffset = 0;
+            }
+        }
+
+        if (cellHit)
+        {
+            if (!movingAway) t = max(t, depthT);
         }
         else
         {
-            start = mid;
+            t = edgeT;
         }
+
+        level = min(level + mipOffset, uSsr.maxLevel);
+        --iterationsLeft;
     }
 
-    vec3 hitNormal = V_GetViewNormal(uNormalTex, hitUV);
-    float d = dot(reflectionDir, hitNormal);
-    if (d > 0.0) return vec4(0.0);
+    if (level < 0 && t < tMax)
+    {
+        vec3 hitRay = screenPos + screenRayDir * t;
+        result.hit = true;
+        result.uv = hitRay.xy;
+        result.t = clamp(t / tMax, 0.0, 1.0);
+    }
 
-    vec3 hitDiff = textureLod(uDiffuseTex, hitUV, 0).rgb;
-    vec3 hitSpec = textureLod(uSpecularTex, hitUV, 0).rgb;
-
-    vec2 distToBorder = min(hitUV, 1.0 - hitUV);
-    float edgeFade = smoothstep(0.0, uSsr.edgeFade, min(distToBorder.x, distToBorder.y));
-    float distFade = 1.0 - smoothstep(0.0, uSsr.maxDistance, sqrt(rayDistanceSq));
-
-    return vec4(hitDiff + hitSpec, edgeFade * distFade);
+    return result;
 }
 
 // ================================
@@ -125,6 +170,27 @@ void main()
     vec3 viewPos = V_GetViewPosition(vTexCoord, linearDepth);
     vec3 viewDir = normalize(viewPos);
 
-    vec3 reflectionDir = reflect(viewDir, viewNormal);
-    FragColor = TraceRay(viewPos, reflectionDir);
+    vec3 reflectionDir = normalize(reflect(viewDir, viewNormal));
+    HitResult result = TraceHiZ(viewPos, reflectionDir);
+
+    if (!result.hit)
+    {
+        FragColor = vec4(0.0);
+        return;
+    }
+
+    vec3 hitNormal = V_GetViewNormal(uNormalTex, result.uv);
+    if (dot(reflectionDir, hitNormal) > 0.0)
+    {
+        FragColor = vec4(0.0);
+        return;
+    }
+
+    vec3 hitDiff = textureLod(uDiffuseTex, result.uv, 0).rgb;
+    vec3 hitSpec = textureLod(uSpecularTex, result.uv, 0).rgb;
+
+    vec2 distToBorder = min(result.uv, 1.0 - result.uv);
+    float edgeFade = smoothstep(0.0, uSsr.edgeFade, min(distToBorder.x, distToBorder.y));
+
+    FragColor = vec4(hitDiff + hitSpec, edgeFade);
 }

@@ -917,13 +917,11 @@ void upload_fx_block(void)
 
     if (env->ssr.enabled)
     {
-        block.uSsr.maxRaySteps = env->ssr.maxRaySteps;
-        block.uSsr.binarySteps = env->ssr.binarySteps;
-        block.uSsr.stepSize    = env->ssr.stepSize;
-        block.uSsr.thickness   = env->ssr.thickness;
-        block.uSsr.maxDistance = env->ssr.maxDistance;
-        block.uSsr.edgeFade    = env->ssr.edgeFade;
-        block.uSsr.enabled     = env->ssr.enabled;
+        block.uSsr.maxLevel      = r3d_target_get_num_levels(R3D_TARGET_SSR) - 1;
+        block.uSsr.maxIterations = env->ssr.maxIterations;
+        block.uSsr.thickness     = env->ssr.thickness;
+        block.uSsr.edgeFade      = env->ssr.edgeFade;
+        block.uSsr.enabled       = env->ssr.enabled;
     }
 
     if (env->fog.mode != R3D_FOG_DISABLED)
@@ -2112,7 +2110,7 @@ r3d_target_t pass_prepare_ssr(void)
     R3D_SHADER_BIND_SAMPLER(prepare.ssr, uDiffuseTex, r3d_target_get_level(R3D_TARGET_DIFFUSE, 1));
     R3D_SHADER_BIND_SAMPLER(prepare.ssr, uSpecularTex, r3d_target_get_level(R3D_TARGET_SPECULAR, 1));
     R3D_SHADER_BIND_SAMPLER(prepare.ssr, uNormalTex, r3d_target_get_level(R3D_TARGET_NORMAL, 1));
-    R3D_SHADER_BIND_SAMPLER(prepare.ssr, uDepthTex, r3d_target_get_level(R3D_TARGET_DEPTH, 1));
+    R3D_SHADER_BIND_SAMPLER(prepare.ssr, uDepthTex, r3d_target_get_levels(R3D_TARGET_DEPTH, minLevel, maxLevel));
 
     R3D_RENDER_SCREEN();
 
@@ -2143,6 +2141,8 @@ r3d_target_t pass_prepare_ssr(void)
 
         R3D_RENDER_SCREEN();
     }
+
+    r3d_target_set_read_levels(R3D_TARGET_SSR, minLevel, maxLevel);
 
     return R3D_TARGET_SSR;
 }
