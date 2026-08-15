@@ -101,7 +101,7 @@ void main()
     float aoSum = 0.0;
     vec3 giSum = vec3(0.0);
 
-    for (int i = 0; i < uSsil.sampleCount; ++i)
+    for (int i = 0; i < uSsil.sampleCount; i++)
     {
         float rNorm;
         vec2 unitDir = TapLocation(i, float(numSpiralTurns), spin, rNorm);
