@@ -278,16 +278,9 @@ typedef struct R3D_EnvSSGI {
  * Real-time reflections calculated in screen space.
  */
 typedef struct R3D_EnvSSR {
-    //int maxRaySteps;        ///< Maximum ray marching steps (default: 32)
-    //int binarySteps;        ///< Binary search refinement steps (default: 4)
-    //float stepSize;         ///< Ray step size (default: 0.125)
-    //float thickness;        ///< Depth tolerance for valid hits (default: 0.2)
-    //float maxDistance;      ///< Maximum ray distance (default: 4.0)
-    //float edgeFade;         ///< Screen edge fade start [0,1] (default: 0.25)
-
-    int maxIterations;
-    float thickness;
-    float edgeFade;
+    int maxIterations;      ///< Maximum ray marching iterations (default: 64)
+    float thickness;        ///< Depth tolerance for valid hits (default: 0.5)
+    float edgeFade;         ///< Screen edge fade start [0,1] (default: 0.25)
     bool enabled;           ///< Enable/disable SSR (default: false)
 } R3D_EnvSSR;
 
