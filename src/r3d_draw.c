@@ -882,8 +882,6 @@ void upload_fx_block(void)
 
     if (env->ssao.enabled)
     {
-        int wSsao = 0, hSsao = 0;
-        r3d_target_get_resolution(&wSsao, &hSsao, 1);
         block.uSsao.sampleCount = env->ssao.sampleCount;
         block.uSsao.intensity   = env->ssao.intensity;
         block.uSsao.power       = env->ssao.power;
@@ -894,13 +892,10 @@ void upload_fx_block(void)
 
     if (env->ssil.enabled)
     {
-        int wSsil = 0, hSsil = 0;
-        r3d_target_get_resolution(&wSsil, &hSsil, 1);
         block.uSsil.sampleCount = env->ssil.sampleCount;
         block.uSsil.giIntensity = env->ssil.giIntensity;
         block.uSsil.aoIntensity = env->ssil.aoIntensity;
         block.uSsil.aoPower     = env->ssil.aoPower;
-        block.uSsil.ssMaxRadius = env->ssil.maxRadius * (float)R3D_MIN(wSsil, hSsil);
         block.uSsil.radius      = env->ssil.radius;
         block.uSsil.bias        = env->ssil.bias;
         block.uSsil.enabled     = env->ssil.enabled;

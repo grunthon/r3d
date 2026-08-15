@@ -41,7 +41,6 @@ struct FX_Ssao {
     int sampleCount;
     float intensity;
     float power;
-    float ssMaxRadius;
     float radius;
     float bias;
     bool enabled;
@@ -52,7 +51,6 @@ struct FX_Ssil {
     float giIntensity;
     float aoIntensity;
     float aoPower;
-    float ssMaxRadius;
     float radius;
     float bias;
     bool enabled;

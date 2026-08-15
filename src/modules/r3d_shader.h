@@ -491,7 +491,7 @@ typedef struct {
         alignas(4) float radius;
         alignas(4) float bias;
         alignas(4) int32_t enabled;
-        uint8_t _pad[4];
+        uint8_t _pad[8];
     } uSsao;
 
     struct r3d_shader_block_fx_ssil {
@@ -499,10 +499,10 @@ typedef struct {
         alignas(4) float giIntensity;
         alignas(4) float aoIntensity;
         alignas(4) float aoPower;
-        alignas(4) float ssMaxRadius;
         alignas(4) float radius;
         alignas(4) float bias;
         alignas(4) int32_t enabled;
+        uint8_t _pad[4];
     } uSsil;
 
     struct r3d_shader_block_fx_ssgi {

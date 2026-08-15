@@ -78,7 +78,6 @@
             .giIntensity = 1.0f,                        \
             .aoIntensity = 1.0f,                        \
             .aoPower = 1.0f,                            \
-            .maxRadius = 0.2f,                          \
             .radius = 4.0f,                             \
             .bias = 0.03f,                              \
             .enabled = false,                           \
@@ -253,7 +252,6 @@ typedef struct R3D_EnvSSIL {
     float giIntensity;      ///< Indirect light strength multiplier (default: 1.0)
     float aoIntensity;      ///< Ambient occlusion strength multiplier (default: 1.0)
     float aoPower;          ///< Exponential falloff for sharper occlusion darkening (default: 1.0)
-    float maxRadius;        ///< Fraction of screen height beyond which the sampling radius is clamped (default: 0.2)
     float radius;           ///< Sampling radius in world space (default: 4.0)
     float bias;             ///< Depth bias to prevent self-occlusion artifacts, in world-space units (default: 0.03)
     bool enabled;           ///< Enable/disable SSIL effect (default: false)
