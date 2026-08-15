@@ -488,11 +488,10 @@ typedef struct {
         alignas(4) int32_t sampleCount;
         alignas(4) float intensity;
         alignas(4) float power;
-        alignas(4) float ssMaxRadius;
         alignas(4) float radius;
         alignas(4) float bias;
         alignas(4) int32_t enabled;
-        uint8_t _pad[4];
+        uint8_t _pad[8];
     } uSsao;
 
     struct r3d_shader_block_fx_ssil {
@@ -500,10 +499,10 @@ typedef struct {
         alignas(4) float giIntensity;
         alignas(4) float aoIntensity;
         alignas(4) float aoPower;
-        alignas(4) float ssMaxRadius;
         alignas(4) float radius;
         alignas(4) float bias;
         alignas(4) int32_t enabled;
+        uint8_t _pad[4];
     } uSsil;
 
     struct r3d_shader_block_fx_ssgi {
@@ -517,14 +516,12 @@ typedef struct {
     } uSsgi;
 
     struct r3d_shader_block_fx_ssr {
-        alignas(4) int32_t maxRaySteps;
-        alignas(4) int32_t binarySteps;
-        alignas(4) float stepSize;
+        alignas(4) int32_t maxLevel;
+        alignas(4) int32_t maxIterations;
         alignas(4) float thickness;
-        alignas(4) float maxDistance;
         alignas(4) float edgeFade;
         alignas(4) int32_t enabled;
-        uint8_t _pad[4];
+        uint8_t _pad[12];
     } uSsr;
 
     struct r3d_shader_block_fx_fog {
@@ -658,38 +655,29 @@ typedef struct {
 typedef struct {
     GLuint id;
     r3d_shader_uniform_sampler_t uSourceTex;
-    r3d_shader_uniform_int_t uSourceLod;
 } r3d_shader_prepare_blur_down_t;
 
 typedef struct {
     GLuint id;
     r3d_shader_uniform_sampler_t uSourceTex;
-    r3d_shader_uniform_int_t uSourceLod;
 } r3d_shader_prepare_blur_up_t;
 
 typedef struct {
     GLuint id;
     r3d_shader_uniform_sampler_t uDepthTex;
-} r3d_shader_prepare_depth_pyramid_t;
+} r3d_shader_prepare_pyramid_t;
 
 typedef struct {
     GLuint id;
     r3d_shader_uniform_sampler_t uSelectorTex;
-    r3d_shader_uniform_sampler_t uNormalTex;
-} r3d_shader_prepare_ssao_in_down_t;
+    r3d_shader_uniform_sampler_t uSourceTex;
+} r3d_shader_prepare_downsample_t;
 
 typedef struct {
     GLuint id;
     r3d_shader_uniform_sampler_t uNormalTex;
     r3d_shader_uniform_sampler_t uDepthTex;
 } r3d_shader_prepare_ssao_t;
-
-typedef struct {
-    GLuint id;
-    r3d_shader_uniform_sampler_t uSelectorTex;
-    r3d_shader_uniform_sampler_t uDiffuseTex;
-    r3d_shader_uniform_sampler_t uNormalTex;
-} r3d_shader_prepare_ssil_in_down_t;
 
 typedef struct {
     GLuint id;
@@ -700,25 +688,10 @@ typedef struct {
 
 typedef struct {
     GLuint id;
-    r3d_shader_uniform_sampler_t uSelectorTex;
-    r3d_shader_uniform_sampler_t uDiffuseTex;
-    r3d_shader_uniform_sampler_t uNormalTex;
-} r3d_shader_prepare_ssgi_in_down_t;
-
-typedef struct {
-    GLuint id;
     r3d_shader_uniform_sampler_t uDiffuseTex;
     r3d_shader_uniform_sampler_t uNormalTex;
     r3d_shader_uniform_sampler_t uDepthTex;
 } r3d_shader_prepare_ssgi_t;
-
-typedef struct {
-    GLuint id;
-    r3d_shader_uniform_sampler_t uSelectorTex;
-    r3d_shader_uniform_sampler_t uDiffuseTex;
-    r3d_shader_uniform_sampler_t uSpecularTex;
-    r3d_shader_uniform_sampler_t uNormalTex;
-} r3d_shader_prepare_ssr_in_down_t;
 
 typedef struct {
     GLuint id;
@@ -749,14 +722,13 @@ typedef struct {
     GLuint id;
     r3d_shader_uniform_sampler_t uTexture;
     r3d_shader_uniform_vec2_t uTexelSize;
-    r3d_shader_uniform_int_t uDstLevel;
+    r3d_shader_uniform_int_t uFirstPass;
 } r3d_shader_prepare_bloom_down_t;
 
 typedef struct {
     GLuint id;
     r3d_shader_uniform_sampler_t uTexture;
     r3d_shader_uniform_vec2_t uFilterRadius;
-    r3d_shader_uniform_float_t uSrcLevel;
 } r3d_shader_prepare_bloom_up_t;
 
 typedef struct {
@@ -1250,14 +1222,11 @@ extern struct r3d_mod_shader {
         r3d_shader_prepare_denoiser_sparse_t denoiserSparse;
         r3d_shader_prepare_blur_down_t blurDown;
         r3d_shader_prepare_blur_up_t blurUp;
-        r3d_shader_prepare_depth_pyramid_t depthPyramid;
-        r3d_shader_prepare_ssao_in_down_t ssaoInDown;
+        r3d_shader_prepare_pyramid_t pyramid;
+        r3d_shader_prepare_downsample_t downsample;
         r3d_shader_prepare_ssao_t ssao;
-        r3d_shader_prepare_ssil_in_down_t ssilInDown;
         r3d_shader_prepare_ssil_t ssil;
-        r3d_shader_prepare_ssgi_in_down_t ssgiInDown;
         r3d_shader_prepare_ssgi_t ssgi;
-        r3d_shader_prepare_ssr_in_down_t ssrInDown;
         r3d_shader_prepare_ssr_t ssr;
         r3d_shader_prepare_dof_coc_t dofCoc;
         r3d_shader_prepare_dof_down_t dofDown;
@@ -1333,14 +1302,11 @@ bool r3d_shader_load_prepare_denoiser_atrous(r3d_shader_custom_t* custom);
 bool r3d_shader_load_prepare_denoiser_sparse(r3d_shader_custom_t* custom);
 bool r3d_shader_load_prepare_blur_down(r3d_shader_custom_t* custom);
 bool r3d_shader_load_prepare_blur_up(r3d_shader_custom_t* custom);
-bool r3d_shader_load_prepare_depth_pyramid(r3d_shader_custom_t* custom);
-bool r3d_shader_load_prepare_ssao_in_down(r3d_shader_custom_t* custom);
+bool r3d_shader_load_prepare_pyramid(r3d_shader_custom_t* custom);
+bool r3d_shader_load_prepare_downsample(r3d_shader_custom_t* custom);
 bool r3d_shader_load_prepare_ssao(r3d_shader_custom_t* custom);
-bool r3d_shader_load_prepare_ssil_in_down(r3d_shader_custom_t* custom);
 bool r3d_shader_load_prepare_ssil(r3d_shader_custom_t* custom);
-bool r3d_shader_load_prepare_ssgi_in_down(r3d_shader_custom_t* custom);
 bool r3d_shader_load_prepare_ssgi(r3d_shader_custom_t* custom);
-bool r3d_shader_load_prepare_ssr_in_down(r3d_shader_custom_t* custom);
 bool r3d_shader_load_prepare_ssr(r3d_shader_custom_t* custom);
 bool r3d_shader_load_prepare_dof_coc(r3d_shader_custom_t* custom);
 bool r3d_shader_load_prepare_dof_down(r3d_shader_custom_t* custom);
@@ -1409,15 +1375,12 @@ static const struct r3d_shader_loader {
         r3d_shader_loader_func denoiserSparse;
         r3d_shader_loader_func blurDown;
         r3d_shader_loader_func blurUp;
-        r3d_shader_loader_func depthPyramid;
-        r3d_shader_loader_func ssaoInDown;
+        r3d_shader_loader_func pyramid;
+        r3d_shader_loader_func downsample;
         r3d_shader_loader_func ssao;
         r3d_shader_loader_func ssaoBlur;
-        r3d_shader_loader_func ssilInDown;
         r3d_shader_loader_func ssil;
-        r3d_shader_loader_func ssgiInDown;
         r3d_shader_loader_func ssgi;
-        r3d_shader_loader_func ssrInDown;
         r3d_shader_loader_func ssr;
         r3d_shader_loader_func dofCoc;
         r3d_shader_loader_func dofDown;
@@ -1490,14 +1453,11 @@ static const struct r3d_shader_loader {
         .denoiserSparse = r3d_shader_load_prepare_denoiser_sparse,
         .blurDown = r3d_shader_load_prepare_blur_down,
         .blurUp = r3d_shader_load_prepare_blur_up,
-        .depthPyramid = r3d_shader_load_prepare_depth_pyramid,
-        .ssaoInDown = r3d_shader_load_prepare_ssao_in_down,
+        .pyramid = r3d_shader_load_prepare_pyramid,
+        .downsample = r3d_shader_load_prepare_downsample,
         .ssao = r3d_shader_load_prepare_ssao,
-        .ssilInDown = r3d_shader_load_prepare_ssil_in_down,
         .ssil = r3d_shader_load_prepare_ssil,
-        .ssgiInDown = r3d_shader_load_prepare_ssgi_in_down,
         .ssgi = r3d_shader_load_prepare_ssgi,
-        .ssrInDown = r3d_shader_load_prepare_ssr_in_down,
         .ssr = r3d_shader_load_prepare_ssr,
         .dofCoc = r3d_shader_load_prepare_dof_coc,
         .dofDown = r3d_shader_load_prepare_dof_down,

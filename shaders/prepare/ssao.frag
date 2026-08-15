@@ -78,36 +78,34 @@ vec2 TapLocation(int i, float numSpiralTurns, float spin, out float rNorm)
 
 void main()
 {
-    FragOcclusion = 1.0;
+    ivec2 depthTexSize = textureSize(uDepthTex, 0);
+    vec2 depthTexInv = 1.0 / vec2(depthTexSize);
 
     ivec2 pixelCoord = ivec2(gl_FragCoord.xy);
-    float depth = texelFetch(uDepthTex, pixelCoord, 0).r;
-    if (depth >= uView.far) return;
 
+    float depth = texelFetch(uDepthTex, pixelCoord, 0).r;
     vec3 position = V_GetViewPosition(vTexCoord, depth);
     vec3 normal = V_GetViewNormal(uNormalTex, pixelCoord);
 
-    float projScale = abs(uView.proj[1][1]) * textureSize(uDepthTex, 0).y * 0.5;
-    float ssRadiusRaw = projScale * uSsao.radius / max(depth, 0.1);
-    float ssRadius = min(ssRadiusRaw, uSsao.ssMaxRadius);
-
-    float radiusScale = ssRadius / max(ssRadiusRaw, 1e-4);
+    float projScale = abs(uView.proj[1][1]) * depthTexSize.y * 0.5;
+    float ssRadius = projScale * uSsao.radius / max(depth, 1e-4);
     float radiusSq = uSsao.radius * uSsao.radius;
-
-    // Here we use an IGN instead of the hash from the HPG12 AlchemyAO paper.
-    // The result is much more pleasing and blurs much better.
 
     float spin = M_TAU * M_HashR2(gl_FragCoord.xy);
     int numSpiralTurns = ROTATIONS[clamp(uSsao.sampleCount - 1, 0, 97)];
 
     float aoSum = 0.0;
-    for (int i = 0; i < uSsao.sampleCount; ++i)
+    for (int i = 0; i < uSsao.sampleCount; i++)
     {
         float rNorm;
         vec2 unitDir = TapLocation(i, float(numSpiralTurns), spin, rNorm);
-        ivec2 pixelOffset = pixelCoord + ivec2(unitDir * ssRadius * rNorm);
+        ivec2 rawOffset = pixelCoord + ivec2(unitDir * ssRadius * rNorm);
 
-        vec3 samplePos = V_GetViewPosition(uDepthTex, pixelOffset);
+        ivec2 pixelOffset = clamp(rawOffset, ivec2(0), depthTexSize - 1);
+        bool inBounds = all(equal(pixelOffset, rawOffset));
+
+        float sampleDepth = texelFetch(uDepthTex, pixelOffset, 0).r;
+        vec3 samplePos = V_GetViewPosition((vec2(pixelOffset) + 0.5) * depthTexInv, sampleDepth);
         vec3 v = samplePos - position;
 
         float vv = dot(v, v);
@@ -115,14 +113,13 @@ void main()
 
         const float epsilon = 0.02;
         float f = max(radiusSq - vv, 0.0);
-        aoSum += f * f * f * max((vn - uSsao.bias) / (epsilon + vv), 0.0);
+        float contribution = f * f * f * max((vn - uSsao.bias) / (epsilon + vv), 0.0);
+
+        aoSum += contribution * float(inBounds);
     }
 
     float temp = radiusSq * uSsao.radius;
     aoSum /= (temp * temp);
 
-    // Attenuate intensity proportionally when ssRadius was clamped, preventing over-darkening at close range
-    float ao = max(0.0, 1.0 - aoSum * uSsao.intensity * (2.0 / float(uSsao.sampleCount)) * radiusScale);
-
-    FragOcclusion = ao;
+    FragOcclusion = max(0.0, 1.0 - aoSum * uSsao.intensity / float(uSsao.sampleCount));
 }

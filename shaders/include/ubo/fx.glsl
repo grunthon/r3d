@@ -41,7 +41,6 @@ struct FX_Ssao {
     int sampleCount;
     float intensity;
     float power;
-    float ssMaxRadius;
     float radius;
     float bias;
     bool enabled;
@@ -52,7 +51,6 @@ struct FX_Ssil {
     float giIntensity;
     float aoIntensity;
     float aoPower;
-    float ssMaxRadius;
     float radius;
     float bias;
     bool enabled;
@@ -68,11 +66,9 @@ struct FX_Ssgi {
 };
 
 struct FX_Ssr {
-    int maxRaySteps;
-    int binarySteps;
-    float stepSize;
+    int maxLevel;
+    int maxIterations;
     float thickness;
-    float maxDistance;
     float edgeFade;
     bool enabled;
 };

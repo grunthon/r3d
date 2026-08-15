@@ -14,6 +14,8 @@
 #include <string.h>
 #include <math.h>
 
+#include "./r3d_helper.h"
+
 // ========================================
 // DEFINITIONS AND CONSTANTS
 // ========================================
@@ -51,6 +53,24 @@ typedef struct {
     int x, y;
     int w, h;
 } r3d_rect_t;
+
+// ========================================
+// SCALAR FUNCTIONS
+// ========================================
+
+//static inline int32_t r3d_log2i(uint32_t v)
+//{
+//    int r = 0;
+//    while (v >>= 1) r++;
+//    return r;
+//}
+
+static inline int32_t r3d_log2i_fast(uint32_t value)
+{
+    R3D_ASSERT(value > 0 && (value & (value - 1)) == 0 && "value must be a power of two");
+
+    return r3d_lsb_index(value);
+}
 
 // ========================================
 // COLOR FUNCTIONS

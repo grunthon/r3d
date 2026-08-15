@@ -42,7 +42,7 @@ layout (location = 0) out vec3 FragColor;
 
 uniform sampler2D uTexture;
 uniform vec2 uTexelSize;    //< Reciprocal of the resolution of the source being sampled
-uniform int uDstLevel;      //< Which mip we are writing to, used for Karis average
+uniform bool uFirstPass;    //< We perform Karis average during first pass
 
 // ================================
 // Helper Functions
@@ -80,7 +80,6 @@ void main()
 {
     // NOTE: This is the readable version of this shader. It will be optimized!
 
-    float srcLevel = float(max(uDstLevel - 1, 0));
     float x = uTexelSize.x;
     float y = uTexelSize.y;
 
@@ -91,22 +90,22 @@ void main()
     // - l - m -
     // g - h - i
     // === ('e' is the current texel) ===
-    vec3 a = textureLod(uTexture, vec2(vTexCoord.x - 2*x, vTexCoord.y + 2*y), srcLevel).rgb;
-    vec3 b = textureLod(uTexture, vec2(vTexCoord.x,       vTexCoord.y + 2*y), srcLevel).rgb;
-    vec3 c = textureLod(uTexture, vec2(vTexCoord.x + 2*x, vTexCoord.y + 2*y), srcLevel).rgb;
+    vec3 a = texture(uTexture, vec2(vTexCoord.x - 2*x, vTexCoord.y + 2*y)).rgb;
+    vec3 b = texture(uTexture, vec2(vTexCoord.x,       vTexCoord.y + 2*y)).rgb;
+    vec3 c = texture(uTexture, vec2(vTexCoord.x + 2*x, vTexCoord.y + 2*y)).rgb;
 
-    vec3 d = textureLod(uTexture, vec2(vTexCoord.x - 2*x, vTexCoord.y), srcLevel).rgb;
-    vec3 e = textureLod(uTexture, vec2(vTexCoord.x,       vTexCoord.y), srcLevel).rgb;
-    vec3 f = textureLod(uTexture, vec2(vTexCoord.x + 2*x, vTexCoord.y), srcLevel).rgb;
+    vec3 d = texture(uTexture, vec2(vTexCoord.x - 2*x, vTexCoord.y)).rgb;
+    vec3 e = texture(uTexture, vec2(vTexCoord.x,       vTexCoord.y)).rgb;
+    vec3 f = texture(uTexture, vec2(vTexCoord.x + 2*x, vTexCoord.y)).rgb;
 
-    vec3 g = textureLod(uTexture, vec2(vTexCoord.x - 2*x, vTexCoord.y - 2*y), srcLevel).rgb;
-    vec3 h = textureLod(uTexture, vec2(vTexCoord.x,       vTexCoord.y - 2*y), srcLevel).rgb;
-    vec3 i = textureLod(uTexture, vec2(vTexCoord.x + 2*x, vTexCoord.y - 2*y), srcLevel).rgb;
+    vec3 g = texture(uTexture, vec2(vTexCoord.x - 2*x, vTexCoord.y - 2*y)).rgb;
+    vec3 h = texture(uTexture, vec2(vTexCoord.x,       vTexCoord.y - 2*y)).rgb;
+    vec3 i = texture(uTexture, vec2(vTexCoord.x + 2*x, vTexCoord.y - 2*y)).rgb;
 
-    vec3 j = textureLod(uTexture, vec2(vTexCoord.x - x, vTexCoord.y + y), srcLevel).rgb;
-    vec3 k = textureLod(uTexture, vec2(vTexCoord.x + x, vTexCoord.y + y), srcLevel).rgb;
-    vec3 l = textureLod(uTexture, vec2(vTexCoord.x - x, vTexCoord.y - y), srcLevel).rgb;
-    vec3 m = textureLod(uTexture, vec2(vTexCoord.x + x, vTexCoord.y - y), srcLevel).rgb;
+    vec3 j = texture(uTexture, vec2(vTexCoord.x - x, vTexCoord.y + y)).rgb;
+    vec3 k = texture(uTexture, vec2(vTexCoord.x + x, vTexCoord.y + y)).rgb;
+    vec3 l = texture(uTexture, vec2(vTexCoord.x - x, vTexCoord.y - y)).rgb;
+    vec3 m = texture(uTexture, vec2(vTexCoord.x + x, vTexCoord.y - y)).rgb;
 
     // Apply weighted distribution:
     // 0.5 + 0.125 + 0.125 + 0.125 + 0.125 = 1
@@ -124,7 +123,7 @@ void main()
 
     // Check if we need to perform Karis average on each block of 4 samples
     vec3 groups[5];
-    if (uDstLevel == 0)
+    if (uFirstPass)
     {
         // We are writing to mip 0, so we need to apply Karis average to each block
         // of 4 samples to prevent fireflies (very bright subpixels, leads to pulsating artifacts).

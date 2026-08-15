@@ -26,14 +26,10 @@
 #include <shaders/denoiser_sparse.frag.h>
 #include <shaders/blur_down.frag.h>
 #include <shaders/blur_up.frag.h>
-#include <shaders/depth_pyramid.frag.h>
-#include <shaders/ssao_in_down.frag.h>
+#include <shaders/pyramid.frag.h>
 #include <shaders/ssao.frag.h>
-#include <shaders/ssil_in_down.frag.h>
 #include <shaders/ssil.frag.h>
-#include <shaders/ssgi_in_down.frag.h>
 #include <shaders/ssgi.frag.h>
-#include <shaders/ssr_in_down.frag.h>
 #include <shaders/ssr.frag.h>
 #include <shaders/dof_coc.frag.h>
 #include <shaders/dof_down.frag.h>
@@ -349,8 +345,6 @@ bool r3d_shader_load_prepare_blur_down(r3d_shader_custom_t* custom)
     DECL_SHADER(r3d_shader_prepare_blur_down_t, prepare, blurDown);
     LOAD_SHADER(blurDown, SCREEN_VERT, BLUR_DOWN_FRAG);
 
-    GET_LOCATION(blurDown, uSourceLod);
-
     USE_SHADER(blurDown);
     SET_SAMPLER(blurDown, uSourceTex, R3D_SHADER_SAMPLER_SOURCE_2D_0);
 
@@ -364,37 +358,62 @@ bool r3d_shader_load_prepare_blur_up(r3d_shader_custom_t* custom)
     DECL_SHADER(r3d_shader_prepare_blur_up_t, prepare, blurUp);
     LOAD_SHADER(blurUp, SCREEN_VERT, BLUR_UP_FRAG);
 
-    GET_LOCATION(blurUp, uSourceLod);
-
     USE_SHADER(blurUp);
     SET_SAMPLER(blurUp, uSourceTex, R3D_SHADER_SAMPLER_SOURCE_2D_0);
 
     return true;
 }
 
-bool r3d_shader_load_prepare_depth_pyramid(r3d_shader_custom_t* custom)
+bool r3d_shader_load_prepare_pyramid(r3d_shader_custom_t* custom)
 {
     R3D_UNUSED(custom);
 
-    DECL_SHADER(r3d_shader_prepare_depth_pyramid_t, prepare, depthPyramid);
-    LOAD_SHADER(depthPyramid, SCREEN_VERT, DEPTH_PYRAMID_FRAG);
+    const char* FS_DEFINES[] = {"PYRAMID"};
 
-    USE_SHADER(depthPyramid);
-    SET_SAMPLER(depthPyramid, uDepthTex, R3D_SHADER_SAMPLER_BUFFER_DEPTH);
+    shader_source_desc_t desc = {
+        .vsTemplate    = SCREEN_VERT,
+        .vsDefines     = NULL,
+        .vsDefineCount = 0,
+        .fsTemplate    = PYRAMID_FRAG,
+        .fsDefines     = FS_DEFINES,
+        .fsDefineCount = R3D_ARRAY_SIZE(FS_DEFINES),
+        .userCode      = NULL,
+    };
+
+    DECL_SHADER(r3d_shader_prepare_pyramid_t, prepare, pyramid);
+    LOAD_SHADER_EX(pyramid, desc);
+
+    SET_UNIFORM_BUFFER(pyramid, ViewBlock, R3D_SHADER_BLOCK_SLOT_VIEW);
+
+    USE_SHADER(pyramid);
+    SET_SAMPLER(pyramid, uDepthTex, R3D_SHADER_SAMPLER_BUFFER_DEPTH);
 
     return true;
 }
 
-bool r3d_shader_load_prepare_ssao_in_down(r3d_shader_custom_t* custom)
+bool r3d_shader_load_prepare_downsample(r3d_shader_custom_t* custom)
 {
     R3D_UNUSED(custom);
 
-    DECL_SHADER(r3d_shader_prepare_ssao_in_down_t, prepare, ssaoInDown);
-    LOAD_SHADER(ssaoInDown, SCREEN_VERT, SSAO_IN_DOWN_FRAG);
+    const char* FS_DEFINES[] = {"DOWNSAMPLE"};
 
-    USE_SHADER(ssaoInDown);
-    SET_SAMPLER(ssaoInDown, uSelectorTex, R3D_SHADER_SAMPLER_BUFFER_SELECTOR);
-    SET_SAMPLER(ssaoInDown, uNormalTex, R3D_SHADER_SAMPLER_BUFFER_NORMAL);
+    shader_source_desc_t desc = {
+        .vsTemplate    = SCREEN_VERT,
+        .vsDefines     = NULL,
+        .vsDefineCount = 0,
+        .fsTemplate    = PYRAMID_FRAG,
+        .fsDefines     = FS_DEFINES,
+        .fsDefineCount = R3D_ARRAY_SIZE(FS_DEFINES),
+        .userCode      = NULL,
+    };
+
+
+    DECL_SHADER(r3d_shader_prepare_downsample_t, prepare, downsample);
+    LOAD_SHADER_EX(downsample, desc);
+
+    USE_SHADER(downsample);
+    SET_SAMPLER(downsample, uSelectorTex, R3D_SHADER_SAMPLER_BUFFER_SELECTOR);
+    SET_SAMPLER(downsample, uSourceTex, R3D_SHADER_SAMPLER_SOURCE_2D_0);
 
     return true;
 }
@@ -412,21 +431,6 @@ bool r3d_shader_load_prepare_ssao(r3d_shader_custom_t* custom)
     USE_SHADER(ssao);
     SET_SAMPLER(ssao, uNormalTex, R3D_SHADER_SAMPLER_BUFFER_NORMAL);
     SET_SAMPLER(ssao, uDepthTex, R3D_SHADER_SAMPLER_BUFFER_DEPTH);
-
-    return true;
-}
-
-bool r3d_shader_load_prepare_ssil_in_down(r3d_shader_custom_t* custom)
-{
-    R3D_UNUSED(custom);
-
-    DECL_SHADER(r3d_shader_prepare_ssil_in_down_t, prepare, ssilInDown);
-    LOAD_SHADER(ssilInDown, SCREEN_VERT, SSIL_IN_DOWN_FRAG);
-
-    USE_SHADER(ssilInDown);
-    SET_SAMPLER(ssilInDown, uSelectorTex, R3D_SHADER_SAMPLER_BUFFER_SELECTOR);
-    SET_SAMPLER(ssilInDown, uDiffuseTex, R3D_SHADER_SAMPLER_BUFFER_DIFFUSE);
-    SET_SAMPLER(ssilInDown, uNormalTex, R3D_SHADER_SAMPLER_BUFFER_NORMAL);
 
     return true;
 }
@@ -449,21 +453,6 @@ bool r3d_shader_load_prepare_ssil(r3d_shader_custom_t* custom)
     return true;
 }
 
-bool r3d_shader_load_prepare_ssgi_in_down(r3d_shader_custom_t* custom)
-{
-    R3D_UNUSED(custom);
-
-    DECL_SHADER(r3d_shader_prepare_ssgi_in_down_t, prepare, ssgiInDown);
-    LOAD_SHADER(ssgiInDown, SCREEN_VERT, SSGI_IN_DOWN_FRAG);
-
-    USE_SHADER(ssgiInDown);
-    SET_SAMPLER(ssgiInDown, uSelectorTex, R3D_SHADER_SAMPLER_BUFFER_SELECTOR);
-    SET_SAMPLER(ssgiInDown, uDiffuseTex, R3D_SHADER_SAMPLER_BUFFER_DIFFUSE);
-    SET_SAMPLER(ssgiInDown, uNormalTex, R3D_SHADER_SAMPLER_BUFFER_NORMAL);
-
-    return true;
-}
-
 bool r3d_shader_load_prepare_ssgi(r3d_shader_custom_t* custom)
 {
     R3D_UNUSED(custom);
@@ -478,22 +467,6 @@ bool r3d_shader_load_prepare_ssgi(r3d_shader_custom_t* custom)
     SET_SAMPLER(ssgi, uDiffuseTex, R3D_SHADER_SAMPLER_BUFFER_DIFFUSE);
     SET_SAMPLER(ssgi, uNormalTex, R3D_SHADER_SAMPLER_BUFFER_NORMAL);
     SET_SAMPLER(ssgi, uDepthTex, R3D_SHADER_SAMPLER_BUFFER_DEPTH);
-
-    return true;
-}
-
-bool r3d_shader_load_prepare_ssr_in_down(r3d_shader_custom_t* custom)
-{
-    R3D_UNUSED(custom);
-
-    DECL_SHADER(r3d_shader_prepare_ssr_in_down_t, prepare, ssrInDown);
-    LOAD_SHADER(ssrInDown, SCREEN_VERT, SSR_IN_DOWN_FRAG);
-
-    USE_SHADER(ssrInDown);
-    SET_SAMPLER(ssrInDown, uSelectorTex, R3D_SHADER_SAMPLER_BUFFER_SELECTOR);
-    SET_SAMPLER(ssrInDown, uDiffuseTex, R3D_SHADER_SAMPLER_BUFFER_DIFFUSE);
-    SET_SAMPLER(ssrInDown, uSpecularTex, R3D_SHADER_SAMPLER_BUFFER_SPECULAR);
-    SET_SAMPLER(ssrInDown, uNormalTex, R3D_SHADER_SAMPLER_BUFFER_NORMAL);
 
     return true;
 }
@@ -573,7 +546,7 @@ bool r3d_shader_load_prepare_bloom_down(r3d_shader_custom_t* custom)
     SET_UNIFORM_BUFFER(bloomDown, FxBlock, R3D_SHADER_BLOCK_SLOT_FX);
 
     GET_LOCATION(bloomDown, uTexelSize);
-    GET_LOCATION(bloomDown, uDstLevel);
+    GET_LOCATION(bloomDown, uFirstPass);
 
     USE_SHADER(bloomDown);
     SET_SAMPLER(bloomDown, uTexture, R3D_SHADER_SAMPLER_BUFFER_BLOOM);
@@ -589,7 +562,6 @@ bool r3d_shader_load_prepare_bloom_up(r3d_shader_custom_t* custom)
     LOAD_SHADER(bloomUp, SCREEN_VERT, BLOOM_UP_FRAG);
 
     GET_LOCATION(bloomUp, uFilterRadius);
-    GET_LOCATION(bloomUp, uSrcLevel);
 
     USE_SHADER(bloomUp);
     SET_SAMPLER(bloomUp, uTexture, R3D_SHADER_SAMPLER_BUFFER_BLOOM);
@@ -1873,14 +1845,11 @@ void r3d_shader_quit(void)
     UNLOAD_SHADER(prepare.denoiserSparse);
     UNLOAD_SHADER(prepare.blurDown);
     UNLOAD_SHADER(prepare.blurUp);
-    UNLOAD_SHADER(prepare.depthPyramid);
-    UNLOAD_SHADER(prepare.ssaoInDown);
+    UNLOAD_SHADER(prepare.pyramid);
+    UNLOAD_SHADER(prepare.downsample);
     UNLOAD_SHADER(prepare.ssao);
-    UNLOAD_SHADER(prepare.ssilInDown);
     UNLOAD_SHADER(prepare.ssil);
-    UNLOAD_SHADER(prepare.ssgiInDown);
     UNLOAD_SHADER(prepare.ssgi);
-    UNLOAD_SHADER(prepare.ssrInDown);
     UNLOAD_SHADER(prepare.ssr);
     UNLOAD_SHADER(prepare.dofCoc);
     UNLOAD_SHADER(prepare.dofDown);

@@ -69,7 +69,6 @@
             .sampleCount = 16,                          \
             .intensity = 1.0f,                          \
             .power = 1.0f,                              \
-            .maxRadius = 0.2f,                          \
             .radius = 1.0f,                             \
             .bias = 0.03f,                              \
             .enabled = false,                           \
@@ -79,7 +78,6 @@
             .giIntensity = 1.0f,                        \
             .aoIntensity = 1.0f,                        \
             .aoPower = 1.0f,                            \
-            .maxRadius = 0.2f,                          \
             .radius = 4.0f,                             \
             .bias = 0.03f,                              \
             .enabled = false,                           \
@@ -94,13 +92,10 @@
             .enabled = false,                           \
         },                                              \
         .ssr = {                                        \
-            .maxRaySteps = 32,                          \
-            .binarySteps = 4,                           \
-            .stepSize = 0.125f,                         \
-            .thickness = 0.2f,                          \
-            .maxDistance = 4.0f,                        \
-            .edgeFade = 0.25f,                          \
-            .enabled = false,                           \
+            .maxIterations = 64,                        \
+            .thickness     = 0.5f,                      \
+            .edgeFade      = 0.25f,                     \
+            .enabled       = false,                     \
         },                                              \
         .fog = {                                        \
             .mode = R3D_FOG_DISABLED,                   \
@@ -239,7 +234,6 @@ typedef struct R3D_EnvSSAO {
     int sampleCount;        ///< Number of samples to compute SSAO (default: 16)
     float intensity;        ///< Base occlusion strength multiplier (default: 1.0)
     float power;            ///< Exponential falloff for sharper darkening (default: 1.0)
-    float maxRadius;        ///< Fraction of screen height beyond which the sampling radius is clamped (default: 0.2)
     float radius;           ///< Sampling radius in world space (default: 1.0)
     float bias;             ///< Depth bias to prevent self-occlusion artifacts, in world-space units (default: 0.03)
     bool enabled;           ///< Enable/disable SSAO effect (default: false)
@@ -258,7 +252,6 @@ typedef struct R3D_EnvSSIL {
     float giIntensity;      ///< Indirect light strength multiplier (default: 1.0)
     float aoIntensity;      ///< Ambient occlusion strength multiplier (default: 1.0)
     float aoPower;          ///< Exponential falloff for sharper occlusion darkening (default: 1.0)
-    float maxRadius;        ///< Fraction of screen height beyond which the sampling radius is clamped (default: 0.2)
     float radius;           ///< Sampling radius in world space (default: 4.0)
     float bias;             ///< Depth bias to prevent self-occlusion artifacts, in world-space units (default: 0.03)
     bool enabled;           ///< Enable/disable SSIL effect (default: false)
@@ -285,11 +278,8 @@ typedef struct R3D_EnvSSGI {
  * Real-time reflections calculated in screen space.
  */
 typedef struct R3D_EnvSSR {
-    int maxRaySteps;        ///< Maximum ray marching steps (default: 32)
-    int binarySteps;        ///< Binary search refinement steps (default: 4)
-    float stepSize;         ///< Ray step size (default: 0.125)
-    float thickness;        ///< Depth tolerance for valid hits (default: 0.2)
-    float maxDistance;      ///< Maximum ray distance (default: 4.0)
+    int maxIterations;      ///< Maximum ray marching iterations (default: 64)
+    float thickness;        ///< Depth tolerance for valid hits (default: 0.5)
     float edgeFade;         ///< Screen edge fade start [0,1] (default: 0.25)
     bool enabled;           ///< Enable/disable SSR (default: false)
 } R3D_EnvSSR;
