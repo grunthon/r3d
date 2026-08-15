@@ -69,7 +69,6 @@
             .sampleCount = 16,                          \
             .intensity = 1.0f,                          \
             .power = 1.0f,                              \
-            .maxRadius = 0.2f,                          \
             .radius = 1.0f,                             \
             .bias = 0.03f,                              \
             .enabled = false,                           \
@@ -236,7 +235,6 @@ typedef struct R3D_EnvSSAO {
     int sampleCount;        ///< Number of samples to compute SSAO (default: 16)
     float intensity;        ///< Base occlusion strength multiplier (default: 1.0)
     float power;            ///< Exponential falloff for sharper darkening (default: 1.0)
-    float maxRadius;        ///< Fraction of screen height beyond which the sampling radius is clamped (default: 0.2)
     float radius;           ///< Sampling radius in world space (default: 1.0)
     float bias;             ///< Depth bias to prevent self-occlusion artifacts, in world-space units (default: 0.03)
     bool enabled;           ///< Enable/disable SSAO effect (default: false)

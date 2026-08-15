@@ -488,7 +488,6 @@ typedef struct {
         alignas(4) int32_t sampleCount;
         alignas(4) float intensity;
         alignas(4) float power;
-        alignas(4) float ssMaxRadius;
         alignas(4) float radius;
         alignas(4) float bias;
         alignas(4) int32_t enabled;

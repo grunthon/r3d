@@ -887,7 +887,6 @@ void upload_fx_block(void)
         block.uSsao.sampleCount = env->ssao.sampleCount;
         block.uSsao.intensity   = env->ssao.intensity;
         block.uSsao.power       = env->ssao.power;
-        block.uSsao.ssMaxRadius = env->ssao.maxRadius * (float)R3D_MIN(wSsao, hSsao);
         block.uSsao.radius      = env->ssao.radius;
         block.uSsao.bias        = env->ssao.bias;
         block.uSsao.enabled     = env->ssao.enabled;
