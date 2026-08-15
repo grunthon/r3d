@@ -221,7 +221,10 @@ void R3D_End(void)
         if (ssao || ssil || ssgi || ssr || vfog || dof)
         {
             pass_prepare_pyramid();
-            pass_prepare_downsample(R3D_TARGET_NORMAL, 1);
+
+            if (ssao || ssil || ssgi) pass_prepare_downsample(R3D_TARGET_NORMAL, 1);
+            // skip ssr for diffuse, we re-downsample during ssr for the full ambient reflection
+            if (ssil || ssgi) pass_prepare_downsample(R3D_TARGET_DIFFUSE, 1);
         }
 
         if (ssao) ssaoSource = pass_prepare_ssao();
@@ -1963,10 +1966,6 @@ r3d_target_t pass_prepare_ssao(void)
 
 r3d_target_t pass_prepare_ssil(void)
 {
-    /* --- Downsample needed buffers --- */
-
-    pass_prepare_downsample(R3D_TARGET_DIFFUSE, 1);
-
     /* --- Setup OpenGL pipeline --- */
 
     r3d_driver_disable(GL_STENCIL_TEST);
@@ -2018,10 +2017,6 @@ r3d_target_t pass_prepare_ssil(void)
 
 r3d_target_t pass_prepare_ssgi(void)
 {
-    /* --- Downsample needed buffers --- */
-
-    pass_prepare_downsample(R3D_TARGET_DIFFUSE, 1);
-
     /* --- Setup OpenGL pipeline --- */
 
     r3d_driver_disable(GL_STENCIL_TEST);
