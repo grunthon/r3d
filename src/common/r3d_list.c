@@ -144,7 +144,9 @@ void reserve(r3d_list_t** list, size_t elemNeeded)
     size_t newSize         = sizeof(r3d_list_t) + newElemCapacity * (*list)->elemSize;
 
     *list = r3d_realloc(*list, newSize);
-    (*list)->elements = (char*)(*list) + sizeof(r3d_list_t);
+
+    (*list)->elements     = (char*)(*list) + sizeof(r3d_list_t);
+    (*list)->elemCapacity = newElemCapacity;
 }
 
 void push(r3d_list_t* list, const void* elem)
