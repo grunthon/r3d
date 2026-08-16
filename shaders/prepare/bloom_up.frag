@@ -10,9 +10,6 @@
  * For conditions of distribution and use, see accompanying LICENSE file.
  */
 
-// This shader performs upsampling on a texture,
-// as taken from Call Of Duty method, presented at ACM Siggraph 2014.
-
 #version 330 core
 
 // ================================
@@ -49,7 +46,7 @@ void main()
     // a - b - c
     // d - e - f
     // g - h - i
-    // === ('e' is the current texel) ===
+
     vec3 a = texture(uTexture, vec2(vTexCoord.x - x, vTexCoord.y + y)).rgb;
     vec3 b = texture(uTexture, vec2(vTexCoord.x,     vTexCoord.y + y)).rgb;
     vec3 c = texture(uTexture, vec2(vTexCoord.x + x, vTexCoord.y + y)).rgb;
@@ -66,6 +63,7 @@ void main()
     //  1   | 1 2 1 |
     // -- * | 2 4 2 |
     // 16   | 1 2 1 |
+
     FragColor = e*4.0;
     FragColor += (b+d+f+h)*2.0;
     FragColor += (a+c+g+i);

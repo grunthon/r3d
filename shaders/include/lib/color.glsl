@@ -27,3 +27,14 @@ vec4 C_SrgbToLinear(vec4 color)
 {
     return vec4(C_SrgbToLinear(color.rgb), color.a);
 }
+
+float C_Luminance(vec3 color)
+{
+    // Rec. 709 (BT.709) https://en.wikipedia.org/wiki/Rec._709
+    return dot(color, vec3(0.2126, 0.7152, 0.0722));
+}
+
+float C_Luminance(vec4 color)
+{
+    return C_Luminance(color.rgb);
+}
