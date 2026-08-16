@@ -88,6 +88,8 @@ int r3d_get_cpu_count(void);
 
 static inline void* r3d_malloc(size_t size)
 {
+    assert(size <= UINT_MAX); // duplicated to keep the stack with debuggers
+
     if (size > UINT_MAX)
     {
         R3D_TRACELOG(LOG_FATAL, "Allocation size %zu exceeds UINT_MAX", size);
@@ -106,6 +108,8 @@ static inline void* r3d_malloc(size_t size)
 
 static inline void* r3d_realloc(void* ptr, size_t size)
 {
+    assert(size <= UINT_MAX); // duplicated to keep the stack with debuggers
+
     if (size > UINT_MAX)
     {
         R3D_TRACELOG(LOG_FATAL, "Reallocation size %zu exceeds UINT_MAX", size);
