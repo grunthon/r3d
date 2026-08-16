@@ -22,23 +22,29 @@
 // ENUM TYPES
 // ========================================
 
+/**
+ * @brief Type of data captured by a probe.
+ */
 typedef enum R3D_ProbeType {
-    R3D_PROBE_ILLUMINATION,
-    R3D_PROBE_REFLECTION,
+    R3D_PROBE_ILLUMINATION,     ///< Captures indirect diffuse lighting.
+    R3D_PROBE_REFLECTION,       ///< Captures environment reflections.
 } R3D_ProbeType;
 
 // ========================================
 // STRUCT TYPES
 // ========================================
 
+/**
+ * @brief Describes a probe used for indirect lighting or reflections.
+ */
 typedef struct R3D_Probe {
-    R3D_ProbeType type;
+    R3D_ProbeType type;     ///< Type of data captured by the probe
     uint32_t handle;        ///< Internal probe handle (don't touch)
-    Vector3 position;
-    float falloff;
-    float range;
-    bool interior;
-    bool shadows;
+    Vector3 position;       ///< World-space probe position
+    float falloff;          ///< Distance falloff factor
+    float range;            ///< Maximum influence distance
+    bool interior;          ///< Whether the probe is captured as an interior
+    bool shadows;           ///< Whether shadows are included in the capture
 } R3D_Probe;
 
 // ========================================

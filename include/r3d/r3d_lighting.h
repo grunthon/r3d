@@ -39,6 +39,9 @@ typedef enum R3D_LightType {
 // STRUCTS TYPES
 // ========================================
 
+/**
+ * @brief Describes a light source.
+ */
 typedef struct R3D_Light {
     Vector3 position;       ///< Light position (spot/omni)
     Vector3 direction;      ///< Light direction (spot/dir)
@@ -53,6 +56,9 @@ typedef struct R3D_Light {
     R3D_LightType type;     ///< Light type (directional/spot/omni)
 } R3D_Light;
 
+/**
+ * @brief Represents an allocated shadow map for a light.
+ */
 typedef struct R3D_ShadowMap {
     uint32_t handle;        ///< Internal shadow map handle (don't touch)
     float softness;         ///< Softness factor for penumbra
