@@ -301,7 +301,7 @@ static void probe_job_init(r3d_env_probe_job_t* job, const R3D_Probe* probe)
     job->layer     = (int)probe->handle - 1;
 }
 
-static void probe_push(const R3D_Probe* probe, r3d_env_cubemap_array_t* cubemapArray, r3d_list_t* targetList, bool updateProbe)
+static void probe_push(const R3D_Probe* probe, r3d_env_cubemap_array_t* cubemapArray, r3d_list_t** targetList, bool updateProbe)
 {
     if (probe->range <= 0.0f) return;
 
@@ -330,7 +330,7 @@ static void probe_push(const R3D_Probe* probe, r3d_env_cubemap_array_t* cubemapA
             .shadows  = probe->shadows,
         };
 
-        R3D_LIST_PUSH(targetList, p);
+        r3d_list_push(targetList, &p);
     }
 }
 
@@ -381,10 +381,10 @@ void r3d_env_push_probe(const R3D_Probe* probe, bool updateProbe)
     switch (probe->type)
     {
     case R3D_PROBE_ILLUMINATION:
-        probe_push(probe, &R3D_MOD_ENV.irradiance, R3D_MOD_ENV.listProbeIllumination, updateProbe);
+        probe_push(probe, &R3D_MOD_ENV.irradiance, &R3D_MOD_ENV.listProbeIllumination, updateProbe);
         break;
     case R3D_PROBE_REFLECTION:
-        probe_push(probe, &R3D_MOD_ENV.prefilter, R3D_MOD_ENV.listProbeReflection, updateProbe);
+        probe_push(probe, &R3D_MOD_ENV.prefilter, &R3D_MOD_ENV.listProbeReflection, updateProbe);
         break;
     default:
         R3D_ASSERT(false);
