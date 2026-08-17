@@ -13,6 +13,7 @@
 // ================================
 
 #include <lib/sampling.glsl>
+#include <lib/color.glsl>
 
 // ================================
 // In - Varyings
@@ -43,4 +44,5 @@ void main()
     float depthSharpness = 1.0 / max(refDepth * 0.1, 0.05);
 
     FragRadiance = S_Upsample(uRadianceTex, uDepthTex, vTexCoord, refDepth, depthSharpness);
+    FragRadiance = C_UnTonemap(FragRadiance);
 }

@@ -18,6 +18,7 @@
 // Includes
 // ================================
 
+#include <lib/color.glsl>
 #include <lib/math.glsl>
 #include <ubo/fx.glsl>
 
@@ -193,4 +194,5 @@ void main()
 
     // Attenuate contribution on sky pixels
     FragRadiance = (depth >= uView.far) ? radiance * uVFog.skyAffect : radiance;
+    FragRadiance = C_Tonemap(FragRadiance);
 }
