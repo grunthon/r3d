@@ -13,6 +13,7 @@
 // ================================
 
 #include <wrap/view.glsl>
+#include <lib/color.glsl>
 #include <lib/math.glsl>
 #include <ubo/fx.glsl>
 
@@ -207,5 +208,5 @@ void main()
     vec2 distToBorder = min(result.uv, 1.0 - result.uv);
     float edgeFade = smoothstep(0.0, uSsr.edgeFade, min(distToBorder.x, distToBorder.y));
 
-    FragColor = vec4(hitDiff + hitSpec, validity * edgeFade);
+    FragColor = vec4(C_Tonemap(hitDiff + hitSpec), validity * edgeFade);
 }

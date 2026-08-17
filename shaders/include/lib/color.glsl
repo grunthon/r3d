@@ -38,3 +38,23 @@ float C_Luminance(vec4 color)
 {
     return C_Luminance(color.rgb);
 }
+
+vec3 C_Tonemap(vec3 color)
+{
+    return color / (1.0 + C_Luminance(color));
+}
+
+vec4 C_Tonemap(vec4 color)
+{
+    return vec4(C_Tonemap(color.rgb), color.a);
+}
+
+vec3 C_UnTonemap(vec3 color)
+{
+    return color / max(1.0 - C_Luminance(color), 1e-4);
+}
+
+vec4 C_UnTonemap(vec4 color)
+{
+    return vec4(C_UnTonemap(color.rgb), color.a);
+}

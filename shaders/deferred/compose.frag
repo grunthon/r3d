@@ -15,6 +15,7 @@
 // Includes
 // ================================
 
+#include <lib/color.glsl>
 #include <lib/pbr.glsl>
 
 // ================================
@@ -52,7 +53,7 @@ void main()
     vec3 specular = texelFetch(uSpecularTex, ivec2(gl_FragCoord.xy), 0).rgb;
 
     vec4 orm = texelFetch(uOrmTex, ivec2(gl_FragCoord).xy, 0);
-    vec4 ssr = textureLod(uSsrTex, vTexCoord, orm.y * uSsrNumLevels);
+    vec4 ssr = C_UnTonemap(textureLod(uSsrTex, vTexCoord, orm.y * uSsrNumLevels));
 
     vec3 F0 = PBR_F0(orm.z, orm.w, albedo);
     vec3 kS_approx = F0 * (1.0 - orm.y * 0.5);
