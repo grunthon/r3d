@@ -222,8 +222,8 @@ void R3D_End(void)
         {
             pass_prepare_pyramid();
 
-            if (ssao || ssil || ssgi) pass_prepare_downsample(R3D_TARGET_NORMAL, 1);
-            // skip ssr for diffuse, we re-downsample during ssr for the full ambient reflection
+            if (ssao || ssil || ssgi || ssr) pass_prepare_downsample(R3D_TARGET_NORMAL, 1);
+            // skip ssr check for diffuse, we re-downsample during ssr for the full ambient reflection
             if (ssil || ssgi) pass_prepare_downsample(R3D_TARGET_DIFFUSE, 1);
         }
 
