@@ -82,23 +82,30 @@ void main()
     vec4 io = vec4(0.0, 0.0, 0.0, 1.0);
     if (uSsil.enabled || uSsao.enabled || uSsgi.enabled)
     {
-        S_UpsampleWeights uw = S_ComputeUpsampleWeights(uDepthTex, vTexCoord, depth, NoV);
+        const float kMinNdotV = 0.05;
+        const float kDepthEdgeToleranceMeters = 0.05;
+        float depthSharpness = max(NoV, kMinNdotV) / kDepthEdgeToleranceMeters;
+        S_UpsampleWeights uw = S_ComputeUpsampleWeights(uDepthTex, vTexCoord, depth, depthSharpness);
+
         if (uSsil.enabled)
         {
             io = S_Upsample(uSsilTex, uw);
             io.rgb *= uSsil.giIntensity;
             io.a = pow(io.a, uSsil.aoPower);
         }
+
         if (uSsao.enabled)
         {
             float ao = S_Upsample(uSsaoTex, uw).r;
             io.a *= pow(ao, uSsao.power);
         }
+
         if (uSsgi.enabled)
         {
             vec3 gi = S_Upsample(uSsgiTex, uw).rgb;
             io.rgb += gi * uSsgi.intensity;
         }
+
         orm.x *= io.a;
         io.rgb *= kD;
     }

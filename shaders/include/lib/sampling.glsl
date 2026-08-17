@@ -20,7 +20,7 @@ struct S_UpsampleWeights {
 // Upsampling Functions
 // ================================
 
-S_UpsampleWeights S_ComputeUpsampleWeights(sampler2D depthTex, vec2 texCoord, float refDepth, float NoV)
+S_UpsampleWeights S_ComputeUpsampleWeights(sampler2D depthTex, vec2 texCoord, float refDepth, float depthSharpness)
 {
     ivec2 depthRes = textureSize(depthTex, 1);
     ivec2 maxCoord = depthRes - ivec2(1);
@@ -49,10 +49,6 @@ S_UpsampleWeights S_ComputeUpsampleWeights(sampler2D depthTex, vec2 texCoord, fl
         f.x * f.y
     );
 
-    const float kMinNdotV = 0.05;
-    const float kDepthEdgeToleranceMeters = 0.05;
-    float depthSharpness = max(NoV, kMinNdotV) / kDepthEdgeToleranceMeters; // = 1.0 / (t / max(NoV, min))
-
     w *= exp(-abs(d - vec4(refDepth)) * depthSharpness);
 
     r.w00 = w.x;
@@ -75,27 +71,28 @@ vec4 S_Upsample(sampler2D source, S_UpsampleWeights uw)
     return (c00 * uw.w00 + c10 * uw.w10 + c01 * uw.w01 + c11 * uw.w11) * uw.invWSum;
 }
 
-vec4 S_Upsample(sampler2D source, sampler2D depthTex, vec2 texCoord, float refDepth, float NoV)
+vec4 S_Upsample(sampler2D source, sampler2D depthTex, vec2 texCoord, float refDepth, float depthSharpness)
 {
-    S_UpsampleWeights uw = S_ComputeUpsampleWeights(depthTex, texCoord, refDepth, NoV);
+    S_UpsampleWeights uw = S_ComputeUpsampleWeights(depthTex, texCoord, refDepth, depthSharpness);
 
     return S_Upsample(source, uw);
 }
 
 vec4 S_UpsampleLod(sampler2D source, S_UpsampleWeights uw, float lod)
 {
-    vec2 texSize = vec2(textureSize(source, 0));
+    vec2 invTexSize = 1.0 / vec2(textureSize(source, 0));
 
-    vec4 c00 = textureLod(source, (vec2(uw.p00) + 0.5) / texSize, lod);
-    vec4 c10 = textureLod(source, (vec2(uw.p10) + 0.5) / texSize, lod);
-    vec4 c01 = textureLod(source, (vec2(uw.p01) + 0.5) / texSize, lod);
-    vec4 c11 = textureLod(source, (vec2(uw.p11) + 0.5) / texSize, lod);
+    vec4 c00 = textureLod(source, (vec2(uw.p00) + 0.5) * invTexSize, lod);
+    vec4 c10 = textureLod(source, (vec2(uw.p10) + 0.5) * invTexSize, lod);
+    vec4 c01 = textureLod(source, (vec2(uw.p01) + 0.5) * invTexSize, lod);
+    vec4 c11 = textureLod(source, (vec2(uw.p11) + 0.5) * invTexSize, lod);
 
     return (c00 * uw.w00 + c10 * uw.w10 + c01 * uw.w01 + c11 * uw.w11) * uw.invWSum;
 }
 
-vec4 S_UpsampleLod(sampler2D source, sampler2D depthTex, vec2 texCoord, float refDepth, float NoV, float lod)
+vec4 S_UpsampleLod(sampler2D source, sampler2D depthTex, vec2 texCoord, float refDepth, float depthSharpness, float lod)
 {
-    S_UpsampleWeights uw = S_ComputeUpsampleWeights(depthTex, texCoord, refDepth, NoV);
+    S_UpsampleWeights uw = S_ComputeUpsampleWeights(depthTex, texCoord, refDepth, depthSharpness);
+
     return S_UpsampleLod(source, uw, lod);
 }
