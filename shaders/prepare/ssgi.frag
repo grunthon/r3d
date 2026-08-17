@@ -16,6 +16,7 @@
 // ================================
 
 #include <wrap/view.glsl>
+#include <lib/color.glsl>
 #include <lib/math.glsl>
 #include <ubo/fx.glsl>
 
@@ -148,5 +149,5 @@ void main()
         gi += giSlice * sliceWeight;
     }
 
-    FragColor = vec4(gi, 1.0);
+    FragColor = vec4(C_Tonemap(gi), 1.0);
 }

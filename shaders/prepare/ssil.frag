@@ -40,6 +40,7 @@ const int ROTATIONS[98] = int[98](
 // ================================
 
 #include <wrap/view.glsl>
+#include <lib/color.glsl>
 #include <lib/math.glsl>
 #include <ubo/fx.glsl>
 
@@ -134,5 +135,5 @@ void main()
     float ao = max(0.0, 1.0 - aoSum * uSsil.aoIntensity / float(uSsil.sampleCount));
     vec3 gi = giSum / float(uSsil.sampleCount);
 
-    FragColor = vec4(gi, ao);
+    FragColor = vec4(C_Tonemap(gi), ao);
 }

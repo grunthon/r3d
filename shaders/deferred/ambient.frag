@@ -19,6 +19,7 @@
 // ================================
 
 #include <lib/sampling.glsl>
+#include <lib/color.glsl>
 #include <lib/math.glsl>
 #include <lib/pbr.glsl>
 #include <ubo/fx.glsl>
@@ -90,6 +91,7 @@ void main()
         if (uSsil.enabled)
         {
             io = S_Upsample(uSsilTex, uw);
+            io.rgb = C_UnTonemap(io.rgb);
             io.rgb *= uSsil.giIntensity;
             io.a = pow(io.a, uSsil.aoPower);
         }
@@ -103,7 +105,8 @@ void main()
         if (uSsgi.enabled)
         {
             vec3 gi = S_Upsample(uSsgiTex, uw).rgb;
-            io.rgb += gi * uSsgi.intensity;
+            gi = C_UnTonemap(gi) * uSsgi.intensity;
+            io.rgb += gi;
         }
 
         orm.x *= io.a;
