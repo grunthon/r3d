@@ -41,7 +41,7 @@ float C_Luminance(vec4 color)
 
 vec3 C_Tonemap(vec3 color)
 {
-    return color / (1.0 + C_Luminance(color));
+    return color / (1.0 + max(max(color.r, color.g), color.b));
 }
 
 vec4 C_Tonemap(vec4 color)
@@ -51,7 +51,7 @@ vec4 C_Tonemap(vec4 color)
 
 vec3 C_UnTonemap(vec3 color)
 {
-    return color / max(1.0 - C_Luminance(color), 1e-4);
+    return color / max(1.0 - max(max(color.r, color.g), color.b), 1e-4);
 }
 
 vec4 C_UnTonemap(vec4 color)
