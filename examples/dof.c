@@ -1,3 +1,4 @@
+#include "raylib.h"
 #include <r3d/r3d.h>
 #include <raymath.h>
 #include <stdlib.h>
@@ -44,7 +45,7 @@ int main(void)
         for (int y = 0; y < Y_INSTANCES; y++)
         {
             positions[idx] = (Vector3) {x * spacing - offsetX, 0, y * spacing - offsetZ};
-            colors[idx] = (Color){rand()%256, rand()%256, rand()%256, 255};
+            colors[idx] = ColorFromHSV((float)(rand()%3600) * .1f, 0.6f, 1.0f);
             idx++;
         }
     }
