@@ -67,16 +67,14 @@ static void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, 
 static void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, const r3d_light_shadow_job_t* shadowJob);
 static void raster_probe_forward(const r3d_render_call_t* call, const r3d_env_probe_job_t* job, int face);
 static void raster_probe_unlit(const r3d_render_call_t* call, const r3d_env_probe_job_t* job, int face);
-static void raster_geometry(const r3d_render_call_t* call, bool matchPrepass);
+static void raster_geometry(const r3d_render_call_t* call);
 static void raster_decal(const r3d_render_call_t* call);
 static void raster_forward(const r3d_render_call_t* call);
 static void raster_unlit(const r3d_render_call_t* call);
 
 static void pass_scene_shadows(void);
 static void pass_scene_probes(void);
-static void pass_scene_geometry(void);
-static void pass_scene_prepass(void);
-static void pass_scene_decals(void);
+static void pass_scene_opaque(void);
 
 static void pass_prepare_pyramid(void);
 static void pass_prepare_downsample(r3d_target_t target, int level);
@@ -199,17 +197,10 @@ void R3D_End(void)
     r3d_target_t ssgiSource  = R3D_TARGET_INVALID;
     r3d_target_t ssrSource   = R3D_TARGET_INVALID;
 
-    r3d_driver_set_depth_mask(GL_TRUE);
-    r3d_driver_set_stencil_mask(0xFF);
-
-    R3D_TARGET_CLEAR(0, true, R3D_TARGET_ALL_DEFERRED);
-
     if (r3d_render_has_deferred() || r3d_render_has_prepass())
     {
-        if (r3d_render_has_deferred()) pass_scene_geometry();
-        if (r3d_render_has_prepass())  pass_scene_prepass();
-        if (r3d_render_has_decal())    pass_scene_decals();
-        if (r3d_light_has_visible())   pass_deferred_lights();
+        pass_scene_opaque();
+        pass_deferred_lights();
 
         bool ssao = R3D.environment.ssao.enabled;
         bool ssil = R3D.environment.ssil.enabled;
@@ -237,10 +228,20 @@ void R3D_End(void)
     }
     else
     {
+        r3d_driver_enable(GL_DEPTH_TEST);
+        r3d_driver_enable(GL_STENCIL_TEST);
+
+        r3d_driver_set_depth_mask(GL_TRUE);
+        r3d_driver_set_stencil_mask(0xFF);
+
+        // Clear g-buffer and those for deferred passes to keep clean state
+        R3D_TARGET_BIND_CLEAR(0, true, R3D_TARGET_ALL_DEFERRED);
+
+        // And clear all depth levels (needed for next passes like DoF)
         int numLevels = r3d_target_get_num_levels(R3D_TARGET_DEPTH);
         for (int i = 1; i < numLevels; i++)
         {
-            R3D_TARGET_CLEAR(i, true, R3D_TARGET_DEPTH);
+            R3D_TARGET_BIND_CLEAR(i, true, R3D_TARGET_DEPTH);
         }
     }
 
@@ -981,6 +982,7 @@ void upload_fx_block(void)
 void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, const r3d_light_shadow_job_t* shadowJob)
 {
     R3D_ASSERT(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
+    R3D_ASSERT(shadowJob != NULL);                  //< Only used for shadow maps
 
     const r3d_render_group_t* group = r3d_render_get_call_group(call);
     const R3D_Material* material = &call->mesh.material;
@@ -1025,28 +1027,11 @@ void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, const r
 
     R3D_SHADER_BIND_SAMPLER_SELECT(scene.depth, shader, uAlbedoMap, R3D_TEXTURE_SELECT(material->albedo.texture.id, WHITE));
     R3D_SHADER_SET_COL4_SELECT(scene.depth, shader, uAlbedoColor, material->albedo.color);
-
-    if (material->transparencyMode == R3D_TRANSPARENCY_PREPASS)
-    {
-        R3D_SHADER_SET_FLOAT_SELECT(scene.depth, shader, uAlphaCutoff, (shadowJob != NULL) ? 0.1f : 0.99f);
-    }
-    else
-    {
-        R3D_SHADER_SET_FLOAT_SELECT(scene.depth, shader, uAlphaCutoff, material->alphaCutoff);
-    }
+    R3D_SHADER_SET_FLOAT_SELECT(scene.depth, shader, uAlphaCutoff, material->alphaCutoff);
 
     /* --- Applying material parameters that are independent of shaders --- */
 
-    if (shadowJob != NULL)
-    {
-        r3d_driver_set_shadow_cast_mode(mesh->shadowCastMode, material->cullMode);
-    }
-    else
-    {
-        r3d_driver_set_depth_state(material->depth);
-        r3d_driver_set_stencil_state(material->stencil);
-        r3d_driver_set_cull_mode(material->cullMode);
-    }
+    r3d_driver_set_shadow_cast_mode(mesh->shadowCastMode, material->cullMode);
 
     /* --- Rendering the object corresponding to the draw call --- */
 
@@ -1065,6 +1050,7 @@ void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, const r
 void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, const r3d_light_shadow_job_t* shadowJob)
 {
     R3D_ASSERT(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
+    R3D_ASSERT(shadowJob != NULL);                  //< Only used for shadow maps
 
     const r3d_render_group_t* group = r3d_render_get_call_group(call);
     const R3D_Material* material = &call->mesh.material;
@@ -1077,11 +1063,8 @@ void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, co
 
     /* --- Set shadow related data --- */
 
-    if (shadowJob != NULL)
-    {
-        R3D_SHADER_SET_FLOAT_SELECT(scene.depthCube, shader, uFar, shadowJob->far);
-        R3D_SHADER_SET_VEC3_SELECT(scene.depthCube, shader, uViewPosition, shadowJob->position);
-    }
+    R3D_SHADER_SET_FLOAT_SELECT(scene.depthCube, shader, uFar, shadowJob->far);
+    R3D_SHADER_SET_VEC3_SELECT(scene.depthCube, shader, uViewPosition, shadowJob->position);
 
     /* --- Send matrices --- */
 
@@ -1117,28 +1100,11 @@ void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, co
 
     R3D_SHADER_BIND_SAMPLER_SELECT(scene.depthCube, shader, uAlbedoMap, R3D_TEXTURE_SELECT(material->albedo.texture.id, WHITE));
     R3D_SHADER_SET_COL4_SELECT(scene.depthCube, shader, uAlbedoColor, material->albedo.color);
-
-    if (material->transparencyMode == R3D_TRANSPARENCY_PREPASS)
-    {
-        R3D_SHADER_SET_FLOAT_SELECT(scene.depthCube, shader, uAlphaCutoff, (shadowJob != NULL) ? 0.1f : 0.99f);
-    }
-    else
-    {
-        R3D_SHADER_SET_FLOAT_SELECT(scene.depthCube, shader, uAlphaCutoff, material->alphaCutoff);
-    }
+    R3D_SHADER_SET_FLOAT_SELECT(scene.depthCube, shader, uAlphaCutoff, material->alphaCutoff);
 
     /* --- Applying material parameters that are independent of shaders --- */
 
-    if (shadowJob != NULL)
-    {
-        r3d_driver_set_shadow_cast_mode(mesh->shadowCastMode, material->cullMode);
-    }
-    else
-    {
-        r3d_driver_set_depth_state(material->depth);
-        r3d_driver_set_stencil_state(material->stencil);
-        r3d_driver_set_cull_mode(material->cullMode);
-    }
+    r3d_driver_set_shadow_cast_mode(mesh->shadowCastMode, material->cullMode);
 
     /* --- Rendering the object corresponding to the draw call --- */
 
@@ -1282,10 +1248,6 @@ void raster_probe_unlit(const r3d_render_call_t* call, const r3d_env_probe_job_t
 
     R3D_SHADER_SET_INT_SELECT(scene.probeUnlit, shader, uBillboard, material->billboardMode);
 
-    /* --- Set misc material values --- */
-
-    R3D_SHADER_SET_FLOAT_SELECT(scene.probeUnlit, shader, uAlphaCutoff, material->alphaCutoff);
-
     /* --- Set texcoord offset/scale --- */
 
     R3D_SHADER_SET_VEC2_SELECT(scene.probeUnlit, shader, uTexCoordOffset, material->uvOffset);
@@ -1294,6 +1256,7 @@ void raster_probe_unlit(const r3d_render_call_t* call, const r3d_env_probe_job_t
     /* --- Set color material maps --- */
 
     R3D_SHADER_SET_COL4_SELECT(scene.probeUnlit, shader, uAlbedoColor, material->albedo.color);
+    R3D_SHADER_SET_FLOAT_SELECT(scene.probeUnlit, shader, uAlphaCutoff, material->alphaCutoff);
 
     /* --- Bind active texture maps --- */
 
@@ -1320,7 +1283,7 @@ void raster_probe_unlit(const r3d_render_call_t* call, const r3d_env_probe_job_t
     }
 }
 
-void raster_geometry(const r3d_render_call_t* call, bool matchPrepass)
+void raster_geometry(const r3d_render_call_t* call)
 {
     R3D_ASSERT(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
 
@@ -1364,10 +1327,6 @@ void raster_geometry(const r3d_render_call_t* call, bool matchPrepass)
     R3D_SHADER_SET_FLOAT_SELECT(scene.geometry, shader, uMetalness, Clamp(material->orm.metalness, 0.0f, 1.0f));
     R3D_SHADER_SET_FLOAT_SELECT(scene.geometry, shader, uSpecular, Clamp(material->orm.specular, 0.0f, 1.0f));
 
-    /* --- Set misc material values --- */
-
-    R3D_SHADER_SET_FLOAT_SELECT(scene.geometry, shader, uAlphaCutoff, material->alphaCutoff);
-
     /* --- Set texcoord offset/scale --- */
 
     R3D_SHADER_SET_VEC2_SELECT(scene.geometry, shader, uTexCoordOffset, material->uvOffset);
@@ -1377,6 +1336,7 @@ void raster_geometry(const r3d_render_call_t* call, bool matchPrepass)
 
     R3D_SHADER_SET_COL4_SELECT(scene.geometry, shader, uAlbedoColor, material->albedo.color);
     R3D_SHADER_SET_COL3_SELECT(scene.geometry, shader, uEmissionColor, material->emission.color);
+    R3D_SHADER_SET_FLOAT_SELECT(scene.geometry, shader, uAlphaCutoff, material->alphaCutoff);
 
     /* --- Bind active texture maps --- */
 
@@ -1387,18 +1347,9 @@ void raster_geometry(const r3d_render_call_t* call, bool matchPrepass)
 
     /* --- Applying material parameters that are independent of shaders --- */
 
-    if (matchPrepass)
-    {
-        r3d_driver_set_depth_offset(material->depth.offsetUnits, material->depth.offsetFactor);
-        r3d_driver_set_depth_range(material->depth.rangeNear, material->depth.rangeFar);
-    }
-    else
-    {
-        r3d_driver_set_depth_state(material->depth);
-        r3d_driver_set_stencil_state(material->stencil);
-    }
-
     r3d_driver_set_cull_mode(material->cullMode);
+    r3d_driver_set_depth_state(material->depth);
+    r3d_driver_set_stencil_state(material->stencil);
 
     /* --- Rendering the object corresponding to the draw call --- */
 
@@ -1447,10 +1398,6 @@ void raster_decal(const r3d_render_call_t* call)
     R3D_SHADER_SET_FLOAT_SELECT(scene.decal, shader, uMetalness, Clamp(decal->orm.metalness, 0.0f, 1.0f));
     R3D_SHADER_SET_FLOAT_SELECT(scene.decal, shader, uSpecular, Clamp(decal->orm.specular, 0.0f, 1.0f));
 
-    /* --- Set misc material values --- */
-
-    R3D_SHADER_SET_FLOAT_SELECT(scene.decal, shader, uAlphaCutoff, decal->alphaCutoff);
-
     /* --- Set texcoord offset/scale --- */
 
     R3D_SHADER_SET_VEC2_SELECT(scene.decal, shader, uTexCoordOffset, decal->uvOffset);
@@ -1460,6 +1407,7 @@ void raster_decal(const r3d_render_call_t* call)
 
     R3D_SHADER_SET_COL4_SELECT(scene.decal, shader, uAlbedoColor, decal->albedo.color);
     R3D_SHADER_SET_COL3_SELECT(scene.decal, shader, uEmissionColor, decal->emission.color);
+    R3D_SHADER_SET_FLOAT_SELECT(scene.decal, shader, uAlphaCutoff, decal->alphaCutoff);
 
     /* --- Set decal specific values --- */
 
@@ -1610,10 +1558,6 @@ void raster_unlit(const r3d_render_call_t* call)
 
     R3D_SHADER_SET_INT_SELECT(scene.unlit, shader, uBillboard, material->billboardMode);
 
-    /* --- Set misc material values --- */
-
-    R3D_SHADER_SET_FLOAT_SELECT(scene.unlit, shader, uAlphaCutoff, material->alphaCutoff);
-
     /* --- Set texcoord offset/scale --- */
 
     R3D_SHADER_SET_VEC2_SELECT(scene.unlit, shader, uTexCoordOffset, material->uvOffset);
@@ -1622,6 +1566,7 @@ void raster_unlit(const r3d_render_call_t* call)
     /* --- Set color material maps --- */
 
     R3D_SHADER_SET_COL4_SELECT(scene.unlit, shader, uAlbedoColor, material->albedo.color);
+    R3D_SHADER_SET_FLOAT_SELECT(scene.unlit, shader, uAlphaCutoff, material->alphaCutoff);
 
     /* --- Bind active texture maps --- */
 
@@ -1791,98 +1736,65 @@ void pass_scene_probes(void)
     }
 }
 
-void pass_scene_geometry(void)
+void pass_scene_opaque(void)
 {
-    R3D_TARGET_BIND(0, true, R3D_TARGET_GBUFFER);
-
     r3d_driver_enable(GL_STENCIL_TEST);
     r3d_driver_enable(GL_DEPTH_TEST);
-    r3d_driver_disable(GL_BLEND);
-
-    r3d_driver_set_depth_mask(GL_TRUE);
-
-    const R3D_Frustum* frustum = &R3D.viewState.frustum;
-    R3D_RENDER_FOR_EACH(call, IS_MESH_VISIBLE_CAMERA(call->mesh.instance), frustum, R3D_RENDER_LIST_OPAQUE_INST, R3D_RENDER_LIST_OPAQUE)
-    {
-        if (!call->mesh.material.unlit)
-        {
-            raster_geometry(call, false);
-        }
-    }
-
-    r3d_driver_set_depth_offset(0.0f, 0.0f);
-    r3d_driver_set_depth_range(0.0f, 1.0f);
-}
-
-void pass_scene_prepass(void)
-{
-    /* --- First render only depth --- */
-
-    r3d_target_bind(NULL, 0, 0, true);
-
-    r3d_driver_enable(GL_STENCIL_TEST);
-    r3d_driver_enable(GL_DEPTH_TEST);
-
-    r3d_driver_set_depth_mask(GL_TRUE);
-
-    const R3D_Frustum* frustum = &R3D.viewState.frustum;
-    R3D_RENDER_FOR_EACH(call, IS_MESH_VISIBLE_CAMERA(call->mesh.instance), frustum, R3D_RENDER_LIST_TRANSPARENT_INST, R3D_RENDER_LIST_TRANSPARENT)
-    {
-        if (r3d_render_is_prepass(call))
-        {
-            raster_depth(call, &R3D.viewState.viewProj, NULL);
-        }
-    }
-
-    /* --- Render opaque only with GL_EQUAL --- */
-
-    // NOTE: The transparent part will be rendered in forward
-    R3D_TARGET_BIND(0, true, R3D_TARGET_GBUFFER);
-
-    r3d_driver_disable(GL_STENCIL_TEST);
-    r3d_driver_disable(GL_BLEND);
-
-    r3d_driver_set_depth_func(GL_EQUAL);
-    r3d_driver_set_depth_mask(GL_FALSE);
-
-    R3D_RENDER_FOR_EACH(call, IS_MESH_VISIBLE_CAMERA(call->mesh.instance), frustum, R3D_RENDER_LIST_TRANSPARENT_INST, R3D_RENDER_LIST_TRANSPARENT)
-    {
-        if (r3d_render_is_prepass(call))
-        {
-            raster_geometry(call, true);
-        }
-    }
-
-    /* --- Reset undesired states --- */
-
-    r3d_driver_set_depth_offset(0.0f, 0.0f);
-    r3d_driver_set_depth_range(0.0f, 1.0f);
-}
-
-void pass_scene_decals(void)
-{
-    R3D_TARGET_BIND(0, false, R3D_TARGET_DECAL);
-
-    r3d_driver_disable(GL_STENCIL_TEST);
-    r3d_driver_disable(GL_DEPTH_TEST);
     r3d_driver_enable(GL_CULL_FACE);
-    r3d_driver_enable(GL_BLEND);
+    r3d_driver_disable(GL_BLEND);
 
-    r3d_driver_set_cull_face(GL_FRONT); // Only render back faces to avoid clipping issues
+    r3d_driver_set_depth_mask(GL_TRUE);
+    r3d_driver_set_stencil_mask(0xFF);
 
-    // FIXME: The decal shader uses the alpha channel of the ORM attachment as a blend factor,
-    //        but this channel now stores the material specular (F0) written during the geometry
-    //        pass. We mask alpha writes to preserve the underlying specular, at the cost of
-    //        making orm.specular ineffective for decals.
-    glColorMaski(2, GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
+    R3D_TARGET_BIND_CLEAR(0, true, R3D_TARGET_GBUFFER);
 
-    const R3D_Frustum* frustum = &R3D.viewState.frustum;
-    R3D_RENDER_FOR_EACH(call, true, frustum, R3D_RENDER_LIST_DECAL_INST, R3D_RENDER_LIST_DECAL)
+    if (r3d_render_has_deferred())
     {
-        raster_decal(call);
+        R3D_RENDER_FOR_EACH(call, IS_MESH_VISIBLE_CAMERA(call->mesh.instance), NULL, R3D_RENDER_LIST_OPAQUE_INST, R3D_RENDER_LIST_OPAQUE)
+        {
+            if (!call->mesh.material.unlit)
+            {
+                raster_geometry(call);
+            }
+        }
     }
 
-    glColorMaski(2, GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    if (r3d_render_has_prepass())
+    {
+        R3D_RENDER_FOR_EACH(call, IS_MESH_VISIBLE_CAMERA(call->mesh.instance), NULL, R3D_RENDER_LIST_TRANSPARENT_INST, R3D_RENDER_LIST_TRANSPARENT)
+        {
+            if (r3d_render_is_prepass(call))
+            {
+                raster_geometry(call);
+            }
+        }
+    }
+
+    r3d_driver_set_depth_offset(0.0f, 0.0f);
+    r3d_driver_set_depth_range(0.0f, 1.0f);
+
+    if (r3d_render_has_decal())
+    {
+        r3d_driver_disable(GL_STENCIL_TEST);
+        r3d_driver_disable(GL_DEPTH_TEST);
+        r3d_driver_enable(GL_BLEND);
+
+        r3d_driver_set_cull_face(GL_FRONT); // Only render back faces to avoid clipping issues
+
+        // FIXME: The decal shader uses the alpha channel of the ORM attachment as a blend factor,
+        //        but this channel now stores the material specular (F0) written during the geometry
+        //        pass. We mask alpha writes to preserve the underlying specular, at the cost of
+        //        making orm.specular ineffective for decals.
+        glColorMaski(2, GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
+
+        const R3D_Frustum* frustum = &R3D.viewState.frustum;
+        R3D_RENDER_FOR_EACH(call, true, frustum, R3D_RENDER_LIST_DECAL_INST, R3D_RENDER_LIST_DECAL)
+        {
+            raster_decal(call);
+        }
+
+        glColorMaski(2, GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    }
 }
 
 void pass_prepare_pyramid(void)
@@ -1901,7 +1813,7 @@ void pass_prepare_pyramid(void)
 
     for (int iDst = 1; iDst <= maxLevel; iDst++)
     {
-        R3D_TARGET_BIND(iDst, true, R3D_TARGET_DEPTH, R3D_TARGET_SELECTOR);
+        R3D_TARGET_BIND_CLEAR(iDst, true, R3D_TARGET_DEPTH, R3D_TARGET_SELECTOR);
         R3D_SHADER_BIND_SAMPLER(prepare.pyramid, uDepthTex, r3d_target_get_level(R3D_TARGET_DEPTH, iDst - 1));
         R3D_RENDER_SCREEN();
     }
@@ -1910,12 +1822,16 @@ void pass_prepare_pyramid(void)
 void pass_prepare_downsample(r3d_target_t target, int level)
 {
     r3d_driver_disable(GL_STENCIL_TEST);
-    r3d_driver_disable(GL_DEPTH_TEST);
     r3d_driver_disable(GL_CULL_FACE);
     r3d_driver_disable(GL_BLEND);
 
+    r3d_driver_enable(GL_DEPTH_TEST);
+    r3d_driver_set_depth_mask(GL_FALSE);
+    r3d_driver_set_depth_func(GL_GREATER);
+
+    R3D_TARGET_BIND_CLEAR(level, true, target);
+
     R3D_SHADER_USE(prepare.downsample);
-    R3D_TARGET_BIND(level, false, target);
     R3D_SHADER_BIND_SAMPLER(prepare.downsample, uSelectorTex, r3d_target_get_level(R3D_TARGET_SELECTOR, level));
     R3D_SHADER_BIND_SAMPLER(prepare.downsample, uSourceTex, r3d_target_get_level(target, level - 1));
     R3D_RENDER_SCREEN();
@@ -1935,7 +1851,7 @@ r3d_target_t pass_prepare_ssao(void)
 
     /* --- Calculate SSAO --- */
 
-    R3D_TARGET_BIND(1, true, R3D_TARGET_SSAO_0);
+    R3D_TARGET_BIND_CLEAR(1, true, R3D_TARGET_SSAO_0);
     R3D_SHADER_USE(prepare.ssao);
 
     R3D_SHADER_BIND_SAMPLER(prepare.ssao, uNormalTex, r3d_target_get_level(R3D_TARGET_NORMAL, 1));
@@ -1945,7 +1861,7 @@ r3d_target_t pass_prepare_ssao(void)
 
     /* --- Denoise SSAO --- */
 
-    R3D_TARGET_BIND(1, true, R3D_TARGET_SSAO_1);
+    R3D_TARGET_BIND_CLEAR(1, true, R3D_TARGET_SSAO_1);
     R3D_SHADER_USE(prepare.denoiserSparse);
 
     R3D_SHADER_BIND_SAMPLER(prepare.denoiserSparse, uNormalTex, r3d_target_get_level(R3D_TARGET_NORMAL, 1));
@@ -1978,7 +1894,7 @@ r3d_target_t pass_prepare_ssil(void)
 
     /* --- Calculate SSIL --- */
 
-    R3D_TARGET_BIND(1, true, R3D_TARGET_SSIL_0);
+    R3D_TARGET_BIND_CLEAR(1, true, R3D_TARGET_SSIL_0);
     R3D_SHADER_USE(prepare.ssil);
 
     R3D_SHADER_BIND_SAMPLER(prepare.ssil, uDiffuseTex, r3d_target_get_level(R3D_TARGET_DIFFUSE, 1));
@@ -2003,7 +1919,7 @@ r3d_target_t pass_prepare_ssil(void)
     float radius = 16.0f;
     for (int i = 0; i < 3; i++, radius *= 0.5f)
     {
-        R3D_TARGET_BIND(1, true, dst);
+        R3D_TARGET_BIND_CLEAR(1, true, dst);
         R3D_SHADER_SET_FLOAT(prepare.denoiserSparse, uBlurRadius, radius);
         R3D_SHADER_SET_FLOAT(prepare.denoiserSparse, uInvBlurRadius2, 1.0f / (radius * radius));
         R3D_SHADER_BIND_SAMPLER(prepare.denoiserSparse, uSourceTex, r3d_target_get(src));
@@ -2029,7 +1945,7 @@ r3d_target_t pass_prepare_ssgi(void)
 
     /* --- Calculate SSGI (RAW) --- */
 
-    R3D_TARGET_BIND(1, true, R3D_TARGET_SSGI_0);
+    R3D_TARGET_BIND_CLEAR(1, true, R3D_TARGET_SSGI_0);
     R3D_SHADER_USE(prepare.ssgi);
 
     R3D_SHADER_BIND_SAMPLER(prepare.ssgi, uDiffuseTex, r3d_target_get_level(R3D_TARGET_DIFFUSE, 1));
@@ -2084,7 +2000,7 @@ r3d_target_t pass_prepare_ssgi(void)
         {
             float invStepWidth2 = 1.0f / (stepWidth[i]*stepWidth[i]);
 
-            R3D_TARGET_BIND(1, true, dst);
+            R3D_TARGET_BIND_CLEAR(1, true, dst);
             R3D_SHADER_BIND_SAMPLER(prepare.denoiserAtrous, uSourceTex, r3d_target_get(src));
             R3D_SHADER_SET_FLOAT(prepare.denoiserAtrous, uInvStepWidth2, invStepWidth2);
             R3D_SHADER_SET_INT(prepare.denoiserAtrous, uStepWidth, stepWidth[i]);
@@ -2119,7 +2035,7 @@ r3d_target_t pass_prepare_ssr(void)
 
     /* --- Calculate SSR --- */
 
-    R3D_TARGET_BIND(minLevel, true, R3D_TARGET_SSR);
+    R3D_TARGET_BIND_CLEAR(minLevel, true, R3D_TARGET_SSR);
     R3D_SHADER_USE(prepare.ssr);
 
     R3D_SHADER_BIND_SAMPLER(prepare.ssr, uDiffuseTex, r3d_target_get_level(R3D_TARGET_DIFFUSE, 1));
@@ -2164,21 +2080,24 @@ r3d_target_t pass_prepare_ssr(void)
 
 void pass_deferred_lights(void)
 {
-    /* --- Setup OpenGL pipeline --- */
+    /* --- Bind and clear lighting buffers --- */
 
-    R3D_TARGET_BIND(0, true, R3D_TARGET_LIGHTING);
+    r3d_driver_enable(GL_DEPTH_TEST);
+    r3d_driver_set_depth_mask(GL_FALSE);
+    R3D_TARGET_BIND_CLEAR(0, true, R3D_TARGET_LIGHTING);
+
+    if (!r3d_light_has_visible()) return;
+
+    /* --- Setup OpenGL pipeline --- */
 
     r3d_driver_disable(GL_STENCIL_TEST);
     r3d_driver_disable(GL_CULL_FACE);
 
     r3d_driver_enable(GL_SCISSOR_TEST);
-    r3d_driver_enable(GL_DEPTH_TEST);
     r3d_driver_enable(GL_BLEND);
 
-    // Set additive blending to accumulate light contributions
     r3d_driver_set_blend_func(GL_FUNC_ADD, GL_ONE, GL_ONE);
     r3d_driver_set_depth_func(GL_GREATER);
-    r3d_driver_set_depth_mask(GL_FALSE);
 
     /* --- Enable shader and setup constant stuff --- */
 
@@ -2247,7 +2166,7 @@ void pass_deferred_ambient(r3d_target_t ssaoSource, r3d_target_t ssilSource, r3d
 
     /* --- Calculation and composition of ambient/indirect lighting --- */
 
-    R3D_TARGET_BIND(0, true, R3D_TARGET_LIGHTING);
+    R3D_TARGET_BIND_LOAD(0, true, R3D_TARGET_LIGHTING);
     R3D_SHADER_USE(deferred.ambient);
 
     R3D_SHADER_BIND_SAMPLER(deferred.ambient, uAlbedoTex, r3d_target_get_level(R3D_TARGET_ALBEDO, 0));
@@ -2271,7 +2190,7 @@ void pass_deferred_compose(r3d_target_t sceneTarget, r3d_target_t ssrSource)
     r3d_driver_set_depth_func(GL_GREATER);
     r3d_driver_set_depth_mask(GL_FALSE);
 
-    R3D_TARGET_BIND(0, true, sceneTarget);
+    R3D_TARGET_BIND_CLEAR(0, true, sceneTarget);
     R3D_SHADER_USE(deferred.compose);
 
     R3D_SHADER_BIND_SAMPLER(deferred.compose, uAlbedoTex, r3d_target_get_level(R3D_TARGET_ALBEDO, 0));
@@ -2294,7 +2213,7 @@ void pass_deferred_fog(r3d_target_t sceneTarget)
     r3d_driver_enable(GL_BLEND);
     r3d_driver_set_blend_func(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    R3D_TARGET_BIND(0, false, sceneTarget);
+    R3D_TARGET_BIND_LOAD(0, false, sceneTarget);
     R3D_SHADER_USE(deferred.fog);
 
     R3D_SHADER_BIND_SAMPLER(deferred.fog, uDepthTex, r3d_target_get_level(R3D_TARGET_DEPTH, 0));
@@ -2312,7 +2231,7 @@ void pass_deferred_volumetric_fog(r3d_target_t sceneTarget)
     r3d_driver_enable(GL_BLEND);
     r3d_driver_set_blend_func_separate(GL_FUNC_ADD, GL_ONE, GL_SRC_ALPHA, GL_ZERO, GL_ONE);
 
-    R3D_TARGET_BIND(0, false, sceneTarget);
+    R3D_TARGET_BIND_LOAD(0, false, sceneTarget);
 
     R3D_SHADER_USE(deferred.vfogTransmittance);
     R3D_SHADER_BIND_SAMPLER(deferred.vfogTransmittance, uDepthTex, r3d_target_get_level(R3D_TARGET_DEPTH, 0));
@@ -2321,7 +2240,7 @@ void pass_deferred_volumetric_fog(r3d_target_t sceneTarget)
 
     /* --- Accumulate radiance in half resolution --- */
 
-    R3D_TARGET_CLEAR(1, false, R3D_TARGET_VFOG_RAD);
+    R3D_TARGET_BIND_CLEAR(1, false, R3D_TARGET_VFOG_RAD);
 
     r3d_driver_enable(GL_SCISSOR_TEST);
     r3d_driver_enable(GL_BLEND);
@@ -2368,7 +2287,7 @@ void pass_deferred_volumetric_fog(r3d_target_t sceneTarget)
 
     /* --- Compose radiance to the scene --- */
 
-    R3D_TARGET_BIND(0, false, sceneTarget);
+    R3D_TARGET_BIND_LOAD(0, false, sceneTarget);
     R3D_SHADER_USE(deferred.vfogCompose);
 
     r3d_driver_enable(GL_BLEND);
@@ -2382,7 +2301,7 @@ void pass_deferred_volumetric_fog(r3d_target_t sceneTarget)
 
 void pass_scene_forward(r3d_target_t sceneTarget)
 {
-    R3D_TARGET_BIND(0, true, sceneTarget);
+    R3D_TARGET_BIND_LOAD(0, true, sceneTarget);
 
     r3d_driver_enable(GL_STENCIL_TEST);
     r3d_driver_enable(GL_DEPTH_TEST);
@@ -2426,7 +2345,7 @@ void pass_scene_forward(r3d_target_t sceneTarget)
 
 void pass_scene_background(r3d_target_t sceneTarget)
 {
-    R3D_TARGET_BIND(0, true, sceneTarget);
+    R3D_TARGET_BIND_LOAD(0, true, sceneTarget);
 
     r3d_driver_disable(GL_STENCIL_TEST);
     r3d_driver_disable(GL_CULL_FACE);
@@ -2474,7 +2393,7 @@ r3d_target_t pass_post_dof(r3d_target_t sceneTarget)
 {
     /* --- Calculate CoC --- */
 
-    R3D_TARGET_BIND(0, false, R3D_TARGET_DOF_COC);
+    R3D_TARGET_BIND_CLEAR(0, false, R3D_TARGET_DOF_COC);
     R3D_SHADER_USE(prepare.dofCoc);
 
     R3D_SHADER_BIND_SAMPLER(prepare.dofCoc, uDepthTex, r3d_target_get_level(R3D_TARGET_DEPTH, 0));
@@ -2482,7 +2401,7 @@ r3d_target_t pass_post_dof(r3d_target_t sceneTarget)
 
     /* --- Downsample CoC to half resolution --- */
 
-    R3D_TARGET_BIND(1, false, R3D_TARGET_DOF_0);
+    R3D_TARGET_BIND_CLEAR(1, false, R3D_TARGET_DOF_0);
 
     R3D_SHADER_USE(prepare.dofDown);
     R3D_SHADER_BIND_SAMPLER(prepare.dofDown, uSceneTex, r3d_target_get(r3d_target_swap_scene(sceneTarget)));
@@ -2492,7 +2411,7 @@ r3d_target_t pass_post_dof(r3d_target_t sceneTarget)
 
     /* --- Calculate DoF in half resolution --- */
 
-    R3D_TARGET_BIND(1, false, R3D_TARGET_DOF_1);
+    R3D_TARGET_BIND_CLEAR(1, false, R3D_TARGET_DOF_1);
 
     R3D_SHADER_USE(prepare.dofBlur);
     R3D_SHADER_BIND_SAMPLER(prepare.dofBlur, uSceneTex, r3d_target_get(R3D_TARGET_DOF_0));
@@ -2527,7 +2446,7 @@ r3d_target_t pass_post_bloom(r3d_target_t sceneTarget)
 
     /* --- Karis average for the first downsampling to half res --- */
 
-    R3D_TARGET_BIND(minLevel, false, R3D_TARGET_BLOOM);
+    R3D_TARGET_BIND_CLEAR(minLevel, false, R3D_TARGET_BLOOM);
 
     R3D_SHADER_USE(prepare.bloomDown);
     R3D_SHADER_BIND_SAMPLER(prepare.bloomDown, uTexture, sceneSourceID);
@@ -2594,7 +2513,7 @@ r3d_target_t pass_post_auto_exposure(r3d_target_t sceneTarget)
 
     /* --- Build log-luminance pyramid --- */
 
-    R3D_TARGET_BIND(1, false, R3D_TARGET_LUMINANCE);
+    R3D_TARGET_BIND_CLEAR(1, false, R3D_TARGET_LUMINANCE);
 
     R3D_SHADER_USE(prepare.luminance);
     R3D_SHADER_BIND_SAMPLER(prepare.luminance, uSourceTex, sceneSourceID);
@@ -2622,10 +2541,10 @@ r3d_target_t pass_post_auto_exposure(r3d_target_t sceneTarget)
 
     if (!r3d_target_exists(EXPOSURE_SRC))
     {
-        R3D_TARGET_CLEAR(r3d_target_get_max_level(EXPOSURE_SRC), false, EXPOSURE_SRC);
+        R3D_TARGET_BIND_CLEAR(r3d_target_get_max_level(EXPOSURE_SRC), false, EXPOSURE_SRC);
     }
 
-    R3D_TARGET_BIND(r3d_target_get_max_level(EXPOSURE_DST), false, EXPOSURE_DST);
+    R3D_TARGET_BIND_CLEAR(r3d_target_get_max_level(EXPOSURE_DST), false, EXPOSURE_DST);
     R3D_SHADER_USE(prepare.exposureAdapt);
 
     R3D_SHADER_BIND_SAMPLER(prepare.exposureAdapt, uMeasuredLogLumTex, r3d_target_get_level(R3D_TARGET_LUMINANCE, r3d_target_get_max_level(R3D_TARGET_LUMINANCE)));
@@ -2709,16 +2628,18 @@ r3d_target_t pass_post_smaa(r3d_target_t sceneTarget)
     // shader), then pass 2 only executes where stencil == 1.
 
     r3d_driver_enable(GL_STENCIL_TEST);
+    r3d_driver_disable(GL_DEPTH_TEST);
+
     r3d_driver_set_stencil_mask(0xFF);
 
-    R3D_TARGET_CLEAR(0, true, R3D_TARGET_SMAA_EDGES, R3D_TARGET_SMAA_BLEND);
+    R3D_TARGET_BIND_CLEAR(0, true, R3D_TARGET_SMAA_EDGES, R3D_TARGET_SMAA_BLEND);
 
     /* --- Edge detection ---  */
 
     r3d_driver_set_stencil_func(GL_ALWAYS, 1, 0xFF);
     r3d_driver_set_stencil_op(GL_KEEP, GL_KEEP, GL_REPLACE);
 
-    R3D_TARGET_BIND(0, true, R3D_TARGET_SMAA_EDGES);
+    R3D_TARGET_BIND_LOAD(0, true, R3D_TARGET_SMAA_EDGES);
     R3D_SHADER_USE(prepare.smaaEdgeDetection[R3D.aaPreset]);
 
     R3D_SHADER_BIND_SAMPLER(prepare.smaaEdgeDetection[R3D.aaPreset], uSceneTex, r3d_target_get(sceneSource));
@@ -2730,7 +2651,7 @@ r3d_target_t pass_post_smaa(r3d_target_t sceneTarget)
     r3d_driver_set_stencil_func(GL_EQUAL, 1, 0xFF);
     r3d_driver_set_stencil_op(GL_KEEP, GL_KEEP, GL_KEEP);
 
-    R3D_TARGET_BIND(0, true, R3D_TARGET_SMAA_BLEND);
+    R3D_TARGET_BIND_LOAD(0, true, R3D_TARGET_SMAA_BLEND);
     R3D_SHADER_USE(prepare.smaaBlendingWeights[R3D.aaPreset]);
 
     R3D_SHADER_BIND_SAMPLER(prepare.smaaBlendingWeights[R3D.aaPreset], uEdgesTex, r3d_target_get(R3D_TARGET_SMAA_EDGES));
