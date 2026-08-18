@@ -80,13 +80,13 @@ extern "C" {
  *
  * All allocated memory is zero-initialized.
  *
- * @param vertexCount Number of vertices to allocate (capacity). Must be > 0.
- * @param indexCount Number of indices to allocate (capacity). May be 0.
- *                   If 0, no index buffer is allocated.
+ * @param vertexCapacity Number of vertices to allocate. Must be > 0.
+ * @param indexCapacity Number of indices to allocate. May be 0.
+ *                      If 0, no index buffer is allocated.
  *
  * @return A new R3D_MeshData with allocated buffers and zero element counts.
  */
-R3DAPI R3D_MeshData R3D_LoadMeshData(int vertexCount, int indexCount);
+R3DAPI R3D_MeshData R3D_LoadMeshData(int vertexCapacity, int indexCapacity);
 
 /**
  * @brief Releases memory used by a mesh data container.

@@ -31,23 +31,23 @@ static inline uint32_t get_index(const R3D_MeshData* meshData, int i)
 // PUBLIC API
 // ========================================
 
-R3D_MeshData R3D_LoadMeshData(int vertexCount, int indexCount)
+R3D_MeshData R3D_LoadMeshData(int vertexCapacity, int indexCapacity)
 {
     R3D_MeshData meshData = {0};
 
-    if (vertexCount <= 0)
+    if (vertexCapacity <= 0)
     {
         R3D_TRACELOG(LOG_ERROR, "Invalid vertex count for mesh creation");
         return meshData;
     }
 
-    meshData.vertices = r3d_malloc(vertexCount * sizeof(*meshData.vertices));
-    meshData.vertexCapacity = vertexCount;
+    meshData.vertices = r3d_malloc(vertexCapacity * sizeof(*meshData.vertices));
+    meshData.vertexCapacity = vertexCapacity;
 
-    if (indexCount > 0)
+    if (indexCapacity > 0)
     {
-        meshData.indices = r3d_malloc(indexCount * sizeof(*meshData.indices));
-        meshData.indexCapacity = indexCount;
+        meshData.indices = r3d_malloc(indexCapacity * sizeof(*meshData.indices));
+        meshData.indexCapacity = indexCapacity;
     }
 
     return meshData;
