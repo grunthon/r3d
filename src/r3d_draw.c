@@ -1590,7 +1590,7 @@ void raster_unlit(const r3d_render_call_t* call, bool opaque)
 
     r3d_driver_set_depth_state(material->depth);
     r3d_driver_set_stencil_state(material->stencil);
-    r3d_driver_set_blend_mode(material->blendMode);
+    if (!opaque) r3d_driver_set_blend_mode(material->blendMode);
     r3d_driver_set_cull_mode(material->cullMode);
 
     /* --- Rendering the object corresponding to the draw call --- */
@@ -2326,10 +2326,10 @@ void pass_scene_forward(r3d_target_t sceneTarget)
 
     r3d_driver_enable(GL_STENCIL_TEST);
     r3d_driver_enable(GL_DEPTH_TEST);
-    r3d_driver_enable(GL_BLEND);
 
     /* --- Render all unlit opaque --- */
 
+    r3d_driver_disable(GL_BLEND);
     r3d_driver_set_depth_mask(GL_TRUE);
 
     #define COND (IS_MESH_VISIBLE_CAMERA(call->mesh.instance) && (call->mesh.material.unlit))
@@ -2341,6 +2341,7 @@ void pass_scene_forward(r3d_target_t sceneTarget)
 
     /* --- Render all lit/unlit blended --- */
 
+    r3d_driver_enable(GL_BLEND);
     r3d_driver_set_depth_mask(GL_FALSE);
 
     R3D_RENDER_FOR_EACH(call, IS_MESH_VISIBLE_CAMERA(call->mesh.instance), &R3D.viewState.frustum, R3D_RENDER_LIST_BLEND_INST, R3D_RENDER_LIST_BLEND)
