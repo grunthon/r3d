@@ -57,6 +57,8 @@ uniform samplerCubeArray uIrradianceTex;
 uniform samplerCubeArray uPrefilterTex;
 uniform sampler2D uBrdfLutTex;
 
+uniform float uAlphaCutoff;
+uniform float uCutoffSign;
 uniform float uNormalScale;
 uniform float uOcclusion;
 uniform float uRoughness;
@@ -91,7 +93,7 @@ void main()
 {
     /* Sample material maps */
 
-    SceneFragment(vTexCoord, vTBN, 0.0);
+    SceneFragment(vTexCoord, vTBN, uAlphaCutoff, uCutoffSign);
 
     vec3 ORM = vec3(OCCLUSION, ROUGHNESS, METALNESS);
     mat3 TBN = mat3(TANGENT, BITANGENT, NORMAL);

@@ -104,8 +104,15 @@ void FetchMaterial(vec2 texCoord)
 
 #define fragment()
 
-void SceneFragment(vec2 texCoord, mat3 tbn, float alphaCutoff)
+void SceneFragment(vec2 texCoord, mat3 tbn, float alphaCutoff, float cutoffSign)
 {
+    // CutoffSign:
+    //  -> +1.0 : Opaque cutoff
+    //  -> -1.0 : Inverted test for hybrid blended
+    //  ->  0.0 : Disables alpha test
+
+#define ALPHA_TEST(alpha) if (cutoffSign * (alpha - alphaCutoff) < 0.0) discard;
+
     /* --- Fill input variables --- */
 
     TEXCOORD  = texCoord;
@@ -117,7 +124,7 @@ void SceneFragment(vec2 texCoord, mat3 tbn, float alphaCutoff)
 
 #if !defined(R3D_NO_AUTO_FETCH)
     vec4 color = vColor * texture(uAlbedoMap, texCoord);
-    if (color.a < alphaCutoff) discard;
+    ALPHA_TEST(color.a);
     ALBEDO = color.rgb;
     ALPHA = color.a;
 
@@ -143,5 +150,7 @@ void SceneFragment(vec2 texCoord, mat3 tbn, float alphaCutoff)
     fragment();
 
     // Alpha cutoff again after user code
-    if (ALPHA < alphaCutoff) discard;
+    ALPHA_TEST(ALPHA);
+
+#undef ALPHA_TEST
 }

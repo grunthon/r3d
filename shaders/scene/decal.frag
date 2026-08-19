@@ -112,7 +112,7 @@ void main()
     if (difference < 0.0) discard;
 
     /* Sample material maps with alpha cutoff */
-    SceneFragment(decalTexCoord, TBN, uAlphaCutoff);
+    SceneFragment(decalTexCoord, TBN, uAlphaCutoff, 1.0);
 
     /* Compute fade factor */
     float fadeAlpha = clamp(difference / uFadeWidth, 0.0, 1.0) * ALPHA;

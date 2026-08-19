@@ -178,8 +178,8 @@ static void load_param_blend_mode(R3D_Material* material, const struct aiMateria
         }
         if (strcmp(alphaMode.data, "BLEND") == 0)
         {
-            material->transparencyMode = R3D_TRANSPARENCY_PREPASS;
-            material->blendMode = R3D_BLEND_MIX;
+            material->transparencyMode = R3D_TRANSPARENCY_HYBRID;
+            material->blendMode = R3D_BLEND_ALPHA;
             return;
         }
     }
@@ -192,12 +192,12 @@ static void load_param_blend_mode(R3D_Material* material, const struct aiMateria
         {
         case aiBlendMode_Default:
             // sColor*sAlpha + dColor*(1-sAlpha)
-            material->transparencyMode = R3D_TRANSPARENCY_PREPASS;
-            material->blendMode = R3D_BLEND_MIX;
+            material->transparencyMode = R3D_TRANSPARENCY_HYBRID;
+            material->blendMode = R3D_BLEND_ALPHA;
             return;
         case aiBlendMode_Additive:
             // sColor*1 + dColor*1
-            material->transparencyMode = R3D_TRANSPARENCY_DISABLED;
+            material->transparencyMode = R3D_TRANSPARENCY_BLEND;
             material->blendMode = R3D_BLEND_ADDITIVE;
             return;
         default:
@@ -209,8 +209,8 @@ static void load_param_blend_mode(R3D_Material* material, const struct aiMateria
     // alpha == 0 is likely a degenerate material, ignore it
     if (material->albedo.color.a > 0 && material->albedo.color.a < 255)
     {
-        material->transparencyMode = R3D_TRANSPARENCY_ALPHA;
-        material->blendMode = R3D_BLEND_MIX;
+        material->transparencyMode = R3D_TRANSPARENCY_BLEND;
+        material->blendMode = R3D_BLEND_ALPHA;
     }
 }
 

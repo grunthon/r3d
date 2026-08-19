@@ -37,6 +37,7 @@ layout(location = 0) out vec4 FragColor;
 
 uniform sampler2D uAlbedoMap;
 uniform float uAlphaCutoff;
+uniform float uCutoffSign;
 
 // ================================
 // User Override
@@ -50,7 +51,7 @@ uniform float uAlphaCutoff;
 
 void main()
 {
-    SceneFragment(vTexCoord, mat3(1.0), uAlphaCutoff);
+    SceneFragment(vTexCoord, mat3(1.0), uAlphaCutoff, uCutoffSign);
 
     FragColor = vec4(ALBEDO, ALPHA);
     FragColor = FogColorMix(FragColor, vLinearDepth);

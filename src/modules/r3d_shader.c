@@ -931,6 +931,8 @@ bool r3d_shader_load_scene_forward(r3d_shader_custom_t* custom)
     GET_LOCATION(forward, uInstancing);
     GET_LOCATION(forward, uSkinning);
     GET_LOCATION(forward, uBillboard);
+    GET_LOCATION(forward, uAlphaCutoff);
+    GET_LOCATION(forward, uCutoffSign);
     GET_LOCATION(forward, uNormalScale);
     GET_LOCATION(forward, uOcclusion);
     GET_LOCATION(forward, uRoughness);
@@ -998,6 +1000,7 @@ bool r3d_shader_load_scene_unlit(r3d_shader_custom_t *custom)
     GET_LOCATION(unlit, uSkinning);
     GET_LOCATION(unlit, uBillboard);
     GET_LOCATION(unlit, uAlphaCutoff);
+    GET_LOCATION(unlit, uCutoffSign);
 
     USE_SHADER(unlit);
 
@@ -1199,6 +1202,8 @@ bool r3d_shader_load_scene_probe_forward(r3d_shader_custom_t* custom)
     GET_LOCATION(probeForward, uInstancing);
     GET_LOCATION(probeForward, uSkinning);
     GET_LOCATION(probeForward, uBillboard);
+    GET_LOCATION(probeForward, uAlphaCutoff);
+    GET_LOCATION(probeForward, uCutoffSign);
     GET_LOCATION(probeForward, uNormalScale);
     GET_LOCATION(probeForward, uOcclusion);
     GET_LOCATION(probeForward, uRoughness);
@@ -1269,6 +1274,7 @@ bool r3d_shader_load_scene_probe_unlit(r3d_shader_custom_t *custom)
     GET_LOCATION(probeUnlit, uSkinning);
     GET_LOCATION(probeUnlit, uBillboard);
     GET_LOCATION(probeUnlit, uAlphaCutoff);
+    GET_LOCATION(probeUnlit, uCutoffSign);
 
     USE_SHADER(probeUnlit);
 

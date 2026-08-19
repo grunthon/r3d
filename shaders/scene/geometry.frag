@@ -66,7 +66,7 @@ uniform float uSpecular;
 
 void main()
 {
-    SceneFragment(vTexCoord, vTBN, uAlphaCutoff);
+    SceneFragment(vTexCoord, vTBN, uAlphaCutoff, 1.0);
 
     mat3 TBN = mat3(TANGENT, BITANGENT, NORMAL);
     vec3 N = normalize(TBN * M_NormalScale(NORMAL_MAP * 2.0 - 1.0, uNormalScale));

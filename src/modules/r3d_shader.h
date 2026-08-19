@@ -857,6 +857,8 @@ typedef struct {
     r3d_shader_uniform_sampler_t uIrradianceTex;
     r3d_shader_uniform_sampler_t uPrefilterTex;
     r3d_shader_uniform_sampler_t uBrdfLutTex;
+    r3d_shader_uniform_float_t uAlphaCutoff;
+    r3d_shader_uniform_float_t uCutoffSign;
     r3d_shader_uniform_float_t uNormalScale;
     r3d_shader_uniform_float_t uOcclusion;
     r3d_shader_uniform_float_t uRoughness;
@@ -878,6 +880,7 @@ typedef struct {
     r3d_shader_uniform_int_t uBillboard;
     r3d_shader_uniform_sampler_t uAlbedoMap;
     r3d_shader_uniform_float_t uAlphaCutoff;
+    r3d_shader_uniform_float_t uCutoffSign;
 } r3d_shader_scene_unlit_t;
 
 typedef struct {
@@ -940,6 +943,8 @@ typedef struct {
     r3d_shader_uniform_sampler_t uIrradianceTex;
     r3d_shader_uniform_sampler_t uPrefilterTex;
     r3d_shader_uniform_sampler_t uBrdfLutTex;
+    r3d_shader_uniform_float_t uAlphaCutoff;
+    r3d_shader_uniform_float_t uCutoffSign;
     r3d_shader_uniform_float_t uNormalScale;
     r3d_shader_uniform_float_t uOcclusion;
     r3d_shader_uniform_float_t uRoughness;
@@ -965,6 +970,7 @@ typedef struct {
     r3d_shader_uniform_int_t uBillboard;
     r3d_shader_uniform_sampler_t uAlbedoMap;
     r3d_shader_uniform_float_t uAlphaCutoff;
+    r3d_shader_uniform_float_t uCutoffSign;
 } r3d_shader_scene_probe_unlit_t;
 
 typedef struct {

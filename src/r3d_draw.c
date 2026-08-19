@@ -65,8 +65,8 @@ static void upload_fx_block(void);
 
 static void raster_depth(const r3d_render_call_t* call, const Matrix* viewProj, const r3d_light_shadow_job_t* shadowJob);
 static void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, const r3d_light_shadow_job_t* shadowJob);
-static void raster_probe_forward(const r3d_render_call_t* call, const r3d_env_probe_job_t* job, int face);
-static void raster_probe_unlit(const r3d_render_call_t* call, const r3d_env_probe_job_t* job, int face);
+static void raster_probe_forward(const r3d_render_call_t* call, const r3d_env_probe_job_t* job, int face, bool opaque);
+static void raster_probe_unlit(const r3d_render_call_t* call, const r3d_env_probe_job_t* job, int face, bool opaque);
 static void raster_geometry(const r3d_render_call_t* call);
 static void raster_decal(const r3d_render_call_t* call);
 static void raster_forward(const r3d_render_call_t* call);
@@ -182,11 +182,11 @@ void R3D_End(void)
     r3d_render_cull_groups(&R3D.viewState.frustum);
 
     r3d_render_sort_list(R3D_RENDER_LIST_OPAQUE, R3D.viewState.camera.position, R3D_RENDER_SORT_FRONT_TO_BACK);
-    r3d_render_sort_list(R3D_RENDER_LIST_TRANSPARENT, R3D.viewState.camera.position, R3D_RENDER_SORT_BACK_TO_FRONT);
+    r3d_render_sort_list(R3D_RENDER_LIST_BLEND, R3D.viewState.camera.position, R3D_RENDER_SORT_BACK_TO_FRONT);
     r3d_render_sort_list(R3D_RENDER_LIST_DECAL, R3D.viewState.camera.position, R3D_RENDER_SORT_MATERIAL_ONLY);
 
     r3d_render_sort_list(R3D_RENDER_LIST_OPAQUE_INST, R3D.viewState.camera.position, R3D_RENDER_SORT_MATERIAL_ONLY);
-    r3d_render_sort_list(R3D_RENDER_LIST_TRANSPARENT_INST, R3D.viewState.camera.position, R3D_RENDER_SORT_MATERIAL_ONLY);
+    r3d_render_sort_list(R3D_RENDER_LIST_BLEND_INST, R3D.viewState.camera.position, R3D_RENDER_SORT_MATERIAL_ONLY);
     r3d_render_sort_list(R3D_RENDER_LIST_DECAL_INST, R3D.viewState.camera.position, R3D_RENDER_SORT_MATERIAL_ONLY);
 
     /* --- Deferred path for opaques and decals --- */
@@ -197,7 +197,7 @@ void R3D_End(void)
     r3d_target_t ssgiSource  = R3D_TARGET_INVALID;
     r3d_target_t ssrSource   = R3D_TARGET_INVALID;
 
-    if (r3d_render_has_deferred() || r3d_render_has_prepass())
+    if (r3d_render_has_opaque())
     {
         pass_scene_opaque();
         pass_deferred_lights();
@@ -245,7 +245,7 @@ void R3D_End(void)
         }
     }
 
-    /* --- Then background/fog and transparent rendering --- */
+    /* --- Then background/fog and forward rendering --- */
 
     pass_scene_background(sceneTarget);
 
@@ -259,10 +259,7 @@ void R3D_End(void)
         pass_deferred_volumetric_fog(sceneTarget);
     }
 
-    if (r3d_render_has_forward() || r3d_render_has_prepass())
-    {
-        pass_scene_forward(sceneTarget);
-    }
+    pass_scene_forward(sceneTarget);
 
     /* --- Applying effects over the scene and final blit --- */
 
@@ -1120,7 +1117,7 @@ void raster_depth_cube(const r3d_render_call_t* call, const Matrix* viewProj, co
     }
 }
 
-void raster_probe_forward(const r3d_render_call_t* call, const r3d_env_probe_job_t* job, int face)
+void raster_probe_forward(const r3d_render_call_t* call, const r3d_env_probe_job_t* job, int face, bool opaque)
 {
     R3D_ASSERT(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
 
@@ -1165,7 +1162,12 @@ void raster_probe_forward(const r3d_render_call_t* call, const r3d_env_probe_job
 
     /* --- Set factor material maps --- */
 
+    bool hybrid = (material->transparencyMode == R3D_TRANSPARENCY_HYBRID);
+    float cutoffSign = opaque ? 1.0f : (hybrid ? -1.0f : 0.0f);
+
     R3D_SHADER_SET_FLOAT_SELECT(scene.probeForward, shader, uEmissionEnergy, material->emission.energy);
+    R3D_SHADER_SET_FLOAT_SELECT(scene.probeForward, shader, uAlphaCutoff, material->alphaCutoff);
+    R3D_SHADER_SET_FLOAT_SELECT(scene.probeForward, shader, uCutoffSign, cutoffSign);
     R3D_SHADER_SET_FLOAT_SELECT(scene.probeForward, shader, uNormalScale, material->normal.scale);
     R3D_SHADER_SET_FLOAT_SELECT(scene.probeForward, shader, uOcclusion, Clamp(material->orm.occlusion, 0.0f, 1.0f));
     R3D_SHADER_SET_FLOAT_SELECT(scene.probeForward, shader, uRoughness, Clamp(material->orm.roughness, 0.0f, 1.0f));
@@ -1193,7 +1195,7 @@ void raster_probe_forward(const r3d_render_call_t* call, const r3d_env_probe_job
 
     r3d_driver_set_depth_state(material->depth);
     r3d_driver_set_stencil_state(material->stencil);
-    r3d_driver_set_blend_mode(material->blendMode, material->transparencyMode);
+    r3d_driver_set_blend_mode(material->blendMode);
     r3d_driver_set_cull_mode(material->cullMode);
 
     /* --- Rendering the object corresponding to the draw call --- */
@@ -1210,7 +1212,7 @@ void raster_probe_forward(const r3d_render_call_t* call, const r3d_env_probe_job
     }
 }
 
-void raster_probe_unlit(const r3d_render_call_t* call, const r3d_env_probe_job_t* job, int face)
+void raster_probe_unlit(const r3d_render_call_t* call, const r3d_env_probe_job_t* job, int face, bool opaque)
 {
     R3D_ASSERT(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
 
@@ -1255,8 +1257,12 @@ void raster_probe_unlit(const r3d_render_call_t* call, const r3d_env_probe_job_t
 
     /* --- Set color material maps --- */
 
+    bool hybrid = (material->transparencyMode == R3D_TRANSPARENCY_HYBRID);
+    float cutoffSign = opaque ? 1.0f : (hybrid ? -1.0f : 0.0f);
+
     R3D_SHADER_SET_COL4_SELECT(scene.probeUnlit, shader, uAlbedoColor, material->albedo.color);
     R3D_SHADER_SET_FLOAT_SELECT(scene.probeUnlit, shader, uAlphaCutoff, material->alphaCutoff);
+    R3D_SHADER_SET_FLOAT_SELECT(scene.probeUnlit, shader, uCutoffSign, cutoffSign);
 
     /* --- Bind active texture maps --- */
 
@@ -1266,7 +1272,7 @@ void raster_probe_unlit(const r3d_render_call_t* call, const r3d_env_probe_job_t
 
     r3d_driver_set_depth_state(material->depth);
     r3d_driver_set_stencil_state(material->stencil);
-    r3d_driver_set_blend_mode(material->blendMode, material->transparencyMode);
+    r3d_driver_set_blend_mode(material->blendMode);
     r3d_driver_set_cull_mode(material->cullMode);
 
     /* --- Rendering the object corresponding to the draw call --- */
@@ -1321,6 +1327,7 @@ void raster_geometry(const r3d_render_call_t* call)
     /* --- Set factor material maps --- */
 
     R3D_SHADER_SET_FLOAT_SELECT(scene.geometry, shader, uEmissionEnergy, material->emission.energy);
+    R3D_SHADER_SET_FLOAT_SELECT(scene.geometry, shader, uAlphaCutoff, material->alphaCutoff);
     R3D_SHADER_SET_FLOAT_SELECT(scene.geometry, shader, uNormalScale, material->normal.scale);
     R3D_SHADER_SET_FLOAT_SELECT(scene.geometry, shader, uOcclusion, Clamp(material->orm.occlusion, 0.0f, 1.0f));
     R3D_SHADER_SET_FLOAT_SELECT(scene.geometry, shader, uRoughness, Clamp(material->orm.roughness, 0.0f, 1.0f));
@@ -1336,7 +1343,6 @@ void raster_geometry(const r3d_render_call_t* call)
 
     R3D_SHADER_SET_COL4_SELECT(scene.geometry, shader, uAlbedoColor, material->albedo.color);
     R3D_SHADER_SET_COL3_SELECT(scene.geometry, shader, uEmissionColor, material->emission.color);
-    R3D_SHADER_SET_FLOAT_SELECT(scene.geometry, shader, uAlphaCutoff, material->alphaCutoff);
 
     /* --- Bind active texture maps --- */
 
@@ -1392,6 +1398,7 @@ void raster_decal(const r3d_render_call_t* call)
     /* --- Set factor material maps --- */
 
     R3D_SHADER_SET_FLOAT_SELECT(scene.decal, shader, uEmissionEnergy, decal->emission.energy);
+    R3D_SHADER_SET_FLOAT_SELECT(scene.decal, shader, uAlphaCutoff, decal->alphaCutoff);
     R3D_SHADER_SET_FLOAT_SELECT(scene.decal, shader, uNormalScale, decal->normal.scale);
     R3D_SHADER_SET_FLOAT_SELECT(scene.decal, shader, uOcclusion, Clamp(decal->orm.occlusion, 0.0f, 1.0f));
     R3D_SHADER_SET_FLOAT_SELECT(scene.decal, shader, uRoughness, Clamp(decal->orm.roughness, 0.0f, 1.0f));
@@ -1407,7 +1414,6 @@ void raster_decal(const r3d_render_call_t* call)
 
     R3D_SHADER_SET_COL4_SELECT(scene.decal, shader, uAlbedoColor, decal->albedo.color);
     R3D_SHADER_SET_COL3_SELECT(scene.decal, shader, uEmissionColor, decal->emission.color);
-    R3D_SHADER_SET_FLOAT_SELECT(scene.decal, shader, uAlphaCutoff, decal->alphaCutoff);
 
     /* --- Set decal specific values --- */
 
@@ -1479,6 +1485,8 @@ void raster_forward(const r3d_render_call_t* call)
     /* --- Set factor material maps --- */
 
     R3D_SHADER_SET_FLOAT_SELECT(scene.forward, shader, uEmissionEnergy, material->emission.energy);
+    R3D_SHADER_SET_FLOAT_SELECT(scene.forward, shader, uAlphaCutoff, material->alphaCutoff);
+    R3D_SHADER_SET_FLOAT_SELECT(scene.forward, shader, uCutoffSign, (material->transparencyMode == R3D_TRANSPARENCY_HYBRID) ? -1.0f : 0.0f);
     R3D_SHADER_SET_FLOAT_SELECT(scene.forward, shader, uNormalScale, material->normal.scale);
     R3D_SHADER_SET_FLOAT_SELECT(scene.forward, shader, uOcclusion, Clamp(material->orm.occlusion, 0.0f, 1.0f));
     R3D_SHADER_SET_FLOAT_SELECT(scene.forward, shader, uRoughness, Clamp(material->orm.roughness, 0.0f, 1.0f));
@@ -1506,7 +1514,7 @@ void raster_forward(const r3d_render_call_t* call)
 
     r3d_driver_set_depth_state(material->depth);
     r3d_driver_set_stencil_state(material->stencil);
-    r3d_driver_set_blend_mode(material->blendMode, material->transparencyMode);
+    r3d_driver_set_blend_mode(material->blendMode);
     r3d_driver_set_cull_mode(material->cullMode);
 
     /* --- Rendering the object corresponding to the draw call --- */
@@ -1567,6 +1575,7 @@ void raster_unlit(const r3d_render_call_t* call)
 
     R3D_SHADER_SET_COL4_SELECT(scene.unlit, shader, uAlbedoColor, material->albedo.color);
     R3D_SHADER_SET_FLOAT_SELECT(scene.unlit, shader, uAlphaCutoff, material->alphaCutoff);
+    R3D_SHADER_SET_FLOAT_SELECT(scene.unlit, shader, uCutoffSign, (material->transparencyMode == R3D_TRANSPARENCY_HYBRID) ? -1.0f : 1.0f);
 
     /* --- Bind active texture maps --- */
 
@@ -1576,7 +1585,7 @@ void raster_unlit(const r3d_render_call_t* call)
 
     r3d_driver_set_depth_state(material->depth);
     r3d_driver_set_stencil_state(material->stencil);
-    r3d_driver_set_blend_mode(material->blendMode, material->transparencyMode);
+    r3d_driver_set_blend_mode(material->blendMode);
     r3d_driver_set_cull_mode(material->cullMode);
 
     /* --- Rendering the object corresponding to the draw call --- */
@@ -1614,7 +1623,7 @@ void pass_scene_shadows(void)
         const R3D_Frustum* frustum = &job->frustum;
         r3d_render_cull_groups(frustum);
 
-        R3D_RENDER_FOR_EACH(call, COND, frustum, R3D_RENDER_PACKLIST_SHADOW)
+        R3D_RENDER_FOR_EACH(call, COND, frustum, R3D_RENDER_LIST_OPAQUE_INST, R3D_RENDER_LIST_OPAQUE)
         {
             if (r3d_render_should_cast_shadow(call))
             {
@@ -1635,6 +1644,19 @@ void pass_scene_shadows(void)
 
 void pass_scene_probes(void)
 {
+    #define RASTER_PROBE(opaque)                                    \
+    do {                                                            \
+        if (!call->mesh.material.unlit)                             \
+        {                                                           \
+            upload_light_array_block_for_mesh(call, job->shadows);  \
+            raster_probe_forward(call, job, iFace, (opaque));       \
+        }                                                           \
+        else                                                        \
+        {                                                           \
+            raster_probe_unlit(call, job, iFace, (opaque));         \
+        }                                                           \
+    } while(0)
+
     const R3D_EnvBackground* bg = &R3D.environment.background;
     const R3D_EnvFog* fog = &R3D.environment.fog;
 
@@ -1656,17 +1678,14 @@ void pass_scene_probes(void)
             r3d_env_probe_capture_bind_fbo(job->probeType, iFace);
             glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-            R3D_RENDER_FOR_EACH(call, true, frustum, R3D_RENDER_PACKLIST_PROBE)
+            R3D_RENDER_FOR_EACH(call, true, frustum, R3D_RENDER_LIST_OPAQUE_INST, R3D_RENDER_LIST_OPAQUE)
             {
-                if (call->mesh.material.unlit)
-                {
-                    raster_probe_unlit(call, job, iFace);
-                }
-                else
-                {
-                    upload_light_array_block_for_mesh(call, job->shadows);
-                    raster_probe_forward(call, job, iFace);
-                }
+                RASTER_PROBE(true);
+            }
+
+            R3D_RENDER_FOR_EACH(call, true, frustum, R3D_RENDER_LIST_BLEND_INST, R3D_RENDER_LIST_BLEND)
+            {
+                RASTER_PROBE(false);
             }
 
             r3d_driver_set_depth_offset(0.0f, 0.0f);
@@ -1734,6 +1753,8 @@ void pass_scene_probes(void)
 
         r3d_target_invalidate_cache(); //< The IBL gen functions bind framebuffers; resetting them prevents any problems
     }
+
+    #undef RASTER_PROBE
 }
 
 void pass_scene_opaque(void)
@@ -1748,26 +1769,11 @@ void pass_scene_opaque(void)
 
     R3D_TARGET_BIND_CLEAR(0, true, R3D_TARGET_GBUFFER);
 
-    if (r3d_render_has_deferred())
-    {
-        R3D_RENDER_FOR_EACH(call, IS_MESH_VISIBLE_CAMERA(call->mesh.instance), NULL, R3D_RENDER_LIST_OPAQUE_INST, R3D_RENDER_LIST_OPAQUE)
-        {
-            if (!call->mesh.material.unlit)
-            {
-                raster_geometry(call);
-            }
-        }
-    }
+    #define COND (IS_MESH_VISIBLE_CAMERA(call->mesh.instance) && (!call->mesh.material.unlit))
 
-    if (r3d_render_has_prepass())
+    R3D_RENDER_FOR_EACH(call, COND, &R3D.viewState.frustum, R3D_RENDER_LIST_OPAQUE_INST, R3D_RENDER_LIST_OPAQUE)
     {
-        R3D_RENDER_FOR_EACH(call, IS_MESH_VISIBLE_CAMERA(call->mesh.instance), NULL, R3D_RENDER_LIST_TRANSPARENT_INST, R3D_RENDER_LIST_TRANSPARENT)
-        {
-            if (r3d_render_is_prepass(call))
-            {
-                raster_geometry(call);
-            }
-        }
+        raster_geometry(call);
     }
 
     r3d_driver_set_depth_offset(0.0f, 0.0f);
@@ -1787,14 +1793,15 @@ void pass_scene_opaque(void)
         //        making orm.specular ineffective for decals.
         glColorMaski(2, GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
 
-        const R3D_Frustum* frustum = &R3D.viewState.frustum;
-        R3D_RENDER_FOR_EACH(call, true, frustum, R3D_RENDER_LIST_DECAL_INST, R3D_RENDER_LIST_DECAL)
+        R3D_RENDER_FOR_EACH(call, true, &R3D.viewState.frustum, R3D_RENDER_LIST_DECAL_INST, R3D_RENDER_LIST_DECAL)
         {
             raster_decal(call);
         }
 
         glColorMaski(2, GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     }
+
+    #undef COND
 }
 
 void pass_prepare_pyramid(void)
@@ -2307,33 +2314,33 @@ void pass_scene_forward(r3d_target_t sceneTarget)
     r3d_driver_enable(GL_DEPTH_TEST);
     r3d_driver_enable(GL_BLEND);
 
-    /* --- Render unlit opaque --- */
+    /* --- Render all unlit opaque --- */
 
     r3d_driver_set_depth_mask(GL_TRUE);
 
-    const R3D_Frustum* frustum = &R3D.viewState.frustum;
-    R3D_RENDER_FOR_EACH(call, IS_MESH_VISIBLE_CAMERA(call->mesh.instance), frustum, R3D_RENDER_LIST_OPAQUE_INST, R3D_RENDER_LIST_OPAQUE)
+    #define COND (IS_MESH_VISIBLE_CAMERA(call->mesh.instance) && (call->mesh.material.unlit))
+
+    R3D_RENDER_FOR_EACH(call, COND, &R3D.viewState.frustum, R3D_RENDER_LIST_OPAQUE_INST, R3D_RENDER_LIST_OPAQUE)
     {
-        if (call->mesh.material.unlit)
-        {
-            raster_unlit(call);
-        }
+        raster_unlit(call);
     }
 
-    /* --- Render all transparent in order - (prepass/alpha treated as same) --- */
+    #undef COND
+
+    /* --- Render all lit/unlit blended --- */
 
     r3d_driver_set_depth_mask(GL_FALSE);
 
-    R3D_RENDER_FOR_EACH(call, IS_MESH_VISIBLE_CAMERA(call->mesh.instance), frustum, R3D_RENDER_LIST_TRANSPARENT_INST, R3D_RENDER_LIST_TRANSPARENT)
+    R3D_RENDER_FOR_EACH(call, IS_MESH_VISIBLE_CAMERA(call->mesh.instance), &R3D.viewState.frustum, R3D_RENDER_LIST_BLEND_INST, R3D_RENDER_LIST_BLEND)
     {
-        if (call->mesh.material.unlit)
-        {
-            raster_unlit(call);
-        }
-        else
+        if (!call->mesh.material.unlit)
         {
             upload_light_array_block_for_mesh(call, true);
             raster_forward(call);
+        }
+        else
+        {
+            raster_unlit(call);
         }
     }
 

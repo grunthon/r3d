@@ -762,15 +762,15 @@ static inline void sort_fill_state_data(r3d_render_sort_state_t* state, const r3
 
 static void sort_fill_cache_front_to_back(r3d_render_list_enum_t list)
 {
-    R3D_ASSERT(list < R3D_RENDER_LIST_NON_INST_COUNT && "Instantiated render lists should not be sorted by distance");
+    R3D_ASSERT(list < R3D_RENDER_LIST_OPAQUE_INST && "Instantiated render lists should not be sorted by distance");
     R3D_ASSERT(list != R3D_RENDER_LIST_DECAL && "Decal render list should not be sorted by distance");
 
-    r3d_render_list_t* drawList = &R3D_MOD_RENDER.list[list];
-    size_t count = R3D_LIST_LENGTH(drawList->calls);
+    r3d_list_t* drawList = R3D_MOD_RENDER.list[list];
+    size_t count = R3D_LIST_LENGTH(drawList);
 
     for (size_t i = 0; i < count; i++)
     {
-        int callIndex = R3D_LIST_GET(drawList->calls, int, i);
+        int callIndex = R3D_LIST_GET(drawList, int, i);
         const r3d_render_call_t* call = &R3D_LIST_GET(R3D_MOD_RENDER.calls, r3d_render_call_t, callIndex);
         const r3d_render_group_t* group = r3d_render_get_call_group(call);
         r3d_render_sort_t* sortData = &R3D_LIST_GET(R3D_MOD_RENDER.sortCache, r3d_render_sort_t, callIndex);
@@ -785,15 +785,15 @@ static void sort_fill_cache_front_to_back(r3d_render_list_enum_t list)
 
 static void sort_fill_cache_back_to_front(r3d_render_list_enum_t list)
 {
-    R3D_ASSERT(list < R3D_RENDER_LIST_NON_INST_COUNT && "Instantiated render lists should not be sorted by distance");
+    R3D_ASSERT(list < R3D_RENDER_LIST_OPAQUE_INST && "Instantiated render lists should not be sorted by distance");
     R3D_ASSERT(list != R3D_RENDER_LIST_DECAL && "Decal render list should not be sorted by distance");
 
-    r3d_render_list_t* drawList = &R3D_MOD_RENDER.list[list];
-    size_t count = R3D_LIST_LENGTH(drawList->calls);
+    r3d_list_t* drawList = R3D_MOD_RENDER.list[list];
+    size_t count = R3D_LIST_LENGTH(drawList);
 
     for (size_t i = 0; i < count; i++)
     {
-        int callIndex = R3D_LIST_GET(drawList->calls, int, i);
+        int callIndex = R3D_LIST_GET(drawList, int, i);
         const r3d_render_call_t* call = &R3D_LIST_GET(R3D_MOD_RENDER.calls, r3d_render_call_t, callIndex);
         const r3d_render_group_t* group = r3d_render_get_call_group(call);
         r3d_render_sort_t* sortData = &R3D_LIST_GET(R3D_MOD_RENDER.sortCache, r3d_render_sort_t, callIndex);
@@ -813,12 +813,12 @@ static void sort_fill_cache_back_to_front(r3d_render_list_enum_t list)
 
 static void sort_fill_cache_by_material(r3d_render_list_enum_t list)
 {
-    r3d_render_list_t* drawList = &R3D_MOD_RENDER.list[list];
-    size_t count = R3D_LIST_LENGTH(drawList->calls);
+    r3d_list_t* drawList = R3D_MOD_RENDER.list[list];
+    size_t count = R3D_LIST_LENGTH(drawList);
 
     for (size_t i = 0; i < count; i++)
     {
-        int callIndex = R3D_LIST_GET(drawList->calls, int, i);
+        int callIndex = R3D_LIST_GET(drawList, int, i);
         const r3d_render_call_t* call = &R3D_LIST_GET(R3D_MOD_RENDER.calls, r3d_render_call_t, callIndex);
         r3d_render_sort_t* sortData = &R3D_LIST_GET(R3D_MOD_RENDER.sortCache, r3d_render_sort_t, callIndex);
 
@@ -899,7 +899,7 @@ bool r3d_render_init(void)
 
     for (int i = 0; i < R3D_RENDER_LIST_COUNT; i++)
     {
-        R3D_MOD_RENDER.list[i].calls = R3D_LIST_CREATE(int, cap);
+        R3D_MOD_RENDER.list[i] = R3D_LIST_CREATE(int, cap);
     }
 
     R3D_MOD_RENDER.calls        = R3D_LIST_CREATE(r3d_render_call_t, cap);
@@ -953,7 +953,7 @@ void r3d_render_quit(void)
 
     for (int i = 0; i < R3D_RENDER_LIST_COUNT; i++)
     {
-        R3D_LIST_DESTROY(R3D_MOD_RENDER.list[i].calls);
+        R3D_LIST_DESTROY(R3D_MOD_RENDER.list[i]);
     }
 
     R3D_LIST_DESTROY(R3D_MOD_RENDER.groupVisibility);
@@ -1215,7 +1215,7 @@ void r3d_render_clear(void)
 {
     for (int i = 0; i < R3D_RENDER_LIST_COUNT; i++)
     {
-        R3D_LIST_CLEAR(R3D_MOD_RENDER.list[i].calls);
+        R3D_LIST_CLEAR(R3D_MOD_RENDER.list[i]);
     }
 
     R3D_LIST_CLEAR(R3D_MOD_RENDER.clusters);
@@ -1227,9 +1227,6 @@ void r3d_render_clear(void)
     R3D_LIST_CLEAR(R3D_MOD_RENDER.sortCache);
 
     R3D_MOD_RENDER.groupCulled = false;
-    R3D_MOD_RENDER.hasDeferred = false;
-    R3D_MOD_RENDER.hasPrepass  = false;
-    R3D_MOD_RENDER.hasForward  = false;
 }
 
 bool r3d_render_cluster_begin(BoundingBox aabb)
@@ -1280,34 +1277,43 @@ void r3d_render_call_push(const r3d_render_call_t* call)
 
     // Get call index and set call group indices
     int callIndex = (int)R3D_LIST_LENGTH(R3D_MOD_RENDER.calls);
-    if (indices->numCall == 0)
-    {
-        indices->firstCall = callIndex;
-    }
-    ++indices->numCall;
+    if (indices->numCall == 0) indices->firstCall = callIndex;
+    indices->numCall += 1;
 
-    // Set group index for this draw call
+    // Push this draw call and its group index
     R3D_LIST_PUSH(R3D_MOD_RENDER.groupIndices, groupIndex);
-
-    // Determine the draw call list
-    r3d_render_list_enum_t list = R3D_RENDER_LIST_OPAQUE;
-    if (r3d_render_is_decal(call)) list = R3D_RENDER_LIST_DECAL;
-    else if (!r3d_render_is_opaque(call)) list = R3D_RENDER_LIST_TRANSPARENT;
-    if (r3d_render_has_instances(group)) list += R3D_RENDER_LIST_NON_INST_COUNT;
-
-    // Update internal flags
-    if (r3d_render_is_deferred(call)) R3D_MOD_RENDER.hasDeferred = true;
-    else if (r3d_render_is_prepass(call)) R3D_MOD_RENDER.hasPrepass = true;
-    else if (r3d_render_is_forward(call)) R3D_MOD_RENDER.hasForward = true;
-
-    // Push the draw call and its index to the list
     R3D_LIST_PUSH(R3D_MOD_RENDER.calls, *call);
 
-    // Reserve a matching slot in the sort cache (filled in later by r3d_render_sort_list)
-    r3d_render_sort_t emptySort = {0};
-    R3D_LIST_PUSH(R3D_MOD_RENDER.sortCache, emptySort);
+    // Push draw call index in the passes lists
+    bool instanced = r3d_render_has_instances(group);
 
-    R3D_LIST_PUSH(R3D_MOD_RENDER.list[list].calls, callIndex);
+    if (call->type == R3D_RENDER_CALL_DECAL)
+    {
+        r3d_render_list_enum_t list = instanced ? R3D_RENDER_LIST_DECAL_INST : R3D_RENDER_LIST_DECAL;
+        R3D_LIST_PUSH(R3D_MOD_RENDER.list[list], callIndex);
+    }
+    else
+    {
+        r3d_render_list_enum_t opaqueList = instanced ? R3D_RENDER_LIST_OPAQUE_INST : R3D_RENDER_LIST_OPAQUE;
+        r3d_render_list_enum_t blendList  = instanced ? R3D_RENDER_LIST_BLEND_INST  : R3D_RENDER_LIST_BLEND;
+
+        switch (call->mesh.material.transparencyMode)
+        {
+        case R3D_TRANSPARENCY_OPAQUE:
+            R3D_LIST_PUSH(R3D_MOD_RENDER.list[opaqueList], callIndex);
+            break;
+        case R3D_TRANSPARENCY_HYBRID:
+            R3D_LIST_PUSH(R3D_MOD_RENDER.list[opaqueList], callIndex);
+            R3D_LIST_PUSH(R3D_MOD_RENDER.list[blendList], callIndex);
+            break;
+        case R3D_TRANSPARENCY_BLEND:
+            R3D_LIST_PUSH(R3D_MOD_RENDER.list[blendList], callIndex);
+            break;
+        }
+    }
+
+    // Reserve a matching slot in the sort cache (filled in later by r3d_render_sort_list)
+    R3D_LIST_PUSH(R3D_MOD_RENDER.sortCache, (r3d_render_sort_t) {0});
 }
 
 r3d_render_group_t* r3d_render_get_call_group(const r3d_render_call_t* call)
@@ -1427,7 +1433,7 @@ void r3d_render_sort_list(r3d_render_list_enum_t list, Vector3 viewPosition, r3d
     G_sortViewPosition = viewPosition;
 
     int (*compareFunc)(const void *a, const void *b) = NULL;
-    r3d_list_t* drawListCalls = R3D_MOD_RENDER.list[list].calls;
+    r3d_list_t* drawListCalls = R3D_MOD_RENDER.list[list];
 
     switch (mode)
     {
