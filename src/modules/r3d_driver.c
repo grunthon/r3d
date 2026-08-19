@@ -13,7 +13,6 @@
 #include <glad.h>
 
 #include "../common/r3d_helper.h"
-#include "r3d/r3d_material.h"
 
 // ========================================
 // CONFIGURATION
