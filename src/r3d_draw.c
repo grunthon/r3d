@@ -2211,7 +2211,7 @@ void pass_deferred_compose(r3d_target_t sceneTarget, r3d_target_t ssrSource)
     r3d_driver_set_depth_mask(GL_FALSE);
     r3d_driver_set_depth_func(GL_GREATER);
 
-    R3D_TARGET_BIND_CLEAR(0, true, sceneTarget);
+    R3D_TARGET_BIND_LOAD(0, true, sceneTarget);
     R3D_SHADER_USE(deferred.compose);
 
     R3D_SHADER_BIND_SAMPLER(deferred.compose, uAlbedoTex, r3d_target_get_level(R3D_TARGET_ALBEDO, 0));
