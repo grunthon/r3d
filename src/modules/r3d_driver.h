@@ -127,9 +127,8 @@ void r3d_driver_set_stencil_state(R3D_StencilState state);
 /*
  * Applies the given blend mode.
  * Assumes that GL_BLEND is already enabled.
- * Some modes like MIX or ADD behave differently depending on the transparency mode.
  */
-void r3d_driver_set_blend_mode(R3D_BlendMode blend, R3D_TransparencyMode transparency);
+void r3d_driver_set_blend_mode(R3D_BlendMode blend);
 
 /*
  * Applies the given cull mode.

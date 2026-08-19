@@ -43,6 +43,6 @@ uniform float uFar;
 
 void main()
 {
-    SceneFragment(vTexCoord, mat3(1.0), uAlphaCutoff);
+    SceneFragment(vTexCoord, mat3(1.0), uAlphaCutoff, 1.0);
     gl_FragDepth = length(vPosition - uViewPosition) / uFar;
 }

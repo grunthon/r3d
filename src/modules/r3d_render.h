@@ -25,26 +25,6 @@
 // ========================================
 
 /*
- * A set of all lists that can be rendered in probe captures.
- * May require check per draw call depending on the context.
- */
-#define R3D_RENDER_PACKLIST_PROBE         \
-    R3D_RENDER_LIST_OPAQUE_INST,          \
-    R3D_RENDER_LIST_OPAQUE,               \
-    R3D_RENDER_LIST_TRANSPARENT_INST,     \
-    R3D_RENDER_LIST_TRANSPARENT
-
-/*
- * A set of all lists that can be rendered in shadow maps.
- * May require check per draw call depending on the context.
- */
-#define R3D_RENDER_PACKLIST_SHADOW        \
-    R3D_RENDER_LIST_OPAQUE_INST,          \
-    R3D_RENDER_LIST_TRANSPARENT_INST,     \
-    R3D_RENDER_LIST_OPAQUE,               \
-    R3D_RENDER_LIST_TRANSPARENT
-
-/*
  * Iterate over multiple render lists in the order specified by the variadic arguments,
  * yielding a pointer to each r3d_render_call_t.
  *
@@ -56,14 +36,14 @@
 #define R3D_RENDER_FOR_EACH(call, cond, frustum, ...)                                               \
     for (int _lists[] = {__VA_ARGS__}, _list_idx = 0, _i = 0, _keep = 1;                            \
          _list_idx < (int)(sizeof(_lists)/sizeof(_lists[0]));                                       \
-         ((size_t)_i >= R3D_LIST_LENGTH(R3D_MOD_RENDER.list[_lists[_list_idx]].calls) ?             \
+         ((size_t)_i >= R3D_LIST_LENGTH(R3D_MOD_RENDER.list[_lists[_list_idx]]) ?                   \
           (_list_idx++, _i = 0) : 0))                                                               \
         for (; _list_idx < (int)(sizeof(_lists)/sizeof(_lists[0])) &&                               \
-               (size_t)_i < R3D_LIST_LENGTH(R3D_MOD_RENDER.list[_lists[_list_idx]].calls);          \
+               (size_t)_i < R3D_LIST_LENGTH(R3D_MOD_RENDER.list[_lists[_list_idx]]);                \
              _i++, _keep = 1)                                                                       \
             for (const r3d_render_call_t* call =                                                    \
                  &R3D_LIST_GET(R3D_MOD_RENDER.calls, r3d_render_call_t,                             \
-                     R3D_LIST_GET(R3D_MOD_RENDER.list[_lists[_list_idx]].calls, int, _i));          \
+                     R3D_LIST_GET(R3D_MOD_RENDER.list[_lists[_list_idx]], int, _i));                \
                  _keep && (cond) && (!(frustum) || r3d_render_call_is_visible(call, (frustum)));    \
                  _keep = 0)
 
@@ -135,19 +115,13 @@ typedef enum {
  * Lists are separated by rendering path and instancing mode.
  */
 typedef enum {
-
     R3D_RENDER_LIST_OPAQUE,
-    R3D_RENDER_LIST_TRANSPARENT,
+    R3D_RENDER_LIST_BLEND,
     R3D_RENDER_LIST_DECAL,
-
-    R3D_RENDER_LIST_NON_INST_COUNT,
-
-    R3D_RENDER_LIST_OPAQUE_INST = R3D_RENDER_LIST_NON_INST_COUNT,
-    R3D_RENDER_LIST_TRANSPARENT_INST,
+    R3D_RENDER_LIST_OPAQUE_INST,
+    R3D_RENDER_LIST_BLEND_INST,
     R3D_RENDER_LIST_DECAL_INST,
-
-    R3D_RENDER_LIST_COUNT
-
+    R3D_RENDER_LIST_COUNT,
 } r3d_render_list_enum_t;
 
 // ========================================
@@ -253,13 +227,6 @@ typedef struct {
 } r3d_render_call_t;
 
 /*
- * A render list stores indices into the global draw call array.
- */
-typedef struct {
-    r3d_list_t* calls;   //< Indices of draw calls (list<int>)
-} r3d_render_list_t;
-
-/*
  * Sort key derived from a rendering state.
  * Fields are declared in priority order: the first differing field
  * encountered during comparison determines the sort result.
@@ -319,15 +286,12 @@ extern struct r3d_mod_render {
     r3d_list_t* callIndices;                            //< Array of draw call index ranges for each render group (list<r3d_render_indices_t>, automatically managed)
     r3d_list_t* groups;                                 //< Array of render groups (list<r3d_render_group_t>, shared data across draw calls)
 
-    r3d_render_list_t list[R3D_RENDER_LIST_COUNT];      //< Lists of draw call indices organized by rendering category
+    r3d_list_t* list[R3D_RENDER_LIST_COUNT];            //< List of draw call indices per render pass (list<int>)
     r3d_list_t* sortCache;                              //< Draw call sorting data cache array (list<r3d_render_sort_t>)
     r3d_list_t* calls;                                  //< Array of draw calls (list<r3d_render_call_t>)
     r3d_list_t* groupIndices;                           //< Array of group indices for each draw call (list<int>, automatically managed)
 
     bool groupCulled;                                   //< Indicates if groups already culled (controls visibility reset)
-    bool hasDeferred;                                   //< If there are any deferred calls (lit opaque)
-    bool hasPrepass;                                    //< If there are any prepass calls (lit opaque / lit transparent)
-    bool hasForward;                                    //< If there are any forward calls (unlit opaque / transparent)
 
 } R3D_MOD_RENDER;
 
@@ -489,106 +453,36 @@ static inline bool r3d_render_has_instances(const r3d_render_group_t* group)
 }
 
 /*
- * Check whether there are any deferred draw calls queued for the current frame.
+ * Check whether there are any opaque draw calls queued for the current frame.
  * Includes both instanced and non-instanced variants.
  */
-static inline bool r3d_render_has_deferred(void)
+static inline bool r3d_render_has_opaque(void)
 {
-    return R3D_MOD_RENDER.hasDeferred;
+    return
+        (!R3D_LIST_EMPTY(R3D_MOD_RENDER.list[R3D_RENDER_LIST_OPAQUE])) ||
+        (!R3D_LIST_EMPTY(R3D_MOD_RENDER.list[R3D_RENDER_LIST_OPAQUE_INST]));
 }
 
 /*
- * Check whether there are any prepass draw calls queued for the current frame.
+ * Check whether there are any blended draw calls queued for the current frame.
  * Includes both instanced and non-instanced variants.
  */
-static inline bool r3d_render_has_prepass(void)
+static inline bool r3d_render_has_blended(void)
 {
-    return R3D_MOD_RENDER.hasPrepass;
-}
-
-/*
- * Check whether there are any forward draw calls queued for the current frame.
- * Includes both instanced and non-instanced variants.
- */
-static inline bool r3d_render_has_forward(void)
-{
-    return R3D_MOD_RENDER.hasForward;
+    return
+        (!R3D_LIST_EMPTY(R3D_MOD_RENDER.list[R3D_RENDER_LIST_BLEND])) ||
+        (!R3D_LIST_EMPTY(R3D_MOD_RENDER.list[R3D_RENDER_LIST_BLEND_INST]));
 }
 
 /*
  * Check whether there are any decal draw calls queued for the current frame.
  * Includes both instanced and non-instanced variants.
  */
-static inline bool r3d_render_has_decal(void)
+static inline bool r3d_render_has_decals(void)
 {
     return
-        (!R3D_LIST_EMPTY(R3D_MOD_RENDER.list[R3D_RENDER_LIST_DECAL].calls)) ||
-        (!R3D_LIST_EMPTY(R3D_MOD_RENDER.list[R3D_RENDER_LIST_DECAL_INST].calls));
-}
-
-/*
- * Indicates whether a draw call corresponds to a decal.
- */
-static inline bool r3d_render_is_decal(const r3d_render_call_t* call)
-{
-    return call->type == R3D_RENDER_CALL_DECAL;
-}
-
-/*
- * Indicates whether a draw call corresponds to an object that is only rendered in deferred.
- * Always check if an object is prepassed before checking if it is deferred.
- */
-static inline bool r3d_render_is_deferred(const r3d_render_call_t* call)
-{
-    if (call->type != R3D_RENDER_CALL_MESH) return false;
-    if (call->mesh.material.unlit) return false;
-
-    if (call->mesh.material.blendMode != R3D_BLEND_MIX) {
-        return false;
-    }
-
-    return call->mesh.material.transparencyMode == R3D_TRANSPARENCY_DISABLED;
-}
-
-/*
- * Indicates whether a draw call corresponds to an opaque object (lit or unlit)
- */
-static inline bool r3d_render_is_opaque(const r3d_render_call_t* call)
-{
-    if (call->type != R3D_RENDER_CALL_MESH) return false;
-
-    if (call->mesh.material.blendMode != R3D_BLEND_MIX) {
-        return false;
-    }
-
-    return call->mesh.material.transparencyMode == R3D_TRANSPARENCY_DISABLED;
-}
-
-/*
- * Indicates whether a draw call corresponds to an illuminated object rendered in multiple passes (deferred / forward)
- */
-static inline bool r3d_render_is_prepass(const r3d_render_call_t* call)
-{
-    if (call->type != R3D_RENDER_CALL_MESH) return false;
-    if (call->mesh.material.unlit) return false;
-
-    return call->mesh.material.transparencyMode == R3D_TRANSPARENCY_PREPASS;
-}
-
-/*
- * Indicates whether a draw call corresponds to an object rendered only in forward (unlit opaque / transparent)
- * Always check if an object is prepassed before checking if it is forwarded.
- */
-static inline bool r3d_render_is_forward(const r3d_render_call_t* call)
-{
-    if (call->type != R3D_RENDER_CALL_MESH) return false;
-    if (call->mesh.material.unlit) return true;
-
-    if (call->mesh.material.blendMode != R3D_BLEND_MIX) {
-        return true;
-    }
-
-    return call->mesh.material.transparencyMode == R3D_TRANSPARENCY_ALPHA;
+        (!R3D_LIST_EMPTY(R3D_MOD_RENDER.list[R3D_RENDER_LIST_DECAL])) ||
+        (!R3D_LIST_EMPTY(R3D_MOD_RENDER.list[R3D_RENDER_LIST_DECAL_INST]));
 }
 
 /*
@@ -596,8 +490,8 @@ static inline bool r3d_render_is_forward(const r3d_render_call_t* call)
  */
 static inline bool r3d_render_should_cast_shadow(const r3d_render_call_t* call)
 {
-    return (call->mesh.material.transparencyMode == R3D_TRANSPARENCY_DISABLED) ||
-           (call->mesh.material.transparencyMode == R3D_TRANSPARENCY_PREPASS);
+    return (call->mesh.material.transparencyMode == R3D_TRANSPARENCY_OPAQUE) ||
+           (call->mesh.material.transparencyMode == R3D_TRANSPARENCY_HYBRID);
 }
 
 #endif // R3D_MODULE_RENDER_H

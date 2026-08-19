@@ -372,9 +372,9 @@ r3d_target_t r3d_target_swap_scene(r3d_target_t scene)
     return R3D_TARGET_SCENE_0;
 }
 
-void r3d_target_clear(const r3d_target_t* targets, int count, int level, bool depth)
+void r3d_target_bind_clear(const r3d_target_t* targets, int count, int level, bool depth)
 {
-    r3d_target_bind(targets, count, level, depth);
+    r3d_target_bind_load(targets, count, level, depth);
 
     for (int i = 0; i < count; i++)
     {
@@ -387,7 +387,7 @@ void r3d_target_clear(const r3d_target_t* targets, int count, int level, bool de
     }
 }
 
-void r3d_target_bind(const r3d_target_t* targets, int count, int level, bool depth)
+void r3d_target_bind_load(const r3d_target_t* targets, int count, int level, bool depth)
 {
     R3D_ASSERT(count > 0 || depth);
 

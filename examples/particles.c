@@ -32,6 +32,7 @@ int main(void)
 
     // Setup particle material
     R3D_Material material = R3D_GetDefaultMaterial();
+    material.transparencyMode = R3D_TRANSPARENCY_BLEND;
     material.billboardMode    = R3D_BILLBOARD_FRONT;
     material.blendMode        = R3D_BLEND_ADDITIVE;
     material.albedo.texture   = R3D_GetBlackTexture();

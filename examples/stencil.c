@@ -37,7 +37,7 @@ int main(void)
     matXrayGhost.depth.mode = R3D_COMPARE_ALWAYS;
     matXrayGhost.stencil.mode = R3D_COMPARE_NOTEQUAL;
     matXrayGhost.stencil.ref = 0x01;
-    matXrayGhost.transparencyMode = R3D_TRANSPARENCY_ALPHA;
+    matXrayGhost.transparencyMode = R3D_TRANSPARENCY_BLEND;
     matXrayGhost.unlit = true;
 
     // Main outline sphere material

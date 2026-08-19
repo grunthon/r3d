@@ -13,7 +13,7 @@ int main(void)
     // Create cube model
     R3D_Mesh cube = R3D_GenMeshCube(1, 1, 1);
     R3D_Material matCube = R3D_MATERIAL_BASE;
-    matCube.transparencyMode = R3D_TRANSPARENCY_ALPHA;
+    matCube.transparencyMode = R3D_TRANSPARENCY_BLEND;
     matCube.albedo.color = (Color){150, 150, 255, 100};
     matCube.orm.occlusion = 1.0f;
     matCube.orm.roughness = 0.2f;

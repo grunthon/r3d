@@ -483,29 +483,18 @@ void r3d_driver_set_stencil_state(R3D_StencilState state)
     r3d_driver_set_stencil_op(glOpFail, glOpZFail, glOpPass);
 }
 
-void r3d_driver_set_blend_mode(R3D_BlendMode blend, R3D_TransparencyMode transparency)
+void r3d_driver_set_blend_mode(R3D_BlendMode blend)
 {
     switch (blend)
     {
-    case R3D_BLEND_MIX:
-        if (transparency == R3D_TRANSPARENCY_DISABLED)
-        {
-            r3d_driver_set_blend_func(GL_FUNC_ADD, GL_ONE, GL_ZERO);
-        }
-        else
-        {
-            r3d_driver_set_blend_func(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        }
+    case R3D_BLEND_ALPHA:
+        r3d_driver_set_blend_func(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         break;
     case R3D_BLEND_ADDITIVE:
-        if (transparency == R3D_TRANSPARENCY_DISABLED)
-        {
-            r3d_driver_set_blend_func(GL_FUNC_ADD, GL_ONE, GL_ONE);
-        }
-        else
-        {
-            r3d_driver_set_blend_func(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE);
-        }
+        r3d_driver_set_blend_func(GL_FUNC_ADD, GL_ONE, GL_ONE);
+        break;
+    case R3D_BLEND_ADD_ALPHA:
+        r3d_driver_set_blend_func(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE);
         break;
     case R3D_BLEND_MULTIPLY:
         r3d_driver_set_blend_func(GL_FUNC_ADD, GL_DST_COLOR, GL_ZERO);

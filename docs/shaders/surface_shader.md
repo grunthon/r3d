@@ -18,7 +18,7 @@ Surface shaders are custom shaders that can be applied to materials and decals i
 
 ## Overview
 
-A surface shader is a simplified shader interface that allows you to modify vertex and fragment behavior without worrying about the underlying render pipeline. R3D automatically handles multiple render passes (opaque, transparent, shadows, etc.) from a single shader definition.
+A surface shader is a simplified shader interface that allows you to modify vertex and fragment behavior without worrying about the underlying render pipeline. R3D automatically handles multiple render passes (opaque, blend, shadows, etc.) from a single shader definition.
 
 ### Basic Example
 
@@ -420,31 +420,30 @@ void fragment() {
 
 ## Usage Hints
 
-R3D compiles multiple shader variants for different render passes (opaque, transparent, shadows, etc.). By default, only the opaque variant is pre-compiled; others compile on-demand when needed.
+R3D compiles multiple shader variants for different render passes (opaque, blend, shadows, etc.). By default, only the opaque variant is pre-compiled; others compile on-demand when needed.
 
 ### The Problem
 
-On-demand compilation can cause stuttering when a new variant is first used. For example, if your shader is used on a transparent object, the transparent variant compiles when the object first becomes visible.
+On-demand compilation can cause stuttering when a new variant is first used. For example, if your shader is used on a transparent object, the `blend` variant compiles when the object first becomes visible.
 
 ### The Solution
 
 Use `#pragma usage` to specify which variants should be pre-compiled:
 
 ```glsl
-#pragma usage transparent shadow
+#pragma usage blend shadow
 ```
 
 ### Available Usage Hints
 
 | Hint | Description |
 |------|-------------|
-| `opaque` | Opaque rendering for **lit objects** (default if no pragma specified) |
-| `prepass` | Transparent pre-pass rendering for **lit objects** |
-| `transparent` | Transparent rendering (color/alpha blending) for **lit objects** |
-| `unlit` | Unlit rendering (handles both opaque and transparent **unlit objects**) |
-| `shadow` | Shadow map rendering |
-| `decal` | Decal rendering |
-| `probe` | Reflection probe rendering |
+| `opaque` | Opaque rendering for **lit objects** (default if no pragma specified). Supports alpha cutoff. |
+| `blend` | Forward blended rendering (color/alpha blending) for **lit objects**. |
+| `unlit` | Unlit rendering (handles opaque, cutoff, and blended **unlit objects**). |
+| `shadow` | Shadow map depth rendering. |
+| `decal` | Decal projection rendering into G-Buffer targets. |
+| `probe` | Reflection probe capture rendering. |
 
 ### Examples
 
@@ -460,7 +459,7 @@ void fragment() {
 
 **Transparent object:**
 ```glsl
-#pragma usage transparent
+#pragma usage blend
 
 void fragment() {
     ALBEDO = vec3(0.0, 0.5, 1.0);
@@ -491,8 +490,8 @@ void fragment() {
 ### Important Notes
 
 - Usage hints are **optional**; missing variants will still compile on-demand
-- Multiple hints can be specified: `#pragma usage opaque transparent shadow`
-- Rendering mode separation: `opaque`, `prepass`, and `transparent` apply to **lit objects** only, while `unlit` applies to **unlit objects** regardless of opacity
+- Multiple hints can be specified: `#pragma usage opaque blend shadow`
+- Rendering mode separation: `opaque` and `blend` apply to **lit objects** only, while `unlit` applies to **unlit objects** regardless of opacity
 - If no pragma is specified, only `opaque` is pre-compiled
 - Variants not in the pragma can still be used; they just compile lazily
 
@@ -539,7 +538,7 @@ void R3D_SetSurfaceShaderSampler(R3D_SurfaceShader* shader, const char* name, Te
 
 ### Shader Structure
 ```glsl
-#pragma usage <hints>           // Optional: opaque, transparent, shadow, etc.
+#pragma usage <hints>           // Optional: opaque, blend, shadow, etc.
 #define R3D_NO_AUTO_FETCH       // Optional: disable automatic material sampling
 
 uniform <type> <name>;          // Uniforms

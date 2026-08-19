@@ -75,10 +75,6 @@ typedef enum {
     R3D_TARGET_GEOM_NORMAL,     \
     R3D_TARGET_DEPTH            \
 
-#define R3D_TARGET_LIGHTING     \
-    R3D_TARGET_DIFFUSE,         \
-    R3D_TARGET_SPECULAR         \
-
 #define R3D_TARGET_DECAL        \
     R3D_TARGET_ALBEDO,          \
     R3D_TARGET_DIFFUSE,         \
@@ -94,15 +90,15 @@ typedef enum {
 #define R3D_TARGET_TEXEL_W  R3D_MOD_TARGET.txlW
 #define R3D_TARGET_TEXEL_H  R3D_MOD_TARGET.txlH
 
-#define R3D_TARGET_CLEAR(level, depth, ...)                             \
-    r3d_target_clear(                                                   \
+#define R3D_TARGET_BIND_CLEAR(level, depth, ...)                        \
+    r3d_target_bind_clear(                                              \
         (r3d_target_t[]) {__VA_ARGS__},                                 \
         sizeof((r3d_target_t[]) {__VA_ARGS__}) / sizeof(r3d_target_t),  \
         (level), (depth)                                                \
     )
 
-#define R3D_TARGET_BIND(level, depth, ...)                              \
-    r3d_target_bind(                                                    \
+#define R3D_TARGET_BIND_LOAD(level, depth, ...)                         \
+    r3d_target_bind_load(                                               \
         (r3d_target_t[]){ __VA_ARGS__ },                                \
         sizeof((r3d_target_t[]) {__VA_ARGS__}) / sizeof(r3d_target_t),  \
         (level), (depth)                                                \
@@ -114,7 +110,7 @@ typedef enum {
  */
 #define R3D_TARGET_BIND_AND_SWAP_SCENE(target)  \
 do {                                            \
-    R3D_TARGET_BIND(0, false, target);          \
+    R3D_TARGET_BIND_LOAD(0, false, target);     \
     target = r3d_target_swap_scene(target);     \
 } while(0)
 
@@ -226,7 +222,7 @@ r3d_target_t r3d_target_swap_scene(r3d_target_t scene);
  * Ensure that the provided target combination is compatible with the specified level.
  * The depth buffer can only be attached when the level is zero.
  */
-void r3d_target_clear(const r3d_target_t* targets, int count, int level, bool depth);
+void r3d_target_bind_clear(const r3d_target_t* targets, int count, int level, bool depth);
 
 /*
  * Creates (or retrieves) and binds an FBO with the requested attachment combination.
@@ -236,7 +232,7 @@ void r3d_target_clear(const r3d_target_t* targets, int count, int level, bool de
  * Ensure that the provided target combination is compatible with the specified level.
  * The depth buffer can only be attached when the level is zero.
  */
-void r3d_target_bind(const r3d_target_t* targets, int count, int level, bool depth);
+void r3d_target_bind_load(const r3d_target_t* targets, int count, int level, bool depth);
 
 /*
  * Sets the viewport according to the specified level.
