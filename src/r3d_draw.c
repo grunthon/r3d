@@ -191,9 +191,6 @@ void R3D_End(void)
 
     /* --- Clear all G-Buffer before writing in it --- */
 
-    r3d_driver_enable(GL_DEPTH_TEST);
-    r3d_driver_enable(GL_STENCIL_TEST);
-
     r3d_driver_set_depth_mask(GL_TRUE);
     r3d_driver_set_stencil_mask(0xFF);
 
@@ -1816,6 +1813,8 @@ void pass_prepare_pyramid(void)
     r3d_driver_disable(GL_BLEND);
 
     r3d_driver_enable(GL_DEPTH_TEST);
+
+    r3d_driver_set_stencil_mask(0x00);
     r3d_driver_set_depth_mask(GL_TRUE);
     r3d_driver_set_depth_func(GL_ALWAYS);
 
@@ -1838,6 +1837,8 @@ void pass_prepare_downsample(r3d_target_t target, int level)
     r3d_driver_disable(GL_BLEND);
 
     r3d_driver_enable(GL_DEPTH_TEST);
+
+    r3d_driver_set_stencil_mask(0x00);
     r3d_driver_set_depth_mask(GL_FALSE);
     r3d_driver_set_depth_func(GL_GREATER);
 
@@ -1858,6 +1859,8 @@ r3d_target_t pass_prepare_ssao(void)
     r3d_driver_disable(GL_BLEND);
 
     r3d_driver_enable(GL_DEPTH_TEST);
+
+    r3d_driver_set_stencil_mask(0x00);
     r3d_driver_set_depth_mask(GL_FALSE);
     r3d_driver_set_depth_func(GL_GREATER);
 
@@ -1901,6 +1904,8 @@ r3d_target_t pass_prepare_ssil(void)
     r3d_driver_disable(GL_BLEND);
 
     r3d_driver_enable(GL_DEPTH_TEST);
+
+    r3d_driver_set_stencil_mask(0x00);
     r3d_driver_set_depth_mask(GL_FALSE);
     r3d_driver_set_depth_func(GL_GREATER);
 
@@ -1952,6 +1957,8 @@ r3d_target_t pass_prepare_ssgi(void)
     r3d_driver_disable(GL_BLEND);
 
     r3d_driver_enable(GL_DEPTH_TEST);
+
+    r3d_driver_set_stencil_mask(0x00);
     r3d_driver_set_depth_mask(GL_FALSE);
     r3d_driver_set_depth_func(GL_GREATER);
 
@@ -2039,6 +2046,8 @@ r3d_target_t pass_prepare_ssr(void)
     r3d_driver_disable(GL_BLEND);
 
     r3d_driver_enable(GL_DEPTH_TEST);
+
+    r3d_driver_set_stencil_mask(0x00);
     r3d_driver_set_depth_mask(GL_FALSE);
     r3d_driver_set_depth_func(GL_GREATER);
 
@@ -2194,8 +2203,10 @@ void pass_deferred_compose(r3d_target_t sceneTarget, r3d_target_t ssrSource)
     r3d_driver_disable(GL_BLEND);
 
     r3d_driver_enable(GL_DEPTH_TEST);
-    r3d_driver_set_depth_func(GL_GREATER);
+
+    r3d_driver_set_stencil_mask(0x00);
     r3d_driver_set_depth_mask(GL_FALSE);
+    r3d_driver_set_depth_func(GL_GREATER);
 
     R3D_TARGET_BIND_CLEAR(0, true, sceneTarget);
     R3D_SHADER_USE(deferred.compose);
