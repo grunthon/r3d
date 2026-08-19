@@ -1792,6 +1792,8 @@ void pass_scene_opaque(void)
 
         r3d_driver_set_cull_face(GL_FRONT); // Only render back faces to avoid clipping issues
 
+        R3D_TARGET_BIND_LOAD(0, true, R3D_TARGET_DECAL);
+
         // FIXME: The decal shader uses the alpha channel of the ORM attachment as a blend factor,
         //        but this channel now stores the material specular (F0) written during the geometry
         //        pass. We mask alpha writes to preserve the underlying specular, at the cost of
