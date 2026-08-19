@@ -74,7 +74,8 @@ static void raster_unlit(const r3d_render_call_t* call, bool opaque);
 
 static void pass_scene_shadows(void);
 static void pass_scene_probes(void);
-static void pass_scene_opaque(void);
+static void pass_scene_geometry(void);
+static void pass_scene_decals(void);
 
 static void pass_prepare_pyramid(void);
 static void pass_prepare_downsample(r3d_target_t target, int level);
@@ -206,12 +207,10 @@ void R3D_End(void)
 
     if (r3d_render_has_opaque())
     {
-        pass_scene_opaque();
+        pass_scene_geometry();
 
-        if (r3d_light_has_visible())
-        {
-            pass_deferred_lights();
-        }
+        if (r3d_render_has_decals()) pass_scene_decals();
+        if (r3d_light_has_visible()) pass_deferred_lights();
 
         bool ssao = R3D.environment.ssao.enabled;
         bool ssil = R3D.environment.ssil.enabled;
@@ -1762,7 +1761,7 @@ void pass_scene_probes(void)
     #undef RASTER_PROBE
 }
 
-void pass_scene_opaque(void)
+void pass_scene_geometry(void)
 {
     r3d_driver_enable(GL_STENCIL_TEST);
     r3d_driver_enable(GL_DEPTH_TEST);
@@ -1783,30 +1782,31 @@ void pass_scene_opaque(void)
 
     r3d_driver_set_depth_offset(0.0f, 0.0f);
     r3d_driver_set_depth_range(0.0f, 1.0f);
+}
 
-    if (r3d_render_has_decal())
+void pass_scene_decals(void)
+{
+    r3d_driver_disable(GL_STENCIL_TEST);
+    r3d_driver_disable(GL_DEPTH_TEST);
+    r3d_driver_enable(GL_CULL_FACE);
+    r3d_driver_enable(GL_BLEND);
+
+    r3d_driver_set_cull_face(GL_FRONT); // Only render back faces to avoid clipping issues
+
+    R3D_TARGET_BIND_LOAD(0, true, R3D_TARGET_DECAL);
+
+    // FIXME: The decal shader uses the alpha channel of the ORM attachment as a blend factor,
+    //        but this channel now stores the material specular (F0) written during the geometry
+    //        pass. We mask alpha writes to preserve the underlying specular, at the cost of
+    //        making orm.specular ineffective for decals.
+    glColorMaski(2, GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
+
+    R3D_RENDER_FOR_EACH(call, true, &R3D.viewState.frustum, R3D_RENDER_LIST_DECAL_INST, R3D_RENDER_LIST_DECAL)
     {
-        r3d_driver_disable(GL_STENCIL_TEST);
-        r3d_driver_disable(GL_DEPTH_TEST);
-        r3d_driver_enable(GL_BLEND);
-
-        r3d_driver_set_cull_face(GL_FRONT); // Only render back faces to avoid clipping issues
-
-        R3D_TARGET_BIND_LOAD(0, true, R3D_TARGET_DECAL);
-
-        // FIXME: The decal shader uses the alpha channel of the ORM attachment as a blend factor,
-        //        but this channel now stores the material specular (F0) written during the geometry
-        //        pass. We mask alpha writes to preserve the underlying specular, at the cost of
-        //        making orm.specular ineffective for decals.
-        glColorMaski(2, GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
-
-        R3D_RENDER_FOR_EACH(call, true, &R3D.viewState.frustum, R3D_RENDER_LIST_DECAL_INST, R3D_RENDER_LIST_DECAL)
-        {
-            raster_decal(call);
-        }
-
-        glColorMaski(2, GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        raster_decal(call);
     }
+
+    glColorMaski(2, GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 }
 
 void pass_prepare_pyramid(void)

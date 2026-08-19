@@ -478,7 +478,7 @@ static inline bool r3d_render_has_blended(void)
  * Check whether there are any decal draw calls queued for the current frame.
  * Includes both instanced and non-instanced variants.
  */
-static inline bool r3d_render_has_decal(void)
+static inline bool r3d_render_has_decals(void)
 {
     return
         (!R3D_LIST_EMPTY(R3D_MOD_RENDER.list[R3D_RENDER_LIST_DECAL])) ||
