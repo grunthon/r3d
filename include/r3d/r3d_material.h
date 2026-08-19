@@ -54,7 +54,7 @@
         },                                              \
         .uvOffset = {0.0f, 0.0f},                       \
         .uvScale = {1.0f, 1.0f},                        \
-        .alphaCutoff = 0.01f,                           \
+        .alphaCutoff = 0.5f,                            \
         .depth = {                                      \
             .mode = R3D_COMPARE_LESS,                   \
             .offsetFactor = 0.0f,                       \
