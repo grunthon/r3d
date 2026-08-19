@@ -75,10 +75,6 @@ typedef enum {
     R3D_TARGET_GEOM_NORMAL,     \
     R3D_TARGET_DEPTH            \
 
-#define R3D_TARGET_LIGHTING     \
-    R3D_TARGET_DIFFUSE,         \
-    R3D_TARGET_SPECULAR         \
-
 #define R3D_TARGET_DECAL        \
     R3D_TARGET_ALBEDO,          \
     R3D_TARGET_DIFFUSE,         \

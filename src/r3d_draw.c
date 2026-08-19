@@ -189,6 +189,16 @@ void R3D_End(void)
     r3d_render_sort_list(R3D_RENDER_LIST_BLEND_INST, R3D.viewState.camera.position, R3D_RENDER_SORT_MATERIAL_ONLY);
     r3d_render_sort_list(R3D_RENDER_LIST_DECAL_INST, R3D.viewState.camera.position, R3D_RENDER_SORT_MATERIAL_ONLY);
 
+    /* --- Clear all G-Buffer before writing in it --- */
+
+    r3d_driver_enable(GL_DEPTH_TEST);
+    r3d_driver_enable(GL_STENCIL_TEST);
+
+    r3d_driver_set_depth_mask(GL_TRUE);
+    r3d_driver_set_stencil_mask(0xFF);
+
+    R3D_TARGET_BIND_CLEAR(0, true, R3D_TARGET_ALL_DEFERRED);
+
     /* --- Deferred path for opaques and decals --- */
 
     r3d_target_t sceneTarget = R3D_TARGET_SCENE_0;
@@ -200,7 +210,11 @@ void R3D_End(void)
     if (r3d_render_has_opaque())
     {
         pass_scene_opaque();
-        pass_deferred_lights();
+
+        if (r3d_light_has_visible())
+        {
+            pass_deferred_lights();
+        }
 
         bool ssao = R3D.environment.ssao.enabled;
         bool ssil = R3D.environment.ssil.enabled;
@@ -228,16 +242,7 @@ void R3D_End(void)
     }
     else
     {
-        r3d_driver_enable(GL_DEPTH_TEST);
-        r3d_driver_enable(GL_STENCIL_TEST);
-
-        r3d_driver_set_depth_mask(GL_TRUE);
-        r3d_driver_set_stencil_mask(0xFF);
-
-        // Clear g-buffer and those for deferred passes to keep clean state
-        R3D_TARGET_BIND_CLEAR(0, true, R3D_TARGET_ALL_DEFERRED);
-
-        // And clear all depth levels (needed for next passes like DoF)
+        // And clear all depth levels, needed for next passes like DoF
         int numLevels = r3d_target_get_num_levels(R3D_TARGET_DEPTH);
         for (int i = 1; i < numLevels; i++)
         {
@@ -1767,14 +1772,14 @@ void pass_scene_opaque(void)
     r3d_driver_set_depth_mask(GL_TRUE);
     r3d_driver_set_stencil_mask(0xFF);
 
-    R3D_TARGET_BIND_CLEAR(0, true, R3D_TARGET_GBUFFER);
+    R3D_TARGET_BIND_LOAD(0, true, R3D_TARGET_GBUFFER);
 
     #define COND (IS_MESH_VISIBLE_CAMERA(call->mesh.instance) && (!call->mesh.material.unlit))
-
     R3D_RENDER_FOR_EACH(call, COND, &R3D.viewState.frustum, R3D_RENDER_LIST_OPAQUE_INST, R3D_RENDER_LIST_OPAQUE)
     {
         raster_geometry(call);
     }
+    #undef COND
 
     r3d_driver_set_depth_offset(0.0f, 0.0f);
     r3d_driver_set_depth_range(0.0f, 1.0f);
@@ -1800,8 +1805,6 @@ void pass_scene_opaque(void)
 
         glColorMaski(2, GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     }
-
-    #undef COND
 }
 
 void pass_prepare_pyramid(void)
@@ -2087,27 +2090,22 @@ r3d_target_t pass_prepare_ssr(void)
 
 void pass_deferred_lights(void)
 {
-    /* --- Bind and clear lighting buffers --- */
-
-    r3d_driver_enable(GL_DEPTH_TEST);
-    r3d_driver_set_depth_mask(GL_FALSE);
-    R3D_TARGET_BIND_CLEAR(0, true, R3D_TARGET_LIGHTING);
-
-    if (!r3d_light_has_visible()) return;
-
     /* --- Setup OpenGL pipeline --- */
 
     r3d_driver_disable(GL_STENCIL_TEST);
     r3d_driver_disable(GL_CULL_FACE);
 
     r3d_driver_enable(GL_SCISSOR_TEST);
+    r3d_driver_enable(GL_DEPTH_TEST);
     r3d_driver_enable(GL_BLEND);
 
     r3d_driver_set_blend_func(GL_FUNC_ADD, GL_ONE, GL_ONE);
     r3d_driver_set_depth_func(GL_GREATER);
+    r3d_driver_set_depth_mask(GL_FALSE);
 
-    /* --- Enable shader and setup constant stuff --- */
+    /* --- Bind FBO and shader then setup constant stuff --- */
 
+    R3D_TARGET_BIND_LOAD(0, true, R3D_TARGET_DIFFUSE, R3D_TARGET_SPECULAR);
     R3D_SHADER_USE(deferred.lighting);
 
     R3D_SHADER_BIND_SAMPLER(deferred.lighting, uAlbedoTex, r3d_target_get_level(R3D_TARGET_ALBEDO, 0));
@@ -2173,7 +2171,7 @@ void pass_deferred_ambient(r3d_target_t ssaoSource, r3d_target_t ssilSource, r3d
 
     /* --- Calculation and composition of ambient/indirect lighting --- */
 
-    R3D_TARGET_BIND_LOAD(0, true, R3D_TARGET_LIGHTING);
+    R3D_TARGET_BIND_LOAD(0, true, R3D_TARGET_DIFFUSE, R3D_TARGET_SPECULAR);
     R3D_SHADER_USE(deferred.ambient);
 
     R3D_SHADER_BIND_SAMPLER(deferred.ambient, uAlbedoTex, r3d_target_get_level(R3D_TARGET_ALBEDO, 0));
