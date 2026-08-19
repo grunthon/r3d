@@ -432,8 +432,12 @@ static void anode_reset_anim(r3d_animtree_anim_t* node)
     const R3D_Animation* a = node->animation;
     R3D_AnimationState* s = &node->params.state;
 
+    bool forward = (s->speed >= 0.0f);
     float duration = a->duration / a->ticksPerSecond;
-    s->currentTime = (s->speed >= 0.0f) ? 0.0f : duration;
+    s->currentTime = forward ? 0.0f : duration;
+
+    node->root.last = forward ? node->root.rest0 : node->root.restN;
+    node->root.loops = -1;
 }
 
 static void anode_reset_blend2(r3d_animtree_blend2_t* node)
