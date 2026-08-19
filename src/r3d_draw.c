@@ -70,7 +70,7 @@ static void raster_probe_unlit(const r3d_render_call_t* call, const r3d_env_prob
 static void raster_geometry(const r3d_render_call_t* call);
 static void raster_decal(const r3d_render_call_t* call);
 static void raster_forward(const r3d_render_call_t* call);
-static void raster_unlit(const r3d_render_call_t* call);
+static void raster_unlit(const r3d_render_call_t* call, bool opaque);
 
 static void pass_scene_shadows(void);
 static void pass_scene_probes(void);
@@ -1533,7 +1533,7 @@ void raster_forward(const r3d_render_call_t* call)
     }
 }
 
-void raster_unlit(const r3d_render_call_t* call)
+void raster_unlit(const r3d_render_call_t* call, bool opaque)
 {
     R3D_ASSERT(call->type == R3D_RENDER_CALL_MESH); //< Paranoid assert, should be fine
 
@@ -1575,9 +1575,12 @@ void raster_unlit(const r3d_render_call_t* call)
 
     /* --- Set color material maps --- */
 
+    bool hybrid = (material->transparencyMode == R3D_TRANSPARENCY_HYBRID);
+    float cutoffSign = opaque ? 1.0f : (hybrid ? -1.0f : 0.0f);
+
     R3D_SHADER_SET_COL4_SELECT(scene.unlit, shader, uAlbedoColor, material->albedo.color);
     R3D_SHADER_SET_FLOAT_SELECT(scene.unlit, shader, uAlphaCutoff, material->alphaCutoff);
-    R3D_SHADER_SET_FLOAT_SELECT(scene.unlit, shader, uCutoffSign, (material->transparencyMode == R3D_TRANSPARENCY_HYBRID) ? -1.0f : 1.0f);
+    R3D_SHADER_SET_FLOAT_SELECT(scene.unlit, shader, uCutoffSign, cutoffSign);
 
     /* --- Bind active texture maps --- */
 
@@ -2332,7 +2335,7 @@ void pass_scene_forward(r3d_target_t sceneTarget)
     #define COND (IS_MESH_VISIBLE_CAMERA(call->mesh.instance) && (call->mesh.material.unlit))
     R3D_RENDER_FOR_EACH(call, COND, &R3D.viewState.frustum, R3D_RENDER_LIST_OPAQUE_INST, R3D_RENDER_LIST_OPAQUE)
     {
-        raster_unlit(call);
+        raster_unlit(call, true);
     }
     #undef COND
 
@@ -2349,7 +2352,7 @@ void pass_scene_forward(r3d_target_t sceneTarget)
         }
         else
         {
-            raster_unlit(call);
+            raster_unlit(call, false);
         }
     }
 
