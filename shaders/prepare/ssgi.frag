@@ -36,7 +36,7 @@ out vec4 FragColor;
 // Samplers & uniforms
 // ================================
 
-uniform sampler2D uDiffuseTex;
+uniform sampler2D uRadianceTex;
 uniform sampler2D uNormalTex;
 uniform sampler2D uDepthTex;
 
@@ -58,7 +58,7 @@ float HorizonContribution(float NdotE, float NdotT, float h0, float h1)
 
 void main()
 {
-    vec2 viewport = vec2(textureSize(uDiffuseTex, 0));
+    vec2 viewport = vec2(textureSize(uRadianceTex, 0));
     vec2 invViewport = 1.0 / viewport;
 
     // Receiver geometry
@@ -128,7 +128,7 @@ void main()
             // Only samples above the current horizon contribute
             if (sampleAngle < horizonAngle)
             {
-                vec3 light = textureLod(uDiffuseTex, sampleUV, 0.0).rgb;
+                vec3 radiance = textureLod(uRadianceTex, sampleUV, 0.0).rgb;
                 float contrib = max(0.0, HorizonContribution(NdotE, NdotT, sampleAngle, horizonAngle));
 
                 vec2 edge = min(sampleUV, 1.0 - sampleUV);
@@ -137,11 +137,11 @@ void main()
                 float dist2 = dot(delta, delta);
                 float distFade = 1.0 / (1.0 + dist2 * uSsgi.distanceFalloff);
 
-                // Reject light from back-facing emitters
+                // Reject radiance from back-facing emitters
                 float facing = -dot(sampleNorm, delta * inversesqrt(max(dist2, 1e-8)));
                 float normalFade = mix(1.0, smoothstep(0.0, 0.1, facing), uSsgi.normalRejection);
 
-                giSlice += light * contrib * edgeFade * distFade * normalFade;
+                giSlice += radiance * contrib * edgeFade * distFade * normalFade;
                 horizonAngle = sampleAngle; // tighten horizon
             }
         }

@@ -446,7 +446,7 @@ bool r3d_shader_load_prepare_ssil(r3d_shader_custom_t* custom)
     SET_UNIFORM_BUFFER(ssil, FxBlock, R3D_SHADER_BLOCK_SLOT_FX);
 
     USE_SHADER(ssil);
-    SET_SAMPLER(ssil, uDiffuseTex, R3D_SHADER_SAMPLER_BUFFER_DIFFUSE);
+    SET_SAMPLER(ssil, uRadianceTex, R3D_SHADER_SAMPLER_BUFFER_RADIANCE);
     SET_SAMPLER(ssil, uNormalTex, R3D_SHADER_SAMPLER_BUFFER_NORMAL);
     SET_SAMPLER(ssil, uDepthTex, R3D_SHADER_SAMPLER_BUFFER_DEPTH);
 
@@ -464,7 +464,7 @@ bool r3d_shader_load_prepare_ssgi(r3d_shader_custom_t* custom)
     SET_UNIFORM_BUFFER(ssgi, FxBlock, R3D_SHADER_BLOCK_SLOT_FX);
 
     USE_SHADER(ssgi);
-    SET_SAMPLER(ssgi, uDiffuseTex, R3D_SHADER_SAMPLER_BUFFER_DIFFUSE);
+    SET_SAMPLER(ssgi, uRadianceTex, R3D_SHADER_SAMPLER_BUFFER_RADIANCE);
     SET_SAMPLER(ssgi, uNormalTex, R3D_SHADER_SAMPLER_BUFFER_NORMAL);
     SET_SAMPLER(ssgi, uDepthTex, R3D_SHADER_SAMPLER_BUFFER_DEPTH);
 
@@ -483,7 +483,7 @@ bool r3d_shader_load_prepare_ssr(r3d_shader_custom_t* custom)
 
     USE_SHADER(ssr);
 
-    SET_SAMPLER(ssr, uDiffuseTex, R3D_SHADER_SAMPLER_BUFFER_DIFFUSE);
+    SET_SAMPLER(ssr, uRadianceTex, R3D_SHADER_SAMPLER_BUFFER_RADIANCE);
     SET_SAMPLER(ssr, uSpecularTex, R3D_SHADER_SAMPLER_BUFFER_SPECULAR);
     SET_SAMPLER(ssr, uNormalTex, R3D_SHADER_SAMPLER_BUFFER_NORMAL);
     SET_SAMPLER(ssr, uDepthTex, R3D_SHADER_SAMPLER_BUFFER_DEPTH);
@@ -1431,7 +1431,7 @@ bool r3d_shader_load_deferred_compose(r3d_shader_custom_t* custom)
     USE_SHADER(compose);
 
     SET_SAMPLER(compose, uAlbedoTex, R3D_SHADER_SAMPLER_BUFFER_ALBEDO);
-    SET_SAMPLER(compose, uDiffuseTex, R3D_SHADER_SAMPLER_BUFFER_DIFFUSE);
+    SET_SAMPLER(compose, uRadianceTex, R3D_SHADER_SAMPLER_BUFFER_RADIANCE);
     SET_SAMPLER(compose, uSpecularTex, R3D_SHADER_SAMPLER_BUFFER_SPECULAR);
     SET_SAMPLER(compose, uOrmTex, R3D_SHADER_SAMPLER_BUFFER_ORM);
     SET_SAMPLER(compose, uSsrTex, R3D_SHADER_SAMPLER_BUFFER_SSR);

@@ -31,8 +31,8 @@ noperspective in vec2 vTexCoord;
 // Out - Fragments
 // ================================
 
-layout(location = 0) out vec4 FragDiff;
-layout(location = 1) out vec4 FragSpec;
+layout(location = 0) out vec4 FragRadiance;
+layout(location = 1) out vec4 FragSpecular;
 
 // ================================
 // Uniforms
@@ -78,8 +78,8 @@ void main()
 
     if (NoL <= 0.0)
     {
-        FragDiff = vec4(0.0);
-        FragSpec = vec4(0.0);
+        FragRadiance = vec4(0.0);
+        FragSpecular = vec4(0.0);
         return;
     }
 
@@ -145,6 +145,6 @@ void main()
 
     /* Compute final lighting contribution */
 
-    FragDiff = vec4(diff * shadow, 1.0);
-    FragSpec = vec4(spec * shadow, 1.0);
+    FragRadiance = vec4(diff * shadow, 1.0);
+    FragSpecular = vec4(spec * shadow, 1.0);
 }

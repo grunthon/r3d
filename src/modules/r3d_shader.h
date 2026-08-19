@@ -304,7 +304,7 @@ typedef enum {
     R3D_SHADER_SAMPLER_BUFFER_ORM           = 24,
     R3D_SHADER_SAMPLER_BUFFER_DEPTH         = 25,
     R3D_SHADER_SAMPLER_BUFFER_SELECTOR      = 26,
-    R3D_SHADER_SAMPLER_BUFFER_DIFFUSE       = 27,
+    R3D_SHADER_SAMPLER_BUFFER_RADIANCE      = 27,
     R3D_SHADER_SAMPLER_BUFFER_SPECULAR      = 28,
     R3D_SHADER_SAMPLER_BUFFER_VFOG_RAD      = 29,
     R3D_SHADER_SAMPLER_BUFFER_SSAO          = 30,
@@ -361,7 +361,7 @@ static const GLenum R3D_MOD_SHADER_SAMPLER_TYPES[R3D_SHADER_SAMPLER_COUNT] =
     [R3D_SHADER_SAMPLER_BUFFER_ORM]             = GL_TEXTURE_2D,
     [R3D_SHADER_SAMPLER_BUFFER_DEPTH]           = GL_TEXTURE_2D,
     [R3D_SHADER_SAMPLER_BUFFER_SELECTOR]        = GL_TEXTURE_2D,
-    [R3D_SHADER_SAMPLER_BUFFER_DIFFUSE]         = GL_TEXTURE_2D,
+    [R3D_SHADER_SAMPLER_BUFFER_RADIANCE]        = GL_TEXTURE_2D,
     [R3D_SHADER_SAMPLER_BUFFER_SPECULAR]        = GL_TEXTURE_2D,
     [R3D_SHADER_SAMPLER_BUFFER_VFOG_RAD]        = GL_TEXTURE_2D,
     [R3D_SHADER_SAMPLER_BUFFER_SSAO]            = GL_TEXTURE_2D,
@@ -681,21 +681,21 @@ typedef struct {
 
 typedef struct {
     GLuint id;
-    r3d_shader_uniform_sampler_t uDiffuseTex;
+    r3d_shader_uniform_sampler_t uRadianceTex;
     r3d_shader_uniform_sampler_t uNormalTex;
     r3d_shader_uniform_sampler_t uDepthTex;
 } r3d_shader_prepare_ssil_t;
 
 typedef struct {
     GLuint id;
-    r3d_shader_uniform_sampler_t uDiffuseTex;
+    r3d_shader_uniform_sampler_t uRadianceTex;
     r3d_shader_uniform_sampler_t uNormalTex;
     r3d_shader_uniform_sampler_t uDepthTex;
 } r3d_shader_prepare_ssgi_t;
 
 typedef struct {
     GLuint id;
-    r3d_shader_uniform_sampler_t uDiffuseTex;
+    r3d_shader_uniform_sampler_t uRadianceTex;
     r3d_shader_uniform_sampler_t uSpecularTex;
     r3d_shader_uniform_sampler_t uNormalTex;
     r3d_shader_uniform_sampler_t uDepthTex;
@@ -1043,7 +1043,7 @@ typedef struct {
 typedef struct {
     GLuint id;
     r3d_shader_uniform_sampler_t uAlbedoTex;
-    r3d_shader_uniform_sampler_t uDiffuseTex;
+    r3d_shader_uniform_sampler_t uRadianceTex;
     r3d_shader_uniform_sampler_t uSpecularTex;
     r3d_shader_uniform_sampler_t uOrmTex;
     r3d_shader_uniform_sampler_t uSsrTex;

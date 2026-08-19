@@ -32,9 +32,9 @@ smooth in vec4 vColor;
 // ================================
 
 layout(location = 0) out vec4 FragAlbedo;
-layout(location = 1) out vec4 FragEmission;
+layout(location = 1) out vec4 FragNormal;
 layout(location = 2) out vec4 FragORM;
-layout(location = 3) out vec4 FragNormal;
+layout(location = 3) out vec4 FragRadiance;
 
 // ================================
 // Samplers & Uniforms
@@ -124,8 +124,8 @@ void main()
     /* Output */
     FragAlbedo   = vec4(ALBEDO, fadeAlpha * float(uApplyColor));
     FragNormal   = vec4(M_EncodeOctahedral(N), 0.0, 1.0);
-    FragEmission = vec4(EMISSION, fadeAlpha);
     FragORM      = vec4(vec3(OCCLUSION, ROUGHNESS, METALNESS), fadeAlpha);
+    FragRadiance = vec4(EMISSION, fadeAlpha);
 
     /* FIXME: uSpecular/SPECULAR is available but not written to FragORM.a, which is used
      *        here as a blend factor. Alpha writes are currently masked in pass_scene_decals
