@@ -77,8 +77,8 @@ typedef struct {
 } target_config_t;
 
 static const target_config_t TARGET_CONFIG[] = {
-    [R3D_TARGET_SCENE_0]     = { FORMAT_RGB16F,     1, GL_LINEAR,                 GL_LINEAR,  1, {0} },
-    [R3D_TARGET_SCENE_1]     = { FORMAT_RGB16F,     1, GL_LINEAR,                 GL_LINEAR,  1, {0} },
+    [R3D_TARGET_SCENE_0]     = { FORMAT_RGBA16F,    1, GL_LINEAR,                 GL_LINEAR,  1, {0} },
+    [R3D_TARGET_SCENE_1]     = { FORMAT_RGBA16F,    1, GL_LINEAR,                 GL_LINEAR,  1, {0} },
     [R3D_TARGET_ALBEDO]      = { FORMAT_RGB8,       1, GL_NEAREST,                GL_NEAREST, 1, {0} },
     [R3D_TARGET_NORMAL]      = { FORMAT_RG16,       1, GL_NEAREST,                GL_NEAREST, 2, {0} },
     [R3D_TARGET_GEOM_NORMAL] = { FORMAT_RG16,       1, GL_NEAREST,                GL_NEAREST, 1, {0} },

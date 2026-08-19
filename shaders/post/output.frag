@@ -215,11 +215,11 @@ vec3 Debanding(vec3 color)
 
 void main()
 {
-    vec3 color = texelFetch(uSceneTex, ivec2(gl_FragCoord.xy), 0).rgb;
+    vec4 color = texelFetch(uSceneTex, ivec2(gl_FragCoord.xy), 0);
 
-    color = Tonemapping(color, uTonemap.exposure, uTonemap.white);
-    color = Adjustments(color, uBcs.brightness, uBcs.contrast, uBcs.saturation);
-    color = C_LinearToSrgb(color);
+    color.rgb = Tonemapping(color.rgb, uTonemap.exposure, uTonemap.white);
+    color.rgb = Adjustments(color.rgb, uBcs.brightness, uBcs.contrast, uBcs.saturation);
+    color.rgb = C_LinearToSrgb(color.rgb);
 
-    FragColor = vec4(Debanding(color), 1.0);
+    FragColor = vec4(Debanding(color.rgb), color.a);
 }

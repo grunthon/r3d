@@ -24,7 +24,7 @@ in vec3 vViewRay;
 // Out - Varyings
 // ================================
 
-layout(location = 0) out vec3 FragColor;
+layout(location = 0) out vec4 FragColor;
 
 // ================================
 // Samplers & uniforms
@@ -43,5 +43,5 @@ void main()
 {
     vec3 direction = normalize(vViewRay);
     direction = M_Rotate3D(direction, uRotation);
-    FragColor = textureLod(uSkyMap, direction, uLod).rgb * uEnergy;
+    FragColor = vec4(textureLod(uSkyMap, direction, uLod).rgb * uEnergy, 1.0);
 }

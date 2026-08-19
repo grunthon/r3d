@@ -28,7 +28,7 @@ noperspective in vec2 vTexCoord;
 // Out - Fragments
 // ================================
 
-layout(location = 0) out vec3 FragColor;
+layout(location = 0) out vec4 FragColor;
 
 // ================================
 // Samplers & Uniforms
@@ -58,5 +58,7 @@ void main()
     vec3 F0 = PBR_F0(orm.z, orm.w, albedo);
     vec3 kS_approx = F0 * (1.0 - orm.y * 0.5);
 
-    FragColor = radiance + mix(specular, kS_approx * ssr.rgb, ssr.a);
+    specular = mix(specular, kS_approx * ssr.rgb, ssr.a);
+
+    FragColor = vec4(radiance + specular, 1.0);
 }

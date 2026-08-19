@@ -65,20 +65,20 @@ float TIME = 0.0;
 // Built-In: Output Variables
 // ================================
 
-vec3 COLOR = vec3(0.0);
+vec4 COLOR = vec4(0.0);
 
 // ================================
 // User Callables
 // ================================
 
-vec3 FetchColor(ivec2 pixCoord)
+vec4 FetchColor(ivec2 pixCoord)
 {
-    return texelFetch(uSceneTex, pixCoord, 0).rgb;
+    return texelFetch(uSceneTex, pixCoord, 0);
 }
 
-vec3 SampleColor(vec2 texCoord)
+vec4 SampleColor(vec2 texCoord)
 {
-    return textureLod(uSceneTex, texCoord, 0.0).rgb;
+    return textureLod(uSceneTex, texCoord, 0.0);
 }
 
 float FetchDepth(ivec2 pixCoord)
@@ -138,5 +138,5 @@ void main()
 
     fragment();
 
-    FragColor = vec4(COLOR, 1.0);
+    FragColor = COLOR;
 }

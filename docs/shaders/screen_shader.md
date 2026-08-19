@@ -24,7 +24,7 @@ Screen shaders process the entire rendered frame as a 2D image. They run after a
 
 ```glsl
 void fragment() {
-    COLOR = SampleColor(TEXCOORD) * vec3(1.0, 0.5, 0.5); // Red tint
+    COLOR = SampleColor(TEXCOORD) * vec4(1.0, 0.5, 0.5, 1.0); // Red tint
 }
 ```
 
@@ -35,7 +35,7 @@ void fragment() {
 R3D_ScreenShader* shader = R3D_LoadScreenShader("vignette.glsl");
 
 // From memory
-const char* code = "void fragment() { COLOR = vec3(1.0 - SampleColor(TEXCOORD)); }";
+const char* code = "void fragment() { COLOR = vec4(1.0 - SampleColor(TEXCOORD).rgb, 1.0); }";
 R3D_ScreenShader* shader = R3D_LoadScreenShaderFromMemory(code);
 
 // Don't forget to unload when done
@@ -55,10 +55,10 @@ Runs once per screen pixel to compute the final output color.
 ```glsl
 void fragment() {
     // Read input color
-    vec3 color = SampleColor(TEXCOORD);
+    vec4 color = SampleColor(TEXCOORD);
     
     // Apply effect
-    color = vec3(dot(color, vec3(0.299, 0.587, 0.114))); // Grayscale conversion
+    color.rgb = vec3(dot(color.rgb, vec3(0.299, 0.587, 0.114))); // Grayscale conversion
     
     // Write output
     COLOR = color;
@@ -89,7 +89,7 @@ Screen shaders provide built-in variables for screen-space operations:
 | `PIXCOORD` | `ivec2` | Integer pixel coordinates (0 to resolution-1) |
 | `FRAME_INDEX` | `int` | Index incremented at each frame |
 | `TIME` | `float` | Time provided by the raylib's `GetTime()` |
-| `COLOR` | `vec3` | Output color (write to this) |
+| `COLOR` | `vec4` | Output color (write to this) |
 
 ### Usage Examples
 
@@ -118,10 +118,10 @@ void fragment() {
     for (int x = -1; x <= 1; x++) {
         for (int y = -1; y <= 1; y++) {
             vec2 offset = vec2(x, y) * TEXEL_SIZE;
-            color += SampleColor(TEXCOORD + offset);
+            color += SampleColor(TEXCOORD + offset).rgb;
         }
     }
-    COLOR = color / 9.0; // Average of 3x3 grid
+    COLOR = vec4(color / 9.0, 1.0); // Average of 3x3 grid
 }
 ```
 
@@ -142,12 +142,12 @@ vec3 SampleColor(vec2 texCoord);  // Bilinear filtering
 ```glsl
 void fragment() {
     // Fetch exact pixel (faster)
-    vec3 center = FetchColor(PIXCOORD);
+    vec3 center = FetchColor(PIXCOORD).rgb;
     
     // Sample with filtering (smoother)
-    vec3 blurred = SampleColor(TEXCOORD + vec2(0.01, 0.0));
+    vec3 blurred = SampleColor(TEXCOORD + vec2(0.01, 0.0)).rgb;
     
-    COLOR = mix(center, blurred, 0.5);
+    COLOR = vec4(mix(center, blurred, 0.5), 1.0);
 }
 ```
 
@@ -166,7 +166,7 @@ float SampleDepth01(vec2 texCoord);
 **Example:**
 ```glsl
 void fragment() {
-    vec3 color = SampleColor(TEXCOORD);
+    vec3 color = SampleColor(TEXCOORD).rgb;
 
     const float outline_size = 1.5;
     vec2 px = TEXEL_SIZE * outline_size;
@@ -180,7 +180,7 @@ void fragment() {
 
     float edge = step(0.5, max(max(dx1, dx2), max(dy1, dy2)));
 
-    COLOR = mix(color, vec3(0.0), edge);
+    COLOR = vec4(mix(color, vec3(0.0), edge), 1.0);
 }
 ```
 
@@ -202,8 +202,8 @@ void fragment() {
     float distance = length(position);
     
     // Depth-based effect
-    vec3 color = SampleColor(TEXCOORD);
-    COLOR = color * (1.0 - smoothstep(10.0, 50.0, distance));
+    vec3 color = SampleColor(TEXCOORD).rgb;
+    COLOR = vec4(color * (1.0 - smoothstep(10.0, 50.0, distance)), 1.0);
 }
 ```
 
@@ -225,8 +225,8 @@ void fragment() {
     vec3 normal_right = SampleNormal(TEXCOORD + vec2(TEXEL_SIZE.x, 0.0));
     float edge = length(normal - normal_right);
     
-    vec3 color = SampleColor(TEXCOORD);
-    COLOR = mix(color, vec3(0.0), edge * 10.0);
+    vec3 color = SampleColor(TEXCOORD).rgb;
+    COLOR = vec4(mix(color, vec3(0.0), edge * 10.0), 1.0);
 }
 ```
 
@@ -268,13 +268,13 @@ uniform float u_intensity;
 uniform sampler2D u_lut;
 
 void fragment() {
-    vec3 color = SampleColor(TEXCOORD);
-    
+    vec4 color = SampleColor(TEXCOORD);
+
     // Apply color grading
-    color = texture(u_lut, color.rg).rgb;
-    
+    color.rgb = texture(u_lut, color.rg).rgb;
+
     // Apply intensity
-    COLOR = mix(SampleColor(TEXCOORD), color, u_intensity);
+    COLOR = vec4(mix(SampleColor(TEXCOORD), color.rgb, u_intensity), color.a);
 }
 ```
 
@@ -370,7 +370,7 @@ uniform float u_intensity;
 uniform float u_radius;
 
 void fragment() {
-    vec3 color = SampleColor(TEXCOORD);
+    vec3 color = SampleColor(TEXCOORD).rgb;
 
     // Calculate distance from center
     vec2 center = TEXCOORD - vec2(0.5);
@@ -379,7 +379,7 @@ void fragment() {
 
     // Apply vignette
     float vignette = smoothstep(u_radius, u_radius * 0.5, dist);
-    COLOR = color * mix(1.0, vignette, u_intensity);
+    COLOR = vec4(color * mix(1.0, vignette, u_intensity), 1.0);
 }
 ```
 
@@ -427,14 +427,14 @@ vec2 RESOLUTION;    // Screen resolution
 float ASPECT;       // Screen aspect ratio
 
 // Output (write)
-vec3 COLOR;         // Final pixel color
+vec4 COLOR;         // Final pixel color
 ```
 
 ### Helper Functions
 ```glsl
 // Color
-vec3 FetchColor(ivec2 pixCoord);
-vec3 SampleColor(vec2 texCoord);
+vec4 FetchColor(ivec2 pixCoord);
+vec4 SampleColor(vec2 texCoord);
 
 // Depth (linear, near to far)
 float FetchDepth(ivec2 pixCoord);

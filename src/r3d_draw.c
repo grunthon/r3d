@@ -2232,7 +2232,7 @@ void pass_deferred_fog(r3d_target_t sceneTarget)
     r3d_driver_disable(GL_CULL_FACE);
 
     r3d_driver_enable(GL_BLEND);
-    r3d_driver_set_blend_func(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    r3d_driver_set_blend_func_separate(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     R3D_TARGET_BIND_LOAD(0, false, sceneTarget);
     R3D_SHADER_USE(deferred.fog);
@@ -2312,7 +2312,7 @@ void pass_deferred_volumetric_fog(r3d_target_t sceneTarget)
     R3D_SHADER_USE(deferred.vfogCompose);
 
     r3d_driver_enable(GL_BLEND);
-    r3d_driver_set_blend_func(GL_FUNC_ADD, GL_ONE, GL_ONE);
+    r3d_driver_set_blend_func_separate(GL_FUNC_ADD, GL_ONE, GL_ONE, GL_ZERO, GL_ONE);
 
     R3D_SHADER_BIND_SAMPLER(deferred.vfogCompose, uRadianceTex, r3d_target_get_level(R3D_TARGET_VFOG_RAD, 1));
     R3D_SHADER_BIND_SAMPLER(deferred.vfogCompose, uDepthTex, r3d_target_get_levels(R3D_TARGET_DEPTH, 0, 1));
@@ -2390,10 +2390,16 @@ void pass_scene_background(r3d_target_t sceneTarget)
     }
     else
     {
+        Vector4 bgColor = r3d_color_srgb_to_linear_vec4(bg->color);
+        float bgPremult = bg->energy * bgColor.w;
+
         R3D_SHADER_USE(scene.background);
-        Vector3 bgColor = r3d_color_srgb_to_linear_vec3(bg->color);
-        bgColor = Vector3Scale(bgColor, bg->energy);
-        R3D_SHADER_SET_VEC4(scene.background, uColor, (Vector4) {bgColor.x, bgColor.y, bgColor.z, 1.0f});
+        R3D_SHADER_SET_VEC4(scene.background, uColor, (Vector4) {
+            bgColor.x * bgPremult,
+            bgColor.y * bgPremult,
+            bgColor.z * bgPremult,
+            bgColor.w
+        });
     }
 
     R3D_RENDER_SCREEN();
@@ -2744,8 +2750,10 @@ void blit_to_screen(r3d_target_t source)
     glViewport(dstX, glDstY, dstW, dstH);
 
     r3d_driver_enable(GL_DEPTH_TEST);
-    r3d_driver_set_depth_mask(GL_TRUE);
+    r3d_driver_disable(GL_BLEND);
+
     r3d_driver_set_depth_func(GL_ALWAYS);
+    r3d_driver_set_depth_mask(GL_TRUE);
 
     if (sign > 0)
     {
