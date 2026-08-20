@@ -485,6 +485,11 @@ void r3d_driver_set_stencil_state(R3D_StencilState state)
 
 void r3d_driver_set_blend_mode(R3D_BlendMode blend)
 {
+    // Alpha always uses separate factors from RGB, it must accumulate
+    // coverage via standard "over" compositing regardless of the RGB
+    // blend mode, so transparent backgrounds and forward-blended
+    // objects compose correctly together.
+
     switch (blend)
     {
     case R3D_BLEND_ALPHA:
