@@ -207,6 +207,10 @@ typedef enum R3D_Tonemap {
 
 /**
  * @brief Background and skybox configuration.
+ *
+ * @note A transparent or semi-transparent background color is supported,
+ * but effects that blur/spread geometry (like bloom or DoF) will bleed
+ * or fade at silhouettes instead of blending with real content behind.
  */
 typedef struct R3D_EnvBackground {
     Color color;            ///< Background color when there is no skybox
