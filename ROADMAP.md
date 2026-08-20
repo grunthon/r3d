@@ -9,12 +9,12 @@
   Currently, each "module" handles allocation failures differently, sometimes logging them and sometimes ignoring them.
   This should be made consistent, possibly following raylib's approach by doing nothing and letting the program fail.
 
-* [ ] **Review the color space system**
+* [x] **Review the color space system**
   The entire system can be simplified by treating `Color` as always being in sRGB and vectors as always being in linear space.
   Similarly for textures: if they contain colors and are RGB(A), always load them as sRGB.
   Also add automatic conversion for RGBA8 attributes (instances/vertices).
 
-* [ ] **Transparent Background**
+* [x] **Transparent Background**
   Allow the use of a transparent background color, making it transparent by default.
   We could either keep the background color as an option, or simply remove it and let the buffer being rendered to determine the background when no skybox is present.
 
