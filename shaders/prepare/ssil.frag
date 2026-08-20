@@ -60,7 +60,7 @@ out vec4 FragColor;
 // Samplers & Uniforms
 // ================================
 
-uniform sampler2D uDiffuseTex;
+uniform sampler2D uRadianceTex;
 uniform sampler2D uNormalTex;
 uniform sampler2D uDepthTex;
 
@@ -123,7 +123,7 @@ void main()
         float w = f * f * f * max((vn - uSsil.bias) / (epsilon + vv), 0.0) * float(inBounds);
 
         aoSum += w;
-        giSum += texelFetch(uDiffuseTex, pixelOffset, 0).rgb * w;
+        giSum += texelFetch(uRadianceTex, pixelOffset, 0).rgb * w;
     }
 
     float temp = radiusSq * uSsil.radius;

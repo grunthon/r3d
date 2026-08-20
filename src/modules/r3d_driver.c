@@ -485,22 +485,47 @@ void r3d_driver_set_stencil_state(R3D_StencilState state)
 
 void r3d_driver_set_blend_mode(R3D_BlendMode blend)
 {
+    // Alpha always uses separate factors from RGB, it must accumulate
+    // coverage via standard "over" compositing regardless of the RGB
+    // blend mode, so transparent backgrounds and forward-blended
+    // objects compose correctly together.
+
     switch (blend)
     {
     case R3D_BLEND_ALPHA:
-        r3d_driver_set_blend_func(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        r3d_driver_set_blend_func_separate(
+            GL_FUNC_ADD,
+            GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,
+            GL_ONE, GL_ONE_MINUS_SRC_ALPHA
+        );
         break;
     case R3D_BLEND_ADDITIVE:
-        r3d_driver_set_blend_func(GL_FUNC_ADD, GL_ONE, GL_ONE);
+        r3d_driver_set_blend_func_separate(
+            GL_FUNC_ADD,
+            GL_ONE, GL_ONE,
+            GL_ZERO, GL_ONE
+        );
         break;
     case R3D_BLEND_ADD_ALPHA:
-        r3d_driver_set_blend_func(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE);
+        r3d_driver_set_blend_func_separate(
+            GL_FUNC_ADD,
+            GL_SRC_ALPHA, GL_ONE,
+            GL_ZERO, GL_ONE
+        );
         break;
     case R3D_BLEND_MULTIPLY:
-        r3d_driver_set_blend_func(GL_FUNC_ADD, GL_DST_COLOR, GL_ZERO);
+        r3d_driver_set_blend_func_separate(
+            GL_FUNC_ADD,
+            GL_DST_COLOR, GL_ZERO,
+            GL_ZERO, GL_ONE
+        );
         break;
     case R3D_BLEND_PREMULTIPLIED_ALPHA:
-        r3d_driver_set_blend_func(GL_FUNC_ADD, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+        r3d_driver_set_blend_func_separate(
+            GL_FUNC_ADD,
+            GL_ONE, GL_ONE_MINUS_SRC_ALPHA,
+            GL_ONE, GL_ONE_MINUS_SRC_ALPHA
+        );
         break;
     default:
         break;

@@ -86,7 +86,7 @@ void main()
 
     vec4 dummy = vec4(0.0);
 
-    FragColor = FxaaPixelShader(
+    vec4 aa = FxaaPixelShader(
         vTexCoord,                  // pos
         fxaaConsolePosPos,          // fxaaConsolePosPos
         uSceneTex,                  // tex
@@ -104,4 +104,9 @@ void main()
         0.0,                        // fxaaConsoleEdgeThresholdMin
         vec4(0.0)                   // fxaaConsole360ConstDir
     );
+
+    // Not a fan of this, but we have to deal with transparent background...
+    float alpha = texelFetch(uSceneTex, ivec2(gl_FragCoord.xy), 0).a;
+
+    FragColor = vec4(aa.rgb, alpha);
 }

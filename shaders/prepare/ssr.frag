@@ -33,7 +33,7 @@ out vec4 FragColor;
 // Samplers & Uniforms
 // ================================
 
-uniform sampler2D uDiffuseTex;
+uniform sampler2D uRadianceTex;
 uniform sampler2D uSpecularTex;
 uniform sampler2D uNormalTex;
 uniform sampler2D uDepthTex;
@@ -196,7 +196,7 @@ void main()
         return;
     }
 
-    vec3 hitDiff = texelFetch(uDiffuseTex, hitPixCoord, 0).rgb;
+    vec3 hitDiff = texelFetch(uRadianceTex, hitPixCoord, 0).rgb;
     vec3 hitSpec = texelFetch(uSpecularTex, hitPixCoord, 0).rgb;
 
     vec3 rayPos = V_GetViewPosition(result.uv, 1.0 / result.z);

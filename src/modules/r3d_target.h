@@ -24,14 +24,16 @@
  */
 typedef enum {
     R3D_TARGET_INVALID = -1,
+    R3D_TARGET_SCENE_0,         //< Full - Mip 1 - RGBA16F
+    R3D_TARGET_SCENE_1,         //< Full - Mip 1 - RGBA16F
     R3D_TARGET_ALBEDO,          //< Full - Mip 1 - RGB8
     R3D_TARGET_NORMAL,          //< Full - Mip 2 - RG16
+    R3D_TARGET_GEOM_NORMAL,     //< Full - Mip 1 - RG16
     R3D_TARGET_ORM,             //< Full - Mip 1 - RGBA8
     R3D_TARGET_DEPTH,           //< Full - Mip N - R16F
     R3D_TARGET_SELECTOR,        //< Half - Mip N - R8UI
-    R3D_TARGET_DIFFUSE,         //< Full - Mip 2 - RGB16F
+    R3D_TARGET_RADIANCE,        //< Full - Mip 2 - RGB16F
     R3D_TARGET_SPECULAR,        //< Full - Mip 2 - RGB16F
-    R3D_TARGET_GEOM_NORMAL,     //< Full - Mip 1 - RG16
     R3D_TARGET_VFOG_RAD,        //< Half - Mip 1 - R11G11B10F
     R3D_TARGET_SSAO_0,          //< Half - Mip 1 - R8
     R3D_TARGET_SSAO_1,          //< Half - Mip 1 - R8
@@ -44,13 +46,11 @@ typedef enum {
     R3D_TARGET_DOF_0,           //< Half - Mip 1 - RGBA16F
     R3D_TARGET_DOF_1,           //< Half - Mip 1 - RGBA16F
     R3D_TARGET_BLOOM,           //< Half - Mip N - RGB16F
-    R3D_TARGET_SMAA_EDGES,      //< Full - Mip 1 - RG8
-    R3D_TARGET_SMAA_BLEND,      //< Full - Mip 1 - RGBA8
     R3D_TARGET_LUMINANCE,       //< Half - Mip N - R16F
     R3D_TARGET_EXPOSURE_0,      //< 1x1  - Mip 1 - RG16F
     R3D_TARGET_EXPOSURE_1,      //< 1x1  - Mip 1 - RG16F
-    R3D_TARGET_SCENE_0,         //< Full - Mip 1 - RGB16F
-    R3D_TARGET_SCENE_1,         //< Full - Mip 1 - RGB16F
+    R3D_TARGET_SMAA_EDGES,      //< Full - Mip 1 - RG8
+    R3D_TARGET_SMAA_BLEND,      //< Full - Mip 1 - RGBA8
     R3D_TARGET_COUNT
 } r3d_target_t;
 
@@ -58,28 +58,19 @@ typedef enum {
 // HELPER TARGET PACKS
 // ========================================
 
-#define R3D_TARGET_ALL_DEFERRED \
-    R3D_TARGET_ALBEDO,          \
-    R3D_TARGET_NORMAL,          \
-    R3D_TARGET_ORM,             \
-    R3D_TARGET_DEPTH,           \
-    R3D_TARGET_DIFFUSE,         \
-    R3D_TARGET_SPECULAR,        \
-    R3D_TARGET_GEOM_NORMAL      \
-
 #define R3D_TARGET_GBUFFER      \
     R3D_TARGET_ALBEDO,          \
-    R3D_TARGET_DIFFUSE,         \
     R3D_TARGET_NORMAL,          \
-    R3D_TARGET_ORM,             \
     R3D_TARGET_GEOM_NORMAL,     \
-    R3D_TARGET_DEPTH            \
+    R3D_TARGET_ORM,             \
+    R3D_TARGET_DEPTH,           \
+    R3D_TARGET_RADIANCE
 
 #define R3D_TARGET_DECAL        \
     R3D_TARGET_ALBEDO,          \
-    R3D_TARGET_DIFFUSE,         \
+    R3D_TARGET_NORMAL,          \
     R3D_TARGET_ORM,             \
-    R3D_TARGET_NORMAL           \
+    R3D_TARGET_RADIANCE
 
 // ========================================
 // HELPER MACROS

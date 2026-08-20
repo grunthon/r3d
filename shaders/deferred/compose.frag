@@ -28,14 +28,14 @@ noperspective in vec2 vTexCoord;
 // Out - Fragments
 // ================================
 
-layout(location = 0) out vec3 FragColor;
+layout(location = 0) out vec4 FragColor;
 
 // ================================
 // Samplers & Uniforms
 // ================================
 
 uniform sampler2D uAlbedoTex;
-uniform sampler2D uDiffuseTex;
+uniform sampler2D uRadianceTex;
 uniform sampler2D uSpecularTex;
 uniform sampler2D uOrmTex;
 uniform sampler2D uSsrTex;
@@ -49,7 +49,7 @@ uniform float uSsrNumLevels;
 void main()
 {
     vec3 albedo = texelFetch(uAlbedoTex, ivec2(gl_FragCoord.xy), 0).rgb;
-    vec3 diffuse = texelFetch(uDiffuseTex, ivec2(gl_FragCoord.xy), 0).rgb;
+    vec3 radiance = texelFetch(uRadianceTex, ivec2(gl_FragCoord.xy), 0).rgb;
     vec3 specular = texelFetch(uSpecularTex, ivec2(gl_FragCoord.xy), 0).rgb;
 
     vec4 orm = texelFetch(uOrmTex, ivec2(gl_FragCoord).xy, 0);
@@ -58,5 +58,7 @@ void main()
     vec3 F0 = PBR_F0(orm.z, orm.w, albedo);
     vec3 kS_approx = F0 * (1.0 - orm.y * 0.5);
 
-    FragColor = diffuse + mix(specular, kS_approx * ssr.rgb, ssr.a);
+    specular = mix(specular, kS_approx * ssr.rgb, ssr.a);
+
+    FragColor = vec4(radiance + specular, 1.0);
 }

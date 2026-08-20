@@ -195,7 +195,7 @@ void R3D_End(void)
     r3d_driver_set_depth_mask(GL_TRUE);
     r3d_driver_set_stencil_mask(0xFF);
 
-    R3D_TARGET_BIND_CLEAR(0, true, R3D_TARGET_ALL_DEFERRED);
+    R3D_TARGET_BIND_CLEAR(0, true, R3D_TARGET_GBUFFER, R3D_TARGET_SPECULAR, R3D_TARGET_SCENE_0);
 
     /* --- Deferred path for opaques and decals --- */
 
@@ -224,8 +224,8 @@ void R3D_End(void)
             pass_prepare_pyramid();
 
             if (ssao || ssil || ssgi || ssr) pass_prepare_downsample(R3D_TARGET_NORMAL, 1);
-            // skip ssr check for diffuse, we re-downsample during ssr for the full ambient reflection
-            if (ssil || ssgi) pass_prepare_downsample(R3D_TARGET_DIFFUSE, 1);
+            // skip ssr check for radiance, we re-downsample during ssr for the full ambient reflection
+            if (ssil || ssgi) pass_prepare_downsample(R3D_TARGET_RADIANCE, 1);
         }
 
         if (ssao) ssaoSource = pass_prepare_ssao();
@@ -307,7 +307,7 @@ void R3D_End(void)
     case R3D_OUTPUT_ALBEDO:   visualize_to_screen(R3D_TARGET_ALBEDO); break;
     case R3D_OUTPUT_NORMAL:   visualize_to_screen(R3D_TARGET_NORMAL); break;
     case R3D_OUTPUT_ORM:      visualize_to_screen(R3D_TARGET_ORM); break;
-    case R3D_OUTPUT_DIFFUSE:  visualize_to_screen(R3D_TARGET_DIFFUSE); break;
+    case R3D_OUTPUT_RADIANCE: visualize_to_screen(R3D_TARGET_RADIANCE); break;
     case R3D_OUTPUT_SPECULAR: visualize_to_screen(R3D_TARGET_SPECULAR); break;
     case R3D_OUTPUT_SSAO:     visualize_to_screen(ssaoSource); break;
     case R3D_OUTPUT_SSIL:     visualize_to_screen(ssilSource); break;
@@ -1917,7 +1917,7 @@ r3d_target_t pass_prepare_ssil(void)
     R3D_TARGET_BIND_CLEAR(1, true, R3D_TARGET_SSIL_0);
     R3D_SHADER_USE(prepare.ssil);
 
-    R3D_SHADER_BIND_SAMPLER(prepare.ssil, uDiffuseTex, r3d_target_get_level(R3D_TARGET_DIFFUSE, 1));
+    R3D_SHADER_BIND_SAMPLER(prepare.ssil, uRadianceTex, r3d_target_get_level(R3D_TARGET_RADIANCE, 1));
     R3D_SHADER_BIND_SAMPLER(prepare.ssil, uNormalTex, r3d_target_get_level(R3D_TARGET_NORMAL, 1));
     R3D_SHADER_BIND_SAMPLER(prepare.ssil, uDepthTex, r3d_target_get_level(R3D_TARGET_DEPTH, 1));
 
@@ -1970,7 +1970,7 @@ r3d_target_t pass_prepare_ssgi(void)
     R3D_TARGET_BIND_CLEAR(1, true, R3D_TARGET_SSGI_0);
     R3D_SHADER_USE(prepare.ssgi);
 
-    R3D_SHADER_BIND_SAMPLER(prepare.ssgi, uDiffuseTex, r3d_target_get_level(R3D_TARGET_DIFFUSE, 1));
+    R3D_SHADER_BIND_SAMPLER(prepare.ssgi, uRadianceTex, r3d_target_get_level(R3D_TARGET_RADIANCE, 1));
     R3D_SHADER_BIND_SAMPLER(prepare.ssgi, uNormalTex, r3d_target_get_level(R3D_TARGET_NORMAL, 1));
     R3D_SHADER_BIND_SAMPLER(prepare.ssgi, uDepthTex, r3d_target_get_level(R3D_TARGET_DEPTH, 1));
 
@@ -2039,7 +2039,7 @@ r3d_target_t pass_prepare_ssr(void)
 {
     /* --- Downsample needed buffers --- */
 
-    pass_prepare_downsample(R3D_TARGET_DIFFUSE, 1);
+    pass_prepare_downsample(R3D_TARGET_RADIANCE, 1);
     pass_prepare_downsample(R3D_TARGET_SPECULAR, 1);
 
     /* --- Setup OpenGL pipeline --- */
@@ -2062,7 +2062,7 @@ r3d_target_t pass_prepare_ssr(void)
     R3D_TARGET_BIND_CLEAR(minLevel, true, R3D_TARGET_SSR);
     R3D_SHADER_USE(prepare.ssr);
 
-    R3D_SHADER_BIND_SAMPLER(prepare.ssr, uDiffuseTex, r3d_target_get_level(R3D_TARGET_DIFFUSE, 1));
+    R3D_SHADER_BIND_SAMPLER(prepare.ssr, uRadianceTex, r3d_target_get_level(R3D_TARGET_RADIANCE, 1));
     R3D_SHADER_BIND_SAMPLER(prepare.ssr, uSpecularTex, r3d_target_get_level(R3D_TARGET_SPECULAR, 1));
     R3D_SHADER_BIND_SAMPLER(prepare.ssr, uNormalTex, r3d_target_get_level(R3D_TARGET_NORMAL, 1));
     R3D_SHADER_BIND_SAMPLER(prepare.ssr, uDepthTex, r3d_target_get_levels(R3D_TARGET_DEPTH, minLevel, maxLevel));
@@ -2119,7 +2119,7 @@ void pass_deferred_lights(void)
 
     /* --- Bind FBO and shader then setup constant stuff --- */
 
-    R3D_TARGET_BIND_LOAD(0, true, R3D_TARGET_DIFFUSE, R3D_TARGET_SPECULAR);
+    R3D_TARGET_BIND_LOAD(0, true, R3D_TARGET_RADIANCE, R3D_TARGET_SPECULAR);
     R3D_SHADER_USE(deferred.lighting);
 
     R3D_SHADER_BIND_SAMPLER(deferred.lighting, uAlbedoTex, r3d_target_get_level(R3D_TARGET_ALBEDO, 0));
@@ -2185,7 +2185,7 @@ void pass_deferred_ambient(r3d_target_t ssaoSource, r3d_target_t ssilSource, r3d
 
     /* --- Calculation and composition of ambient/indirect lighting --- */
 
-    R3D_TARGET_BIND_LOAD(0, true, R3D_TARGET_DIFFUSE, R3D_TARGET_SPECULAR);
+    R3D_TARGET_BIND_LOAD(0, true, R3D_TARGET_RADIANCE, R3D_TARGET_SPECULAR);
     R3D_SHADER_USE(deferred.ambient);
 
     R3D_SHADER_BIND_SAMPLER(deferred.ambient, uAlbedoTex, r3d_target_get_level(R3D_TARGET_ALBEDO, 0));
@@ -2211,11 +2211,11 @@ void pass_deferred_compose(r3d_target_t sceneTarget, r3d_target_t ssrSource)
     r3d_driver_set_depth_mask(GL_FALSE);
     r3d_driver_set_depth_func(GL_GREATER);
 
-    R3D_TARGET_BIND_CLEAR(0, true, sceneTarget);
+    R3D_TARGET_BIND_LOAD(0, true, sceneTarget);
     R3D_SHADER_USE(deferred.compose);
 
     R3D_SHADER_BIND_SAMPLER(deferred.compose, uAlbedoTex, r3d_target_get_level(R3D_TARGET_ALBEDO, 0));
-    R3D_SHADER_BIND_SAMPLER(deferred.compose, uDiffuseTex, r3d_target_get_level(R3D_TARGET_DIFFUSE, 0));
+    R3D_SHADER_BIND_SAMPLER(deferred.compose, uRadianceTex, r3d_target_get_level(R3D_TARGET_RADIANCE, 0));
     R3D_SHADER_BIND_SAMPLER(deferred.compose, uSpecularTex, r3d_target_get_level(R3D_TARGET_SPECULAR, 0));
     R3D_SHADER_BIND_SAMPLER(deferred.compose, uOrmTex, r3d_target_get_level(R3D_TARGET_ORM, 0));
     R3D_SHADER_BIND_SAMPLER(deferred.compose, uSsrTex, R3D_TEXTURE_SELECT(r3d_target_get_or_null(ssrSource), BLANK));
@@ -2232,7 +2232,7 @@ void pass_deferred_fog(r3d_target_t sceneTarget)
     r3d_driver_disable(GL_CULL_FACE);
 
     r3d_driver_enable(GL_BLEND);
-    r3d_driver_set_blend_func(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    r3d_driver_set_blend_func_separate(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     R3D_TARGET_BIND_LOAD(0, false, sceneTarget);
     R3D_SHADER_USE(deferred.fog);
@@ -2312,7 +2312,7 @@ void pass_deferred_volumetric_fog(r3d_target_t sceneTarget)
     R3D_SHADER_USE(deferred.vfogCompose);
 
     r3d_driver_enable(GL_BLEND);
-    r3d_driver_set_blend_func(GL_FUNC_ADD, GL_ONE, GL_ONE);
+    r3d_driver_set_blend_func_separate(GL_FUNC_ADD, GL_ONE, GL_ONE, GL_ZERO, GL_ONE);
 
     R3D_SHADER_BIND_SAMPLER(deferred.vfogCompose, uRadianceTex, r3d_target_get_level(R3D_TARGET_VFOG_RAD, 1));
     R3D_SHADER_BIND_SAMPLER(deferred.vfogCompose, uDepthTex, r3d_target_get_levels(R3D_TARGET_DEPTH, 0, 1));
@@ -2390,10 +2390,16 @@ void pass_scene_background(r3d_target_t sceneTarget)
     }
     else
     {
+        Vector4 bgColor = r3d_color_srgb_to_linear_vec4(bg->color);
+        float bgPremult = bg->energy * bgColor.w;
+
         R3D_SHADER_USE(scene.background);
-        Vector3 bgColor = r3d_color_srgb_to_linear_vec3(bg->color);
-        bgColor = Vector3Scale(bgColor, bg->energy);
-        R3D_SHADER_SET_VEC4(scene.background, uColor, (Vector4) {bgColor.x, bgColor.y, bgColor.z, 1.0f});
+        R3D_SHADER_SET_VEC4(scene.background, uColor, (Vector4) {
+            bgColor.x * bgPremult,
+            bgColor.y * bgPremult,
+            bgColor.z * bgPremult,
+            bgColor.w
+        });
     }
 
     R3D_RENDER_SCREEN();
@@ -2744,8 +2750,10 @@ void blit_to_screen(r3d_target_t source)
     glViewport(dstX, glDstY, dstW, dstH);
 
     r3d_driver_enable(GL_DEPTH_TEST);
-    r3d_driver_set_depth_mask(GL_TRUE);
+    r3d_driver_disable(GL_BLEND);
+
     r3d_driver_set_depth_func(GL_ALWAYS);
+    r3d_driver_set_depth_mask(GL_TRUE);
 
     if (sign > 0)
     {

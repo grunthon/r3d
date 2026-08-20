@@ -34,7 +34,7 @@ noperspective in vec2 vTexCoord;
 // Out - Fragments
 // ================================
 
-layout(location = 0) out vec4 FragDiffuse;
+layout(location = 0) out vec4 FragRadiance;
 layout(location = 1) out vec4 FragSpecular;
 
 // ================================
@@ -117,6 +117,6 @@ void main()
     vec3 spec = vec3(0.0);
     E_ComputeAmbientAndProbes(diff, spec, kD, orm.rgb, F0, P, N, V, NoV);
 
-    FragDiffuse = vec4(diff + io.rgb, 1.0);
+    FragRadiance = vec4(diff + io.rgb, 1.0);
     FragSpecular = vec4(spec, 1.0);
 }
