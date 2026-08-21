@@ -66,8 +66,6 @@ Texture2D R3D_LoadTextureFromImageEx(Image image, TextureWrap wrap, TextureFilte
         R3D_TRACELOG(LOG_WARNING, "Failed to load texture from image");
     }
 
-    UnloadImage(image);
-
     return texture;
 }
 
