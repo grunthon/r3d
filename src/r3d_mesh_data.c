@@ -2025,13 +2025,18 @@ void R3D_GenMeshDataTangents(R3D_MeshData* meshData, R3D_PrimitiveType type)
 
     size_t bufferSize = meshData->vertexCount * sizeof(Vector3);
 
-    R3D_STACK_SCOPE(&R3D.stack, 2 * bufferSize)
-    {
-        Vector3* tangents = r3d_stack_alloc(&R3D.stack, bufferSize);
-        memset(tangents, 0, bufferSize);
+    // TODO: Make the scratch allocator thread-safe, or keep zalloc.
 
-        Vector3* bitangents = r3d_stack_alloc(&R3D.stack, bufferSize);
-        memset(bitangents, 0, bufferSize);
+    //R3D_STACK_SCOPE(&R3D.stack, 2 * bufferSize)
+    //{
+        //Vector3* tangents = r3d_stack_alloc(&R3D.stack, bufferSize);
+        //memset(tangents, 0, bufferSize);
+
+        //Vector3* bitangents = r3d_stack_alloc(&R3D.stack, bufferSize);
+        //memset(bitangents, 0, bufferSize);
+
+        Vector3* tangents = r3d_zalloc(2 * bufferSize);
+        Vector3* bitangents = tangents + meshData->vertexCount;
 
         int count = meshData->indexCount > 0
             ? meshData->indexCount : meshData->vertexCount;
@@ -2096,7 +2101,9 @@ void R3D_GenMeshDataTangents(R3D_MeshData* meshData, R3D_PrimitiveType type)
             float handedness = Vector3DotProduct(Vector3CrossProduct(n, t), bitangents[i]) < 0.0f ? -1.0f : 1.0f;
             R3D_PackTangent((int8_t*)meshData->vertices[i].tangent, (Vector4){t.x, t.y, t.z, handedness});
         }
-    }
+
+        r3d_free(tangents);
+    //}
 }
 
 BoundingBox R3D_CalculateMeshDataBoundingBox(R3D_MeshData meshData)
