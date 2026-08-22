@@ -84,7 +84,7 @@ static inline void process_vertex_tangent(R3D_Vertex* vertex, const struct aiMes
             bitangent = r3d_vector3_transform_linear(bitangent, normalMatrix);
         }
 
-        normal = Vector3Normalize(tangent);
+        normal = Vector3Normalize(normal);
         tangent = Vector3Normalize(tangent);
         bitangent = Vector3Normalize(bitangent);
 
