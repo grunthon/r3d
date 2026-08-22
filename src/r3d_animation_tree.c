@@ -411,7 +411,7 @@ static R3D_AnimationTreeNode* anode_create(R3D_AnimationTree* atree, r3d_animtre
     if (poolSize < atree->nodePoolMaxSize)
     {
         node = &atree->nodePool[poolSize];
-        node->base = r3d_malloc(nodeSize);
+        node->base = r3d_zalloc(nodeSize);
         node->base->type = type;
     }
     else
@@ -1107,8 +1107,8 @@ static R3D_AnimationTreeNode* atree_switch_create(R3D_AnimationTree* atree, int 
     if (!anode) return NULL;
 
     r3d_animtree_switch_t* swch = anode->swch;
-    swch->inList    = r3d_malloc(inCount * sizeof(*swch->inList));
-    swch->inWeights = r3d_malloc(inCount * sizeof(*swch->inWeights));
+    swch->inList    = r3d_zalloc(inCount * sizeof(*swch->inList));
+    swch->inWeights = r3d_zalloc(inCount * sizeof(*swch->inWeights));
     swch->inCount   = inCount;
     swch->params    = params;
 
@@ -1122,18 +1122,18 @@ static R3D_AnimationTreeNode* atree_stm_create(R3D_AnimationTree* atree, int sta
     if (!anode) return NULL;
 
     r3d_animtree_stm_t* stm = anode->stm;
-    stm->nodeList  = r3d_malloc(statesCount * sizeof(*stm->nodeList));
-    stm->edgeList  = r3d_malloc(edgesCount * sizeof(*stm->edgeList));
-    stm->stateList = r3d_malloc(statesCount * sizeof(*stm->stateList));
-    stm->visitList = r3d_malloc(statesCount * sizeof(*stm->visitList));
+    stm->nodeList  = r3d_zalloc(statesCount * sizeof(*stm->nodeList));
+    stm->edgeList  = r3d_zalloc(edgesCount * sizeof(*stm->edgeList));
+    stm->stateList = r3d_zalloc(statesCount * sizeof(*stm->stateList));
+    stm->visitList = r3d_zalloc(statesCount * sizeof(*stm->visitList));
     stm->maxStates = statesCount;
     stm->maxEdges  = edgesCount;
     if (travel)
     {
-        stm->path.edges = r3d_malloc(statesCount * sizeof(*stm->path.edges));
-        stm->path.open  = r3d_malloc(edgesCount * statesCount * sizeof(*stm->path.open));
-        stm->path.next  = r3d_malloc(edgesCount * statesCount * sizeof(*stm->path.next));
-        stm->path.mark  = r3d_malloc(statesCount * sizeof(*stm->path.mark));
+        stm->path.edges = r3d_zalloc(statesCount * sizeof(*stm->path.edges));
+        stm->path.open  = r3d_zalloc(edgesCount * statesCount * sizeof(*stm->path.open));
+        stm->path.next  = r3d_zalloc(edgesCount * statesCount * sizeof(*stm->path.next));
+        stm->path.mark  = r3d_zalloc(statesCount * sizeof(*stm->path.mark));
     }
     return anode;
 }
@@ -1154,7 +1154,7 @@ static R3D_AnimationStmIndex atree_state_create(r3d_animtree_stm_t* node, R3D_An
 
     r3d_stmstate_t* state = &node->stateList[nextIdx];
     *state = (r3d_stmstate_t) {
-        .outList = (edgesCount > 0 ? r3d_malloc(edgesCount * sizeof(*state->outList)) : NULL),
+        .outList = (edgesCount > 0 ? r3d_zalloc(edgesCount * sizeof(*state->outList)) : NULL),
         .outCount = 0,
         .maxOut = edgesCount,
         .activeIn = NULL
@@ -1308,7 +1308,7 @@ R3D_AnimationTree R3D_LoadAnimationTreePro(R3D_AnimationPlayer player, int maxSi
 {
     R3D_AnimationTree tree = {0};
     tree.player = player;
-    tree.nodePool = r3d_malloc(maxSize * sizeof(*tree.nodePool));
+    tree.nodePool = r3d_zalloc(maxSize * sizeof(*tree.nodePool));
     tree.nodePoolMaxSize = maxSize;
     tree.rootBone = rootBone;
     tree.updateCallback = updateCallback;

@@ -132,7 +132,7 @@ Image r3d_image_compose_rgb(const Image* sources[3], Color defaultColor)
         return image;
     }
 
-    uint8_t* pixels = r3d_malloc(3 * w * h);
+    uint8_t* pixels = r3d_zalloc(3 * w * h);
 
     /* --- Calculate scales --- */
 

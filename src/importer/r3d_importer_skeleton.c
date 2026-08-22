@@ -125,10 +125,10 @@ bool r3d_importer_load_skeleton(const R3D_Importer* importer, R3D_Skeleton* skel
     }
 
     // Allocate bone arrays
-    skeleton->bones     = r3d_malloc(boneCount * sizeof(R3D_BoneInfo));
-    skeleton->invBind   = r3d_malloc(boneCount * sizeof(Matrix));
-    skeleton->localBind = r3d_malloc(boneCount * sizeof(Matrix));
-    skeleton->modelBind = r3d_malloc(boneCount * sizeof(Matrix));
+    skeleton->bones     = r3d_zalloc(boneCount * sizeof(R3D_BoneInfo));
+    skeleton->invBind   = r3d_zalloc(boneCount * sizeof(Matrix));
+    skeleton->localBind = r3d_zalloc(boneCount * sizeof(Matrix));
+    skeleton->modelBind = r3d_zalloc(boneCount * sizeof(Matrix));
     skeleton->boneCount = boneCount;
 
     // Initialize parent indices to -1 (no parent)

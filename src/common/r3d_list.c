@@ -27,7 +27,7 @@ static void push_all(r3d_list_t* list, const void* elems, size_t count);
 
 r3d_list_t* r3d_list_create(size_t elemSize, size_t capacity)
 {
-    r3d_list_t* list = r3d_malloc(sizeof(r3d_list_t) + capacity * elemSize);
+    r3d_list_t* list = r3d_zalloc(sizeof(r3d_list_t) + capacity * elemSize);
 
     list->elements     = (char*)list + sizeof(r3d_list_t);
     list->elemSize     = elemSize;

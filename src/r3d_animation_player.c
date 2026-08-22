@@ -35,10 +35,10 @@ R3D_AnimationPlayer R3D_LoadAnimationPlayer(R3D_Skeleton skeleton, R3D_Animation
     player.animLib  = animLib;
 
     // Allocate the required memory
-    player.states     = r3d_malloc(animLib.count * sizeof(*player.states));
-    player.localPose  = r3d_malloc(skeleton.boneCount * sizeof(*player.localPose));
-    player.modelPose  = r3d_malloc(skeleton.boneCount * sizeof(*player.modelPose));
-    player.skinBuffer = r3d_malloc(skeleton.boneCount * sizeof(*player.skinBuffer));
+    player.states     = r3d_zalloc(animLib.count * sizeof(*player.states));
+    player.localPose  = r3d_zalloc(skeleton.boneCount * sizeof(*player.localPose));
+    player.modelPose  = r3d_zalloc(skeleton.boneCount * sizeof(*player.modelPose));
+    player.skinBuffer = r3d_zalloc(skeleton.boneCount * sizeof(*player.skinBuffer));
 
     // Initialize animation states
     for (int i = 0; i < animLib.count; i++)

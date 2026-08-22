@@ -417,7 +417,7 @@ r3d_importer_texture_cache_t* r3d_importer_load_texture_cache(
 
     // Persistent output buffer (outlives the scratch scope below)
     int maxSlots = materialCount * R3D_MAP_COUNT;
-    Texture2D* finalTextures = r3d_malloc(maxSlots * sizeof(Texture2D));
+    Texture2D* finalTextures = r3d_zalloc(maxSlots * sizeof(Texture2D));
 
     int uniqueCount    = 0;
     int uploadedCount  = 0;
@@ -551,7 +551,7 @@ r3d_importer_texture_cache_t* r3d_importer_load_texture_cache(
         }
     }
 
-    r3d_importer_texture_cache_t* cache = r3d_malloc(sizeof(*cache));
+    r3d_importer_texture_cache_t* cache = r3d_zalloc(sizeof(*cache));
     cache->materialCount = materialCount;
     cache->textures      = finalTextures;
 

@@ -1958,7 +1958,7 @@ r3d_shader_custom_t* r3d_shader_custom_alloc(void)
     size_t programOffset = (sizeof(r3d_shader_custom_t) + alignof(r3d_shader_custom_program_t) - 1) & ~(alignof(r3d_shader_custom_program_t) - 1);
     size_t size = programOffset + sizeof(r3d_shader_custom_program_t);
 
-    r3d_shader_custom_t* shader = r3d_malloc(size);
+    r3d_shader_custom_t* shader = r3d_zalloc(size);
     uintptr_t programAddress = (uintptr_t)shader + programOffset;
 
     shader->program = (r3d_shader_custom_program_t*)programAddress;
@@ -1969,7 +1969,7 @@ r3d_shader_custom_t* r3d_shader_custom_alloc(void)
 
 r3d_shader_custom_t* r3d_shader_custom_clone(r3d_shader_custom_t* custom)
 {
-    r3d_shader_custom_t* clone = r3d_malloc(sizeof(r3d_shader_custom_t));
+    r3d_shader_custom_t* clone = r3d_zalloc(sizeof(r3d_shader_custom_t));
 
     clone->program = custom->program;
     clone->programOwner = false;

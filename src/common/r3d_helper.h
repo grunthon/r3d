@@ -86,7 +86,7 @@ int r3d_get_cpu_count(void);
 // INLINED FUNCTIONS
 // ========================================
 
-static inline void* r3d_malloc(size_t size)
+static inline void* r3d_zalloc(size_t size)
 {
     assert(size <= UINT_MAX); // duplicated to keep the stack with debuggers
 

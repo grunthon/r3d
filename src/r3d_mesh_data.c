@@ -41,12 +41,12 @@ R3D_MeshData R3D_LoadMeshData(int vertexCapacity, int indexCapacity)
         return meshData;
     }
 
-    meshData.vertices = r3d_malloc(vertexCapacity * sizeof(*meshData.vertices));
+    meshData.vertices = r3d_zalloc(vertexCapacity * sizeof(*meshData.vertices));
     meshData.vertexCapacity = vertexCapacity;
 
     if (indexCapacity > 0)
     {
-        meshData.indices = r3d_malloc(indexCapacity * sizeof(*meshData.indices));
+        meshData.indices = r3d_zalloc(indexCapacity * sizeof(*meshData.indices));
         meshData.indexCapacity = indexCapacity;
     }
 
@@ -2127,8 +2127,8 @@ BoundingBox R3D_CalculateMeshDataBoundingBox(R3D_MeshData meshData)
 
 bool alloc_mesh(R3D_MeshData* meshData, int vertexCount, int indexCount)
 {
-    meshData->vertices = r3d_malloc(vertexCount * sizeof(*meshData->vertices));
-    meshData->indices  = r3d_malloc(indexCount * sizeof(*meshData->indices));
+    meshData->vertices = r3d_zalloc(vertexCount * sizeof(*meshData->vertices));
+    meshData->indices  = r3d_zalloc(indexCount * sizeof(*meshData->indices));
 
     meshData->vertexCount    = vertexCount;
     meshData->indexCount     = indexCount;

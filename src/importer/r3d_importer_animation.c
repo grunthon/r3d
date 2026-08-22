@@ -27,8 +27,8 @@ static void load_vec3_track(R3D_AnimationTrack* track, unsigned int count, const
 
     if (track->count == 0) return;
 
-    float* times    = r3d_malloc(sizeof(float) * track->count);
-    Vector3* values = r3d_malloc(sizeof(Vector3) * track->count);
+    float* times    = r3d_zalloc(sizeof(float) * track->count);
+    Vector3* values = r3d_zalloc(sizeof(Vector3) * track->count);
 
     for (int i = 0; i < track->count; ++i)
     {
@@ -48,8 +48,8 @@ static void load_quat_track(R3D_AnimationTrack* track, unsigned int count, const
 
     if (track->count == 0) return;
 
-    float* times       = r3d_malloc(sizeof(float) * track->count);
-    Quaternion* values = r3d_malloc(sizeof(Quaternion) * track->count);
+    float* times       = r3d_zalloc(sizeof(float) * track->count);
+    Quaternion* values = r3d_zalloc(sizeof(Quaternion) * track->count);
 
     for (int i = 0; i < track->count; ++i)
     {
@@ -124,7 +124,7 @@ static bool load_animation(R3D_Animation* animation, const R3D_Importer* importe
 
     // Allocate channels
     animation->channelCount = aiAnim->mNumChannels;
-    animation->channels = r3d_malloc(animation->channelCount * sizeof(R3D_AnimationChannel));
+    animation->channels = r3d_zalloc(animation->channelCount * sizeof(R3D_AnimationChannel));
 
     // Load each channel
     int successChannels = 0;
@@ -180,7 +180,7 @@ bool r3d_importer_load_animations(const R3D_Importer* importer, R3D_AnimationLib
     }
 
     // Allocate temporary animations array
-    R3D_Animation* animations = r3d_malloc(animCount * sizeof(R3D_Animation));
+    R3D_Animation* animations = r3d_zalloc(animCount * sizeof(R3D_Animation));
 
     // Load each animation
     int successCount = 0;

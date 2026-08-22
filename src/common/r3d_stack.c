@@ -43,7 +43,7 @@ static r3d_stack_t* stack_grow(r3d_stack_t* stack, size_t minCapacity)
         newCap = doubled;
     }
 
-    r3d_stack_t* newStack = r3d_malloc(stack_total_size(newCap));
+    r3d_stack_t* newStack = r3d_zalloc(stack_total_size(newCap));
     *newStack = *stack;
     newStack->capacity = newCap;
 
@@ -66,7 +66,7 @@ r3d_stack_t* r3d_stack_create(size_t capacity)
 {
     R3D_ASSERT(capacity > 0 && "r3d_stack: capacity must be non-zero");
 
-    r3d_stack_t* stack = r3d_malloc(stack_total_size(capacity));
+    r3d_stack_t* stack = r3d_zalloc(stack_total_size(capacity));
     stack->capacity    = capacity;
     stack->cursor      = 0;
     stack->depth       = 0;

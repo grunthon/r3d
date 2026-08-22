@@ -265,7 +265,7 @@ bool r3d_importer_load_materials(const R3D_Importer* importer, R3D_Material** ma
     }
 
     *materialCount = r3d_importer_get_material_count(importer);
-    *materials = r3d_malloc(*materialCount * sizeof(R3D_Material));
+    *materials = r3d_zalloc(*materialCount * sizeof(R3D_Material));
 
     for (int i = 0; i < *materialCount; i++)
     {
