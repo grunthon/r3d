@@ -108,6 +108,8 @@ void main()
         g4 *= KarisAverage(g4);
 
         FragColor = g0+g1+g2+g3+g4;
+        FragColor = max(FragColor, 1e-4);
+        FragColor = Prefilter(FragColor);
     }
     else
     {
