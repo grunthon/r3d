@@ -1676,10 +1676,7 @@ R3D_MeshData R3D_CopyMeshData(R3D_MeshData meshData)
     }
 
     duplicate = R3D_LoadMeshData(meshData.vertexCount, meshData.indexCount);
-    if (duplicate.vertices == NULL)
-    {
-        return duplicate;
-    }
+    if (duplicate.vertices == NULL) return duplicate;
 
     memcpy(duplicate.vertices, meshData.vertices, meshData.vertexCount * sizeof(*meshData.vertices));
 
@@ -1687,6 +1684,9 @@ R3D_MeshData R3D_CopyMeshData(R3D_MeshData meshData)
     {
         memcpy(duplicate.indices, meshData.indices, meshData.indexCount * sizeof(*meshData.indices));
     }
+
+    duplicate.vertexCount = meshData.vertexCount;
+    duplicate.indexCount  = meshData.indexCount;
 
     return duplicate;
 }
