@@ -1705,11 +1705,7 @@ R3D_MeshData R3D_MergeMeshData(R3D_MeshData a, R3D_MeshData b)
     int totalIndices = a.indexCount + b.indexCount;
 
     merged = R3D_LoadMeshData(totalVertices, totalIndices);
-
-    if (merged.vertices == NULL)
-    {
-        return merged;
-    }
+    if (merged.vertices == NULL) return merged;
 
     memcpy(merged.vertices, a.vertices, a.vertexCount * sizeof(*merged.vertices));
     memcpy(merged.vertices + a.vertexCount, b.vertices, b.vertexCount * sizeof(*merged.vertices));
